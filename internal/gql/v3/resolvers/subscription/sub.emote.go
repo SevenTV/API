@@ -15,7 +15,7 @@ func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID, init *bool)
 		if err != nil {
 			return nil
 		}
-		return helpers.EmoteStructureToPartialModel(r.Ctx, emote)
+		return helpers.EmoteStructureToPartialModel(emote)
 	}
 
 	ch := make(chan *model.EmotePartial, 1)

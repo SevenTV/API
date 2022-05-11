@@ -9,13 +9,12 @@ import (
 	v2structures "github.com/SevenTV/Common/structures/v2"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 )
 
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
-func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote {
+func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	version, _ := s.GetVersion(s.ID)
 
 	width := make([]int, 4)
@@ -35,7 +34,7 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 			height[pos] = int(f.Height)
 			urls[pos] = []string{
 				fmt.Sprintf("%d", pos+1),
-				fmt.Sprintf("//%s/emote/%s/%s", ctx.Config().CdnURL, version.ID.Hex(), f.Name),
+				fmt.Sprintf("//%s/emote/%s/%s", cdnURL, version.ID.Hex(), f.Name),
 			}
 			pos++
 		}
@@ -69,14 +68,14 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 		AuditEntries: []*model.AuditLog{},
 		Channels:     []*model.UserPartial{},
 		ChannelCount: int(version.State.ChannelCount),
-		Owner:        UserStructureToModel(ctx, owner),
+		Owner:        UserStructureToModel(owner, cdnURL),
 		Urls:         urls,
 		Width:        width,
 		Height:       width,
 	}
 }
 
-func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
+func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	highestRole := s.GetHighestRole()
 	rank := 0
 	if !highestRole.ID.IsZero() {
@@ -100,7 +99,7 @@ func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
 	// Avatar URL
 	avatarURL := ""
 	if s.AvatarID != "" {
-		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", ctx.Config().CdnURL, s.ID.Hex(), s.AvatarID)
+		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	}
 
 	// Editors
@@ -119,7 +118,7 @@ func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
 		Email:        nil,
 		Description:  s.Biography,
 		Rank:         rank,
-		Role:         RoleStructureToModel(ctx, highestRole),
+		Role:         RoleStructureToModel(highestRole),
 		EmoteIds:     []string{},
 		EmoteAliases: [][]string{},
 		// EditorIds:         []string{},
@@ -159,7 +158,7 @@ func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
 	return user
 }
 
-func UserStructureToPartialModel(ctx global.Context, s *model.User) *model.UserPartial {
+func UserStructureToPartialModel(s *model.User) *model.UserPartial {
 	return &model.UserPartial{
 		ID:              s.ID,
 		Rank:            s.Rank,
@@ -175,7 +174,7 @@ func UserStructureToPartialModel(ctx global.Context, s *model.User) *model.UserP
 	}
 }
 
-func RoleStructureToModel(ctx global.Context, s structures.Role) *model.Role {
+func RoleStructureToModel(s structures.Role) *model.Role {
 	p := 0
 	switch s.Allowed {
 	case structures.RolePermissionCreateEmote:
@@ -214,7 +213,7 @@ func RoleStructureToModel(ctx global.Context, s structures.Role) *model.Role {
 	}
 }
 
-func BanStructureToModel(ctx global.Context, s *structures.Ban) *model.Ban {
+func BanStructureToModel(s *structures.Ban) *model.Ban {
 	victimID := s.VictimID.Hex()
 	actorID := s.ActorID.Hex()
 	return &model.Ban{

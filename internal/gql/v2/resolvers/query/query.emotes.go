@@ -19,11 +19,17 @@ import (
 )
 
 func (r *Resolver) Emote(ctx context.Context, id string) (*model.Emote, error) {
-	emote, err := loaders.For(ctx).EmoteByID.Load(id)
-	if emote == nil || emote.ID == structures.DeletedEmote.ID.Hex() {
+	eid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
+	emote, err := loaders.For(ctx).EmoteByID.Load(eid)
+	if emote.ID.IsZero() || emote.ID == structures.DeletedEmote.ID {
 		return nil, errors.ErrUnknownEmote()
 	}
-	return emote, err
+
+	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), err
 }
 
 func (r *Resolver) SearchEmotes(
@@ -63,6 +69,7 @@ func (r *Resolver) SearchEmotes(
 	if sortOrderArg == nil {
 		sortOrderArg = utils.PointerOf(0)
 	}
+
 	sortField, validField := sortFieldMap[*sortByArg]
 	sortOrder, validOrder := sortOrderMap[*sortOrderArg]
 	sortMap := bson.M{}
@@ -151,10 +158,10 @@ func (r *Resolver) SearchEmotes(
 				e.ID = ver.ID
 			}
 		}
-		models[i] = helpers.EmoteStructureToModel(r.Ctx, e)
+		models[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 	}
 
-	rctx := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)
+	rctx, _ := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)
 	if rctx != nil {
 		rctx.Response.Header.Set("X-Collection-Size", strconv.Itoa(totalCount))
 	}

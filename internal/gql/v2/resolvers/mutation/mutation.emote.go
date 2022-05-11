@@ -11,7 +11,7 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
-	"github.com/seventv/api/internal/gql/v2/loaders"
+	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -144,7 +144,8 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 	go func() {
 		events.Publish(r.Ctx, "emotes", emoteID)
 	}()
-	return loaders.For(ctx).EmoteByID.Load(emoteID.Hex())
+
+	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*bool, error) {
@@ -185,5 +186,6 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	go func() {
 		events.Publish(r.Ctx, "emotes", emoteID)
 	}()
+
 	return utils.PointerOf(true), nil
 }

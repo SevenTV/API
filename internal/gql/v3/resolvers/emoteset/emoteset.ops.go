@@ -89,7 +89,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		events.Publish(r.Ctx, "emote_sets", b.EmoteSet.ID)
 
 		// Legacy Event API v1
-		if set.Owner != nil {
+		if set.Owner != nil && actor != nil {
 			tw, _, err := set.Owner.Connections.Twitch()
 			if err != nil {
 				return
@@ -97,11 +97,15 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 			if tw.EmoteSetID.IsZero() || tw.EmoteSetID != set.ID {
 				return // skip if target emote set isn't bound to user connection
 			}
-			events.PublishLegacyEventAPI(r.Ctx, action.String(), actor, set, emote, tw.Data.Login)
+			if err := events.PublishLegacyEventAPI(r.Ctx, action, tw.Data.Login, *actor, set, emote); err != nil {
+				zap.S().Errorw("redis",
+					"error", err,
+				)
+			}
 		}
 	}()
 
-	setModel := helpers.EmoteSetStructureToModel(r.Ctx, b.EmoteSet)
+	setModel := helpers.EmoteSetStructureToModel(b.EmoteSet, r.Ctx.Config().CdnURL)
 	emotes, errs := loaders.For(ctx).EmoteByID.LoadAll(emoteIDs)
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {

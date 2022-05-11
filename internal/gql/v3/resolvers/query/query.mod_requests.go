@@ -45,7 +45,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 	result := make([]*model.ModRequestMessage, len(messages))
 	for i, msg := range messages {
 		if msg, err := structures.ConvertMessage[structures.MessageDataModRequest](msg); err == nil {
-			result[i] = helpers.MessageStructureToModRequestModel(r.Ctx, msg)
+			result[i] = helpers.MessageStructureToModRequestModel(msg, r.Ctx.Config().CdnURL)
 		}
 	}
 	return result, nil

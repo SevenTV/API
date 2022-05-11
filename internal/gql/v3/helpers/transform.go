@@ -9,7 +9,6 @@ import (
 
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
@@ -18,29 +17,29 @@ import (
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
 // UserStructureToModel: Transform a user structure to a GQL mdoel
-func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
+func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	tagColor := 0
 	if role := s.GetHighestRole(); !role.ID.IsZero() {
 		tagColor = int(role.Color)
 	}
 	roles := make([]*model.Role, len(s.Roles))
 	for i, v := range s.Roles {
-		roles[i] = RoleStructureToModel(ctx, v)
+		roles[i] = RoleStructureToModel(v)
 	}
 
 	connections := make([]*model.UserConnection, len(s.Connections))
 	for i, v := range s.Connections {
-		connections[i] = UserConnectionStructureToModel(ctx, v)
+		connections[i] = UserConnectionStructureToModel(v)
 	}
 
 	editors := make([]*model.UserEditor, len(s.Editors))
 	for i, v := range s.Editors {
-		editors[i] = UserEditorStructureToModel(ctx, v)
+		editors[i] = UserEditorStructureToModel(v, cdnURL)
 	}
 
 	avatarURL := ""
 	if s.AvatarID != "" {
-		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", ctx.Config().CdnURL, s.ID.Hex(), s.AvatarID)
+		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
 			switch con.Platform {
@@ -70,7 +69,7 @@ func UserStructureToModel(ctx global.Context, s structures.User) *model.User {
 	}
 }
 
-func UserStructureToPartialModel(ctx global.Context, m *model.User) *model.UserPartial {
+func UserStructureToPartialModel(m *model.User) *model.UserPartial {
 	return &model.UserPartial{
 		ID:          m.ID,
 		UserType:    m.UserType,
@@ -86,7 +85,7 @@ func UserStructureToPartialModel(ctx global.Context, m *model.User) *model.UserP
 }
 
 // UserEditorStructureToModel: Transform a user editor structure to a GQL model
-func UserEditorStructureToModel(ctx global.Context, s structures.UserEditor) *model.UserEditor {
+func UserEditorStructureToModel(s structures.UserEditor, cdnURL string) *model.UserEditor {
 	if s.User == nil {
 		s.User = &structures.DeletedUser
 	}
@@ -96,12 +95,12 @@ func UserEditorStructureToModel(ctx global.Context, s structures.UserEditor) *mo
 		Permissions: int(s.Permissions),
 		Visible:     s.Visible,
 		AddedAt:     s.AddedAt,
-		User:        UserStructureToPartialModel(ctx, UserStructureToModel(ctx, *s.User)),
+		User:        UserStructureToPartialModel(UserStructureToModel(*s.User, cdnURL)),
 	}
 }
 
 // UserConnectionStructureToModel: Transform a user connection structure to a GQL model
-func UserConnectionStructureToModel(ctx global.Context, s structures.UserConnection[bson.Raw]) *model.UserConnection {
+func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *model.UserConnection {
 	var (
 		err         error
 		displayName string
@@ -136,7 +135,7 @@ func UserConnectionStructureToModel(ctx global.Context, s structures.UserConnect
 }
 
 // RoleStructureToModel: Transform a role structure to a GQL model
-func RoleStructureToModel(ctx global.Context, s structures.Role) *model.Role {
+func RoleStructureToModel(s structures.Role) *model.Role {
 	return &model.Role{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -150,7 +149,7 @@ func RoleStructureToModel(ctx global.Context, s structures.Role) *model.Role {
 	}
 }
 
-func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote {
+func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	images := make([]*model.Image, 0)
 	versions := make([]*model.EmoteVersion, len(s.Versions))
 	versionCount := int32(0)
@@ -181,8 +180,8 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 				format = model.ImageFormatPng
 			}
 
-			url := fmt.Sprintf("//%s/emote/%s/%s", ctx.Config().CdnURL, ver.ID.Hex(), fi.Name)
-			img := EmoteFileStructureToModel(ctx, &fi, format, url)
+			url := fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), fi.Name)
+			img := EmoteFileStructureToModel(&fi, format, url)
 			vimages[i] = img
 		}
 
@@ -191,7 +190,7 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 			listed = ver.State.Listed
 			images = vimages
 		}
-		versions[versionCount] = EmoteVersionStructureToModel(ctx, ver, vimages)
+		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages)
 		versionCount++
 	}
 	if len(versions) != int(versionCount) {
@@ -211,7 +210,7 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 		Animated:  animated,
 		CreatedAt: s.ID.Timestamp(),
 		OwnerID:   s.OwnerID,
-		Owner:     UserStructureToModel(ctx, owner),
+		Owner:     UserStructureToModel(owner, cdnURL),
 		Channels:  &model.UserSearchResult{},
 		Images:    images,
 		Versions:  versions,
@@ -220,7 +219,7 @@ func EmoteStructureToModel(ctx global.Context, s structures.Emote) *model.Emote 
 	}
 }
 
-func EmoteStructureToPartialModel(ctx global.Context, m *model.Emote) *model.EmotePartial {
+func EmoteStructureToPartialModel(m *model.Emote) *model.EmotePartial {
 	return &model.EmotePartial{
 		ID:        m.ID,
 		Name:      m.Name,
@@ -237,7 +236,7 @@ func EmoteStructureToPartialModel(ctx global.Context, m *model.Emote) *model.Emo
 	}
 }
 
-func EmoteSetStructureToModel(ctx global.Context, s structures.EmoteSet) *model.EmoteSet {
+func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.EmoteSet {
 	emotes := make([]*model.ActiveEmote, len(s.Emotes))
 	for i, e := range s.Emotes {
 		if e.Emote == nil {
@@ -248,12 +247,12 @@ func EmoteSetStructureToModel(ctx global.Context, s structures.EmoteSet) *model.
 			Name:      e.Name,
 			Flags:     int(e.Flags),
 			Timestamp: e.Timestamp,
-			Emote:     EmoteStructureToModel(ctx, *e.Emote),
+			Emote:     EmoteStructureToModel(*e.Emote, cdnURL),
 		}
 	}
 	var owner *model.User
 	if s.Owner != nil {
-		owner = UserStructureToModel(ctx, *s.Owner)
+		owner = UserStructureToModel(*s.Owner, cdnURL)
 	}
 
 	return &model.EmoteSet{
@@ -267,7 +266,7 @@ func EmoteSetStructureToModel(ctx global.Context, s structures.EmoteSet) *model.
 	}
 }
 
-func EmoteVersionStructureToModel(ctx global.Context, s structures.EmoteVersion, images []*model.Image) *model.EmoteVersion {
+func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Image) *model.EmoteVersion {
 	return &model.EmoteVersion{
 		ID:          s.ID,
 		Name:        s.Name,
@@ -279,7 +278,7 @@ func EmoteVersionStructureToModel(ctx global.Context, s structures.EmoteVersion,
 	}
 }
 
-func EmoteFileStructureToModel(ctx global.Context, s *structures.EmoteFile, format model.ImageFormat, url string) *model.Image {
+func EmoteFileStructureToModel(s *structures.EmoteFile, format model.ImageFormat, url string) *model.Image {
 	return &model.Image{
 		Name:     s.Name,
 		Format:   format,
@@ -292,7 +291,7 @@ func EmoteFileStructureToModel(ctx global.Context, s *structures.EmoteFile, form
 	}
 }
 
-func ActiveEmoteStructureToModel(ctx global.Context, s *structures.ActiveEmote) *model.ActiveEmote {
+func ActiveEmoteStructureToModel(s *structures.ActiveEmote) *model.ActiveEmote {
 	return &model.ActiveEmote{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -301,7 +300,7 @@ func ActiveEmoteStructureToModel(ctx global.Context, s *structures.ActiveEmote) 
 	}
 }
 
-func MessageStructureToInboxModel(ctx global.Context, s structures.Message[structures.MessageDataInbox]) *model.InboxMessage {
+func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInbox], cdnURL string) *model.InboxMessage {
 	author := structures.DeletedUser
 	if s.Author != nil {
 		author = *s.Author
@@ -310,7 +309,7 @@ func MessageStructureToInboxModel(ctx global.Context, s structures.Message[struc
 		ID:           s.ID,
 		Kind:         model.MessageKind(s.Kind.String()),
 		CreatedAt:    s.CreatedAt,
-		Author:       UserStructureToModel(ctx, author),
+		Author:       UserStructureToModel(author, cdnURL),
 		Read:         s.Read,
 		ReadAt:       &time.Time{},
 		Subject:      s.Data.Subject,
@@ -322,7 +321,7 @@ func MessageStructureToInboxModel(ctx global.Context, s structures.Message[struc
 	}
 }
 
-func MessageStructureToModRequestModel(ctx global.Context, s structures.Message[structures.MessageDataModRequest]) *model.ModRequestMessage {
+func MessageStructureToModRequestModel(s structures.Message[structures.MessageDataModRequest], cdnURL string) *model.ModRequestMessage {
 	author := structures.DeletedUser
 	if s.Author != nil {
 		author = *s.Author
@@ -331,13 +330,13 @@ func MessageStructureToModRequestModel(ctx global.Context, s structures.Message[
 		ID:         s.ID,
 		Kind:       model.MessageKind(s.Kind.String()),
 		CreatedAt:  s.CreatedAt,
-		Author:     UserStructureToModel(ctx, author),
+		Author:     UserStructureToModel(author, cdnURL),
 		TargetKind: int(s.Data.TargetKind),
 		TargetID:   s.Data.TargetID,
 	}
 }
 
-func BanStructureToModel(ctx global.Context, s structures.Ban) *model.Ban {
+func BanStructureToModel(s structures.Ban) *model.Ban {
 	return &model.Ban{
 		ID:        s.ID,
 		Reason:    s.Reason,

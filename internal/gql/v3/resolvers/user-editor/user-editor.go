@@ -27,5 +27,5 @@ func (r *Resolver) User(ctx context.Context, obj *model.UserEditor) (*model.User
 	if err != nil {
 		return nil, err
 	}
-	return helpers.UserStructureToPartialModel(r.Ctx, u), nil
+	return helpers.UserStructureToPartialModel(u), nil
 }

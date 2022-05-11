@@ -24,7 +24,7 @@ func emoteByID(gCtx global.Context) *EmoteLoader {
 			errs := make([]error, len(keys))
 
 			// Initially fill the response with unknown emotes in case some cannot be found
-			unknownModel := helpers.EmoteStructureToModel(gCtx, structures.DeletedEmote)
+			unknownModel := helpers.EmoteStructureToModel(structures.DeletedEmote, gCtx.Config().CdnURL)
 			for i := 0; i < len(models); i++ {
 				models[i] = unknownModel
 			}
@@ -57,7 +57,7 @@ func emoteByID(gCtx global.Context) *EmoteLoader {
 							continue
 						}
 						x.ID = v
-						models[i] = helpers.EmoteStructureToModel(gCtx, x)
+						models[i] = helpers.EmoteStructureToModel(x, gCtx.Config().CdnURL)
 					}
 				}
 			}

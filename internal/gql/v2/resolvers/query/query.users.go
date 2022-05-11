@@ -19,41 +19,44 @@ import (
 
 func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 	var (
-		isMe  = id == "@me"
-		model *model.User
-		err   error
+		err  error
+		user structures.User
 	)
-	if primitive.IsValidObjectID(id) {
-		model, err = loaders.For(ctx).UserByID.Load(id)
-	} else if id == "@me" {
+	switch id {
+	case "@me":
 		// Handle @me (fetch actor)
 		// this sets the queried user ID to that of the actor user
 		actor := auth.For(ctx)
 		if actor == nil {
 			return nil, errors.ErrUnauthorized()
 		}
-		id = actor.ID.Hex()
-		model, err = loaders.For(ctx).UserByID.Load(id)
-	} else {
-		// at this point we assume the query is for a username
-		// (it was neither an id, or the @me label)
-		model, err = loaders.For(ctx).UserByUsername.Load(strings.ToLower(id))
-	}
+		user, err = loaders.For(ctx).UserByID.Load(actor.ID)
+	default:
+		uid, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			user, err = loaders.For(ctx).UserByUsername.Load(strings.ToLower(id))
+		} else {
+			user, err = loaders.For(ctx).UserByID.Load(uid)
+		}
+		if err != nil {
+			return nil, err
+		}
 
-	// Check if banned
-	if !isMe && model != nil {
-		userID, _ := primitive.ObjectIDFromHex(model.ID)
 		bans, err := r.Ctx.Inst().Query.Bans(ctx, query.BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 			Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
 		})
 		if err != nil {
 			return nil, err
 		}
-		if _, banned := bans.MemoryHole[userID]; banned {
+		if _, banned := bans.MemoryHole[user.ID]; banned {
 			return nil, errors.ErrUnknownUser()
 		}
 	}
-	return model, err
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), err
 }
 
 func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, limit *int) ([]*model.UserPartial, error) {
@@ -72,7 +75,7 @@ func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, 
 
 	result := make([]*model.UserPartial, len(users))
 	for i, u := range users {
-		result[i] = helpers.UserStructureToPartialModel(r.Ctx, helpers.UserStructureToModel(r.Ctx, u))
+		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 	}
 
 	rctx := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)

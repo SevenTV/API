@@ -31,7 +31,7 @@ func (r *ResolverPartial) Roles(ctx context.Context, obj *model.UserPartial) ([]
 		if _, ok := m[rol.ID]; ok {
 			continue
 		}
-		m[rol.ID] = helpers.RoleStructureToModel(r.Ctx, rol)
+		m[rol.ID] = helpers.RoleStructureToModel(rol)
 	}
 
 	result := make([]*model.Role, 0, len(m))

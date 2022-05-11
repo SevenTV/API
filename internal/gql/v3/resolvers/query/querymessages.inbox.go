@@ -54,7 +54,7 @@ func (r *Resolver) Inbox(ctx context.Context, userID primitive.ObjectID, afterID
 	result := make([]*model.InboxMessage, len(messages))
 	for i, msg := range messages {
 		if msg, err := structures.ConvertMessage[structures.MessageDataInbox](msg); err == nil {
-			result[i] = helpers.MessageStructureToInboxModel(r.Ctx, msg)
+			result[i] = helpers.MessageStructureToInboxModel(msg, r.Ctx.Config().CdnURL)
 		}
 	}
 

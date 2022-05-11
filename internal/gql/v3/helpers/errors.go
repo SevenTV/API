@@ -1,18 +1,20 @@
 package helpers
 
-import "fmt"
+type ErrorGQL string
 
-type ErrorGQL error
+func (e ErrorGQL) Error() string {
+	return string(e)
+}
 
-var (
-	ErrUnauthorized        ErrorGQL = fmt.Errorf("unauthorized")
-	ErrAccessDenied        ErrorGQL = fmt.Errorf("access denied")
-	ErrUnknownEmote        ErrorGQL = fmt.Errorf("unknown emote")
-	ErrUnknownUser         ErrorGQL = fmt.Errorf("unknown user")
-	ErrUnknownRole         ErrorGQL = fmt.Errorf("unknown role")
-	ErrUnknownReport       ErrorGQL = fmt.Errorf("unknown report")
-	ErrBadObjectID         ErrorGQL = fmt.Errorf("bad object id")
-	ErrInternalServerError ErrorGQL = fmt.Errorf("internal server error")
-	ErrBadInt              ErrorGQL = fmt.Errorf("bad int")
-	ErrDontBeSilly         ErrorGQL = fmt.Errorf("don't be silly")
+const (
+	ErrUnauthorized        ErrorGQL = "unauthorized"
+	ErrAccessDenied        ErrorGQL = "access denied"
+	ErrUnknownEmote        ErrorGQL = "unknown emote"
+	ErrUnknownUser         ErrorGQL = "unknown user"
+	ErrUnknownRole         ErrorGQL = "unknown role"
+	ErrUnknownReport       ErrorGQL = "unknown report"
+	ErrBadObjectID         ErrorGQL = "bad object id"
+	ErrInternalServerError ErrorGQL = "internal server error"
+	ErrBadInt              ErrorGQL = "bad int"
+	ErrDontBeSilly         ErrorGQL = "don't be silly"
 )

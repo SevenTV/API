@@ -27,9 +27,9 @@ func (r *ResolverPartial) Role(ctx context.Context, obj *model.UserPartial) (*mo
 		// Get default role
 		roles, err := r.Ctx.Inst().Query.Roles(ctx, bson.M{"default": true})
 		if err == nil && len(roles) > 0 {
-			obj.Role = helpers.RoleStructureToModel(r.Ctx, roles[0])
+			obj.Role = helpers.RoleStructureToModel(roles[0])
 		} else {
-			obj.Role = helpers.RoleStructureToModel(r.Ctx, structures.NilRole)
+			obj.Role = helpers.RoleStructureToModel(structures.NilRole)
 		}
 	}
 	return obj.Role, nil
@@ -43,7 +43,7 @@ func (*ResolverPartial) EmoteIds(ctx context.Context, obj *model.UserPartial) ([
 	}
 
 	for _, e := range emotes {
-		result = append(result, e.ID)
+		result = append(result, e.ID.Hex())
 	}
 	return result, nil
 }

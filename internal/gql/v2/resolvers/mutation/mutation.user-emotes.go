@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
+	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,19 +33,20 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID.Hex())
+	target, err := loaders.For(ctx).UserByID.Load(channelID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the emote set
-	setID, _ := primitive.ObjectIDFromHex(target.EmoteSetID)
-	if setID.IsZero() {
+	twConn, _, err := target.Connections.Twitch()
+	if err != nil {
 		return nil, errors.ErrUnknownEmoteSet()
 	}
+
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
 	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": setID,
+		"_id": twConn.EmoteSetID,
 	}).Decode(&b.EmoteSet); err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
@@ -52,10 +54,9 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", mutations.ListItemActionAdd, b); err != nil {
 		graphql.AddError(ctx, err)
-		return loaders.For(ctx).UserByID.Load(channelID.Hex())
 	}
 
-	return loaders.For(ctx).UserByID.Load(channelID.Hex())
+	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteIDArg string, reasonArg *string) (*model.User, error) {
@@ -72,19 +73,19 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID.Hex())
+	target, err := loaders.For(ctx).UserByID.Load(channelID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the emote set
-	setID, _ := primitive.ObjectIDFromHex(target.EmoteSetID)
-	if setID.IsZero() {
+	twConn, _, err := target.Connections.Twitch()
+	if err != nil {
 		return nil, errors.ErrUnknownEmoteSet()
 	}
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
 	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": setID,
+		"_id": twConn.EmoteSetID,
 	}).Decode(&b.EmoteSet); err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
@@ -92,10 +93,9 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", mutations.ListItemActionRemove, b); err != nil {
 		graphql.AddError(ctx, err)
-		return loaders.For(ctx).UserByID.Load(channelID.Hex())
 	}
 
-	return loaders.For(ctx).UserByID.Load(channelID.Hex())
+	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, emoteIDArg string, data model.ChannelEmoteInput, reason *string) (*model.User, error) {
@@ -118,19 +118,19 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID.Hex())
+	target, err := loaders.For(ctx).UserByID.Load(channelID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the emote set
-	setID, _ := primitive.ObjectIDFromHex(target.EmoteSetID)
-	if setID.IsZero() {
+	twConn, _, err := target.Connections.Twitch()
+	if err != nil {
 		return nil, errors.ErrUnknownEmoteSet()
 	}
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
 	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": setID,
+		"_id": twConn.EmoteSetID,
 	}).Decode(&b.EmoteSet); err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
@@ -138,10 +138,9 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, actor, emoteID, alias, mutations.ListItemActionUpdate, b); err != nil {
 		graphql.AddError(ctx, err)
-		return loaders.For(ctx).UserByID.Load(channelID.Hex())
 	}
 
-	return loaders.For(ctx).UserByID.Load(channelID.Hex())
+	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) doSetChannelEmote(

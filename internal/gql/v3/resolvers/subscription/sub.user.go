@@ -21,7 +21,7 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 		if err != nil {
 			return nil
 		}
-		return helpers.UserStructureToPartialModel(r.Ctx, user)
+		return helpers.UserStructureToPartialModel(user)
 	}
 
 	ch := make(chan *model.UserPartial, 1)
@@ -52,7 +52,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) 
 		if err != nil {
 			return nil
 		}
-		return helpers.UserStructureToPartialModel(r.Ctx, user)
+		return helpers.UserStructureToPartialModel(user)
 	}
 
 	ch := make(chan *model.UserPartial, 1)

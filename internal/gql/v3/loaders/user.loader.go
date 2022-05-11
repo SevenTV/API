@@ -25,7 +25,7 @@ func userByID(gCtx global.Context) *UserLoader {
 			errs := make([]error, len(keys))
 
 			// Initially fill the response with "deleted user" models in case some cannot be found
-			deletedModel := helpers.UserStructureToModel(gCtx, structures.DeletedUser)
+			deletedModel := helpers.UserStructureToModel(structures.DeletedUser, gCtx.Config().CdnURL)
 			for i := 0; i < len(models); i++ {
 				models[i] = deletedModel
 			}
@@ -44,7 +44,7 @@ func userByID(gCtx global.Context) *UserLoader {
 
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
-						models[i] = helpers.UserStructureToModel(gCtx, x)
+						models[i] = helpers.UserStructureToModel(x, gCtx.Config().CdnURL)
 					}
 				}
 			}

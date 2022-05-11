@@ -47,7 +47,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 		if u.ID.IsZero() {
 			u = structures.DeletedUser
 		}
-		models[i] = helpers.UserStructureToModel(r.Ctx, u)
+		models[i] = helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL)
 	}
 
 	results := model.UserSearchResult{

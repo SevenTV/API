@@ -60,7 +60,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 
 	result := make([]*model.UserPartial, len(users))
 	for i, u := range users {
-		result[i] = helpers.UserStructureToPartialModel(r.Ctx, helpers.UserStructureToModel(r.Ctx, u))
+		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 	}
 	return result, nil
 }

@@ -34,7 +34,7 @@ func emoteSetByID(gCtx global.Context) *EmoteSetLoader {
 
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
-						models[i] = helpers.EmoteSetStructureToModel(gCtx, x)
+						models[i] = helpers.EmoteSetStructureToModel(x, gCtx.Config().CdnURL)
 					}
 				}
 			}
@@ -62,7 +62,7 @@ func emoteSetByUserID(gCtx global.Context) *BatchEmoteSetLoader {
 					if x, ok := sets[v]; ok {
 						models := make([]*model.EmoteSet, len(x))
 						for ii, set := range x {
-							models[ii] = helpers.EmoteSetStructureToModel(gCtx, set)
+							models[ii] = helpers.EmoteSetStructureToModel(set, gCtx.Config().CdnURL)
 						}
 						modelLists[i] = models
 					}

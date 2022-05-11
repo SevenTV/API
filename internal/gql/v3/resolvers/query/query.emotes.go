@@ -104,7 +104,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 				e.ID = ver.ID
 			}
 		}
-		models[i] = helpers.EmoteStructureToModel(r.Ctx, e)
+		models[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 	}
 
 	return &model.EmoteSearchResult{

@@ -4,28 +4,27 @@ import (
 	"context"
 
 	"github.com/SevenTV/Common/dataloader"
+	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/gql/v2/gen/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const LoadersKey = utils.Key("dataloadersv2")
 
 type Loaders struct {
-	UserByID       *UserLoader
-	UserByUsername *UserLoader
-	UserEmotes     *UserEmotesLoader
-
-	EmoteByID *EmoteLoader
+	UserByID       UserLoaderByID
+	UserByUsername UserLoaderByUsername
+	UserEmotes     UserEmotesLoader
+	EmoteByID      EmoteLoader
 }
 
 func New(gCtx global.Context) *Loaders {
 	return &Loaders{
-		UserByID:       userLoader(gCtx, "_id"),
-		UserByUsername: userLoader(gCtx, "username"),
+		UserByID:       userLoader[primitive.ObjectID](gCtx, "_id"),
+		UserByUsername: userLoader[string](gCtx, "username"),
 		UserEmotes:     userEmotesLoader(gCtx),
-
-		EmoteByID: emoteByID(gCtx),
+		EmoteByID:      emoteByID(gCtx),
 	}
 }
 
@@ -34,7 +33,8 @@ func For(ctx context.Context) *Loaders {
 }
 
 type (
-	EmoteLoader      = dataloader.DataLoader[string, *model.Emote]
-	UserLoader       = dataloader.DataLoader[string, *model.User]
-	UserEmotesLoader = dataloader.DataLoader[string, []*model.Emote]
+	EmoteLoader          = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
+	UserLoaderByID       = *dataloader.DataLoader[primitive.ObjectID, structures.User]
+	UserLoaderByUsername = *dataloader.DataLoader[string, structures.User]
+	UserEmotesLoader     = *dataloader.DataLoader[string, []structures.ActiveEmote]
 )

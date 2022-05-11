@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
@@ -31,16 +32,30 @@ func (r *Resolver) Role(ctx context.Context, obj *model.User) (*model.Role, erro
 		// Get default role
 		roles, err := r.Ctx.Inst().Query.Roles(ctx, bson.M{"default": true})
 		if err == nil && len(roles) > 0 {
-			obj.Role = helpers.RoleStructureToModel(r.Ctx, roles[0])
+			obj.Role = helpers.RoleStructureToModel(roles[0])
 		} else {
-			obj.Role = helpers.RoleStructureToModel(r.Ctx, structures.NilRole)
+			obj.Role = helpers.RoleStructureToModel(structures.NilRole)
 		}
 	}
 	return obj.Role, nil
 }
 
 func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
-	return loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
+	emotes, err := loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
+	arr := make([]*model.Emote, len(emotes))
+	for i, emote := range emotes {
+		em := helpers.EmoteStructureToModel(*emote.Emote, r.Ctx.Config().CdnURL)
+
+		// set "alias"
+		if emote.Name != em.Name {
+			em.OriginalName = &emote.Emote.Name
+			em.Name = emote.Name
+		}
+
+		arr[i] = em
+	}
+
+	return nil, err
 }
 
 func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, error) {
@@ -51,7 +66,7 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 	}
 
 	for _, e := range emotes {
-		result = append(result, e.ID)
+		result = append(result, e.ID.Hex())
 	}
 	return result, nil
 }
@@ -66,27 +81,35 @@ func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]strin
 		return result, err
 	}
 	for _, e := range emotes {
-		if e.OriginalName == nil {
+		if e.Name == e.Emote.Name {
 			continue // no original name property means no alias set
 		}
-		result = append(result, []string{e.ID, e.Name})
+		result = append(result, []string{e.ID.Hex(), e.Name})
 	}
 
 	return result, nil
 }
 
 func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserPartial, error) {
+	var err error
 	result := []*model.UserPartial{}
-	editors, errs := loaders.For(ctx).UserByID.LoadAll(obj.EditorIds)
+	editorIDs := make([]primitive.ObjectID, len(obj.EditorIds))
+	for i, v := range obj.EditorIds {
+		editorIDs[i], err = primitive.ObjectIDFromHex(v)
+		if err != nil {
+			return nil, errors.ErrBadObjectID()
+		}
+	}
+
+	editors, errs := loaders.For(ctx).UserByID.LoadAll(editorIDs)
 	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
 		return result, err
 	}
 
-	setIDs := make([]string, len(editors))
-	for i, ed := range editors {
-		setIDs[i] = ed.EmoteSetID
-		result = append(result, helpers.UserStructureToPartialModel(r.Ctx, ed))
+	for _, ed := range editors {
+		result = append(result, helpers.UserStructureToPartialModel(helpers.UserStructureToModel(ed, r.Ctx.Config().CdnURL)))
 	}
+
 	return result, nil
 }
 
@@ -103,18 +126,20 @@ func (r *Resolver) EditorIn(ctx context.Context, obj *model.User) ([]*model.User
 	}
 
 	// Get a list of user IDs from the v3 editor list
-	ids := make([]string, len(editors))
+	ids := make([]primitive.ObjectID, len(editors))
 	for i, ed := range editors {
-		ids[i] = ed.ID.Hex()
+		ids[i] = ed.ID
 	}
 
 	users, errs := loaders.For(ctx).UserByID.LoadAll(ids)
 	if err = multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
 		return result, err
 	}
+
 	for _, u := range users {
-		result = append(result, helpers.UserStructureToPartialModel(r.Ctx, u))
+		result = append(result, helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL)))
 	}
+
 	return result, nil
 }
 

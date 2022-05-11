@@ -89,16 +89,24 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 								if ae.Emote == nil {
 									continue
 								}
-								events.PublishLegacyEventAPI(r.Ctx, "REMOVE", actor, oldSet, *ae.Emote, conn.Data.Login)
-								time.Sleep(time.Millisecond * 10)
+								if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
+									zap.S().Errorw("redis",
+										"error", err,
+									)
+								}
+								time.Sleep(time.Millisecond * 10) // todo
 							}
 						}
 						for _, ae := range newSet.Emotes {
 							if ae.Emote == nil {
 								continue
 							}
-							events.PublishLegacyEventAPI(r.Ctx, "ADD", actor, newSet, *ae.Emote, conn.Data.Login)
-							time.Sleep(time.Millisecond * 10)
+							if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
+								zap.S().Errorw("redis",
+									"error", err,
+								)
+							}
+							time.Sleep(time.Millisecond * 10) // todo
 						}
 					}
 				}()
@@ -109,7 +117,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		return nil, err
 	}
 
-	result := helpers.UserStructureToModel(r.Ctx, b.User)
+	result := helpers.UserStructureToModel(b.User, r.Ctx.Config().CdnURL)
 	events.Publish(r.Ctx, "users", b.User.ID)
 	return result.Connections, nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/SevenTV/Common/structures/v3/mutations"
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
-	"github.com/seventv/api/internal/gql/v2/loaders"
+	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,11 +27,12 @@ func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, ed
 		return nil, errors.ErrBadObjectID()
 	}
 
-	if err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionAdd, targetID, editorID); err != nil {
+	target, _, err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionAdd, targetID, editorID)
+	if err != nil {
 		return nil, err
 	}
 
-	return loaders.For(ctx).UserByID.Load(targetID.Hex())
+	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string, editorIDArg string, reason *string) (*model.User, error) {
@@ -46,11 +47,12 @@ func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string,
 		return nil, errors.ErrBadObjectID()
 	}
 
-	if err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionRemove, targetID, editorID); err != nil {
+	target, _, err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionRemove, targetID, editorID)
+	if err != nil {
 		return nil, err
 	}
 
-	return loaders.For(ctx).UserByID.Load(targetID.Hex())
+	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) doSetChannelEditor(
@@ -59,21 +61,22 @@ func (r *Resolver) doSetChannelEditor(
 	action mutations.ListItemAction,
 	targetID primitive.ObjectID,
 	editorID primitive.ObjectID,
-) error {
+) (structures.User, structures.User, error) {
 	var target structures.User
 	var editor structures.User
+
 	users := []structures.User{}
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 		"_id": bson.M{"$in": bson.A{targetID, editorID}},
 	})
 	if err != nil {
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		return target, editor, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 	if err = cur.All(ctx, &users); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return errors.ErrUnknownUser()
+			return target, editor, errors.ErrUnknownUser()
 		}
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		return target, editor, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 	for _, u := range users {
 		switch u.ID {
@@ -84,7 +87,7 @@ func (r *Resolver) doSetChannelEditor(
 		}
 	}
 	if target.ID.IsZero() {
-		return errors.ErrUnknownUser()
+		return target, editor, errors.ErrUnknownUser()
 	}
 
 	ub := structures.NewUserBuilder(target)
@@ -95,7 +98,7 @@ func (r *Resolver) doSetChannelEditor(
 		EditorVisible:     true,
 		Action:            action,
 	}); err != nil {
-		return err
+		return target, editor, err
 	}
-	return nil
+	return target, editor, nil
 }

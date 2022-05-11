@@ -62,7 +62,7 @@ func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
 
 	result := make([]*model.Role, len(roles))
 	for i, rol := range roles {
-		result[i] = helpers.RoleStructureToModel(r.Ctx, rol)
+		result[i] = helpers.RoleStructureToModel(rol)
 	}
 	return result, nil
 }

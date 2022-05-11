@@ -53,7 +53,7 @@ func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, r
 		return nil, err
 	}
 
-	return helpers.BanStructureToModel(r.Ctx, bb.Ban), nil
+	return helpers.BanStructureToModel(bb.Ban), nil
 }
 
 func (r *Resolver) EditBan(ctx context.Context, banID primitive.ObjectID, reason *string, effects *int, expireAt *string) (*model.Ban, error) {

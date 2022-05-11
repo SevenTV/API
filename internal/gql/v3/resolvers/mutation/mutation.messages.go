@@ -137,5 +137,5 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 	if err != nil {
 		return nil, err
 	}
-	return helpers.MessageStructureToInboxModel(r.Ctx, inb), nil
+	return helpers.MessageStructureToInboxModel(inb, r.Ctx.Config().CdnURL), nil
 }
