@@ -59,7 +59,7 @@ func main() {
 	}
 
 	if !config.NoHeader {
-		zap.S().Info("7TV Image Processor")
+		zap.S().Info("7TV API")
 		zap.S().Infof("Version: %s", Version)
 		zap.S().Infof("build.Time: %s", Time)
 		zap.S().Infof("build.User: %s", User)
