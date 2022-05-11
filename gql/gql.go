@@ -10,8 +10,8 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/global"
 
-	// v2 "github.com/seventv/api/gql/v2"
 	"github.com/seventv/api/global/middleware"
+	v2 "github.com/seventv/api/gql/v2"
 	v3 "github.com/seventv/api/gql/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
@@ -21,7 +21,7 @@ func New(gCtx global.Context) <-chan struct{} {
 	done := make(chan struct{})
 
 	gqlv3 := v3.GqlHandlerV3(gCtx)
-	// gqlv2 := v2.GqlHandlerV2(gCtx)
+	gqlv2 := v2.GqlHandlerV2(gCtx)
 
 	router := router.New()
 
@@ -36,8 +36,8 @@ func New(gCtx global.Context) <-chan struct{} {
 		switch ctx.UserValue("v") {
 		case "v3":
 			gqlv3(ctx)
-		// case "v2":
-		// 	gqlv2(ctx)
+		case "v2":
+			gqlv2(ctx)
 		default:
 			err := errors.ErrUnknownRoute()
 			b, _ := json.Marshal(map[string]interface{}{
