@@ -114,15 +114,18 @@ type Config struct {
 	CdnURL        string `mapstructure:"cdn_url" json:"cdn_url"`
 
 	Redis struct {
-		URI      string `mapstructure:"uri" json:"uri"`
-		Username string `mapstructure:"username" json:"username"`
-		Password string `mapstructure:"password" json:"password"`
-		Database int    `mapstructure:"db" json:"db"`
+		Username   string   `mapstructure:"username" json:"username"`
+		Password   string   `mapstructure:"password" json:"password"`
+		Database   int      `mapstructure:"db" json:"db"`
+		Sentinel   bool     `mapstructure:"sentinel" json:"sentinel"`
+		Addresses  []string `mapstructure:"addresses" json:"addresses"`
+		MasterName string   `mapstructure:"master_name" json:"master_name"`
 	} `mapstructure:"redis" json:"redis"`
 
 	Mongo struct {
-		URI string `mapstructure:"uri" json:"uri"`
-		DB  string `mapstructure:"db" json:"db"`
+		URI    string `mapstructure:"uri" json:"uri"`
+		DB     string `mapstructure:"db" json:"db"`
+		Direct bool   `mapstructure:"direct" json:"direct"`
 	} `mapstructure:"mongo" json:"mongo"`
 
 	Health struct {

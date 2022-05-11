@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/redis"
 	"github.com/bugsnag/panicwrap"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
@@ -71,6 +73,35 @@ func main() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
 	gCtx, cancel := global.WithCancel(global.New(context.Background(), config))
+
+	{
+		gCtx.Inst().Redis, err = redis.Setup(gCtx, redis.SetupOptions{
+			Username:   config.Redis.Username,
+			Password:   config.Redis.Password,
+			Database:   config.Redis.Database,
+			Sentinel:   config.Redis.Sentinel,
+			Addresses:  config.Redis.Addresses,
+			MasterName: config.Redis.MasterName,
+		})
+		if err != nil {
+			zap.S().Fatalw("failed to setup redis handler",
+				"error", err,
+			)
+		}
+	}
+
+	{
+		gCtx.Inst().Mongo, err = mongo.Setup(gCtx, mongo.SetupOptions{
+			URI:    config.Mongo.URI,
+			DB:     config.Mongo.DB,
+			Direct: config.Mongo.Direct,
+		})
+		if err != nil {
+			zap.S().Fatalw("failed to setup mongo handler",
+				"error", err,
+			)
+		}
+	}
 
 	{
 		gCtx.Inst().RMQ, err = rmq.New(gCtx, rmq.Options{
