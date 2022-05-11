@@ -13,5 +13,3 @@ tmp/
 node_modules/
 internal/rest/v*/docs
 .vscode/
-go.work
-go.work.sum
