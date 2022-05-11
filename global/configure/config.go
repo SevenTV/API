@@ -83,12 +83,14 @@ func BindEnvs(config *viper.Viper, iface interface{}, parts ...string) {
 }
 
 type Config struct {
-	Level      string `mapstructure:"level" json:"level"`
-	ConfigFile string `mapstructure:"config" json:"config"`
-	NoHeader   bool   `mapstructure:"noheader" json:"noheader"`
-	WebsiteURL string `mapstructure:"website_url" json:"website_url"`
-	NodeName   string `mapstructure:"node_name" json:"node_name"`
-	CdnURL     string `mapstructure:"cdn_url" json:"cdn_url"`
+	Level         string `mapstructure:"level" json:"level"`
+	ConfigFile    string `mapstructure:"config" json:"config"`
+	NoHeader      bool   `mapstructure:"noheader" json:"noheader"`
+	WebsiteURL    string `mapstructure:"website_url" json:"website_url"`
+	OldWebsiteURL string `mapstructure:"website_old_url" json:"website_old_url"`
+	NodeName      string `mapstructure:"node_name" json:"node_name"`
+	TempFolder    string `mapstructure:"temp_folder" json:"temp_folder"`
+	CdnURL        string `mapstructure:"cdn_url" json:"cdn_url"`
 
 	Redis struct {
 		URI      string `mapstructure:"uri" json:"uri"`
@@ -109,14 +111,38 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 		Type               string `mapstructure:"type" json:"type"`
+		VersionSuffix      string `mapstructure:"version_suffix" json:"version_suffix"`
+		CookieDomain       string `mapstructure:"cookie_domain" json:"cookie_domain"`
+		CookieSecure       bool   `mapstructure:"cookie_secure" json:"cookie_secure"`
 		OauthRedirectURI   string `mapstructure:"oauth_redirect_uri" json:"oauth_redirect_uri"`
 		QuotaDefaultLimit  int32  `mapstructure:"quota_default_limit" json:"quota_default_limit"`
 		QuotaMaxBadQueries int64  `mapstructure:"quota_max_bad_queries" json:"quota_max_bad_queries"`
 	} `mapstructure:"http" json:"http"`
 
-	Auth struct {
-		Secret string `mapstructure:"secret" json:"secret"`
+	Platforms struct {
+		Twitch struct {
+			ClientID     string `mapstructure:"client_id" json:"client_id"`
+			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
+		} `mapstructure:"twitch" json:"twitch"`
+	} `mapstructure:"platforms" json:"platforms"`
 
+	Rmq struct {
+		ServerURL       string `mapstructure:"server_url" json:"server_url"`
+		JobQueueName    string `mapstructure:"job_queue_name" json:"job_queue_name"`
+		ResultQueueName string `mapstructure:"result_queue_name" json:"result_queue_name"`
+		UpdateQueueName string `mapstructure:"update_queue_name" json:"update_queue_name"`
+	} `mapstructure:"rmq" json:"rmq"`
+
+	Aws struct {
+		AccessToken string `mapstructure:"access_token" json:"access_token"`
+		SecretKey   string `mapstructure:"secret_key" json:"secret_key"`
+		Region      string `mapstructure:"region" json:"region"`
+		Bucket      string `mapstructure:"bucket" json:"bucket"`
+		Endpoint    string `mapstructure:"endpoint" json:"endpoint"`
+	} `mapstructure:"aws" json:"aws"`
+
+	Auth struct {
 		Platforms []struct {
 			Name    string `mapstructure:"name" json:"name"`
 			Enabled bool   `mapstructure:"enabled" json:"enabled"`

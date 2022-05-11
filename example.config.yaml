@@ -1,8 +1,13 @@
 # Log Level
 level: info
 
-# URL to the web-app
+# Temporary Folder (for emote uploads)
+temp_folder: "tmp"
+
+# URL to the web-app and cdn
 website_url: https://example.com/
+website_old_url: https://old.example.com/
+cdn_url: cdn.7tv.app
 
 # Redis Settings
 redis:
@@ -24,6 +29,7 @@ http:
     gql: 3000
     rest: 3100
   type: tcp
+  version_suffix: ""
 
   # The default amount of quota points granted on a new query
   quota_default_limit: 1000

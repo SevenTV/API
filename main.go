@@ -18,6 +18,7 @@ import (
 	"github.com/seventv/api/global"
 	"github.com/seventv/api/global/configure"
 	"github.com/seventv/api/gql"
+	"github.com/seventv/api/rest"
 	"github.com/sirupsen/logrus"
 )
 
@@ -96,7 +97,13 @@ func main() {
 		gCtx.Inst().Mutate = mutations.New(mongoInst, redisInst)
 	}
 
-	serverDone := gql.New(gCtx)
+	gqlDone := gql.New(gCtx)
+
+	restServer := rest.New()
+	restDone, err := restServer.Start(gCtx)
+	if err != nil {
+		logrus.WithError(err).Fatal("failed to start rest server")
+	}
 
 	logrus.Info("running")
 
@@ -114,7 +121,8 @@ func main() {
 
 		logrus.Info("shutting down")
 
-		<-serverDone
+		<-gqlDone
+		<-restDone
 
 		close(done)
 	}()
