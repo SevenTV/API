@@ -22,10 +22,11 @@ lint:
 	staticcheck ./...
 	go vet ./...
 	golangci-lint run
-	yarn prettier --write .
+	yarn prettier --check .
 
 format:
 	gofmt -s -w .
+	yarn prettier --write .
 
 deps:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.1
