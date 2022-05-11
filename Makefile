@@ -1,4 +1,4 @@
-.PHONY: build lint deps dev_deps generate clean work
+.PHONY: build lint deps dev_deps generate clean work dev
 
 BUILDER := "unknown"
 VERSION := "unknown"
