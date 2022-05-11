@@ -11,7 +11,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -19,11 +18,16 @@ import (
 const EMOTES_QUERY_LIMIT = 300
 
 func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emote, error) {
-	emote, err := loaders.For(ctx).EmoteByID.Load(id)
-	if emote == nil || emote.ID == structures.DeletedEmote.ID {
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if emote.ID.IsZero() || emote.ID == structures.DeletedEmote.ID {
 		return nil, errors.ErrUnknownEmote()
 	}
-	return emote, err
+
+	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {

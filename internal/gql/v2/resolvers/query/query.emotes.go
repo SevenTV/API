@@ -11,7 +11,6 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,7 +23,7 @@ func (r *Resolver) Emote(ctx context.Context, id string) (*model.Emote, error) {
 		return nil, errors.ErrBadObjectID()
 	}
 
-	emote, err := loaders.For(ctx).EmoteByID.Load(eid)
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(eid)
 	if emote.ID.IsZero() || emote.ID == structures.DeletedEmote.ID {
 		return nil, errors.ErrUnknownEmote()
 	}

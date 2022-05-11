@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,7 +20,12 @@ func New(r types.Resolver) generated.ReportResolver {
 }
 
 func (r *Resolver) Reporter(ctx context.Context, obj *model.Report) (*model.User, error) {
-	return loaders.For(ctx).UserByID.Load(obj.Reporter.ID)
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.Reporter.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
 
 func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.User, error) {
@@ -29,7 +34,16 @@ func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.U
 		ids[i] = v.ID
 	}
 
-	users, errs := loaders.For(ctx).UserByID.LoadAll(ids)
+	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
+	err := multierror.Append(nil, errs...).ErrorOrNil()
+	if err != nil {
+		return nil, err
+	}
 
-	return users, multierror.Append(nil, errs...).ErrorOrNil()
+	result := make([]*model.User, len(users))
+	for i, v := range users {
+		result[i] = helpers.UserStructureToModel(v, r.Ctx.Config().CdnURL)
+	}
+
+	return result, nil
 }

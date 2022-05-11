@@ -12,7 +12,6 @@ import (
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -33,7 +32,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID)
+	target, err := r.Ctx.Inst().Loaders.UserByID().Load(channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,7 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID)
+	target, err := r.Ctx.Inst().Loaders.UserByID().Load(channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +117,7 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	}
 
 	// Get the target user
-	target, err := loaders.For(ctx).UserByID.Load(channelID)
+	target, err := r.Ctx.Inst().Loaders.UserByID().Load(channelID)
 	if err != nil {
 		return nil, err
 	}

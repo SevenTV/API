@@ -3,13 +3,14 @@ package user
 import (
 	"context"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v2/types"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ResolverPartial struct {
@@ -35,14 +36,19 @@ func (r *ResolverPartial) Role(ctx context.Context, obj *model.UserPartial) (*mo
 	return obj.Role, nil
 }
 
-func (*ResolverPartial) EmoteIds(ctx context.Context, obj *model.UserPartial) ([]string, error) {
+func (r *ResolverPartial) EmoteIds(ctx context.Context, obj *model.UserPartial) ([]string, error) {
+	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
 	result := []string{}
-	emotes, err := loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
+	emoteSets, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		return result, err
 	}
 
-	for _, e := range emotes {
+	for _, e := range emoteSets.Emotes {
 		result = append(result, e.ID.Hex())
 	}
 	return result, nil

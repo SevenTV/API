@@ -3,7 +3,6 @@ package emotes
 import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/rest/loaders"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 )
@@ -39,10 +38,10 @@ func (r *emote) Handler(ctx *rest.Ctx) errors.APIError {
 		return errors.From(err)
 	}
 
-	emote, err := loaders.For(ctx).EmoteByID.Load(emoteID)
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(emoteID)
 	if err != nil {
 		return errors.From(err)
 	}
 
-	return ctx.JSON(rest.OK, model.NewEmote(r.Ctx, *emote))
+	return ctx.JSON(rest.OK, model.NewEmote(emote, r.Ctx.Config().CdnURL))
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v2/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -41,9 +40,14 @@ func (r *Resolver) Role(ctx context.Context, obj *model.User) (*model.Role, erro
 }
 
 func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
-	emotes, err := loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
-	arr := make([]*model.Emote, len(emotes))
-	for i, emote := range emotes {
+	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
+	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	arr := make([]*model.Emote, len(emoteSet.Emotes))
+	for i, emote := range emoteSet.Emotes {
 		em := helpers.EmoteStructureToModel(*emote.Emote, r.Ctx.Config().CdnURL)
 
 		// set "alias"
@@ -59,28 +63,37 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 }
 
 func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, error) {
+	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
 	result := []string{}
-	emotes, err := loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
+	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		return result, err
 	}
 
-	for _, e := range emotes {
+	for _, e := range emoteSet.Emotes {
 		result = append(result, e.ID.Hex())
 	}
 	return result, nil
 }
 
 func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]string, error) {
-	result := [][]string{}
-	if obj.EmoteSetID == "" {
-		return result, nil
-	}
-	emotes, err := loaders.For(ctx).UserEmotes.Load(obj.EmoteSetID)
+	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
 	if err != nil {
-		return result, err
+		return nil, errors.ErrBadObjectID()
 	}
-	for _, e := range emotes {
+
+	result := [][]string{}
+
+	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, e := range emoteSet.Emotes {
 		if e.Name == e.Emote.Name {
 			continue // no original name property means no alias set
 		}
@@ -101,7 +114,7 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserP
 		}
 	}
 
-	editors, errs := loaders.For(ctx).UserByID.LoadAll(editorIDs)
+	editors, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(editorIDs)
 	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
 		return result, err
 	}
@@ -131,7 +144,7 @@ func (r *Resolver) EditorIn(ctx context.Context, obj *model.User) ([]*model.User
 		ids[i] = ed.ID
 	}
 
-	users, errs := loaders.For(ctx).UserByID.LoadAll(ids)
+	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
 	if err = multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
 		return result, err
 	}

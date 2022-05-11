@@ -6,7 +6,7 @@ import (
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -41,5 +41,11 @@ func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*
 	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
 		return obj.Owner, nil
 	}
-	return loaders.For(ctx).UserByID.Load(obj.OwnerID)
+
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }

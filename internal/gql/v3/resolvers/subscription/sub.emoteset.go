@@ -4,17 +4,17 @@ import (
 	"context"
 
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID, init *bool) (<-chan *model.EmoteSet, error) {
 	getEmoteSet := func() *model.EmoteSet {
-		set, err := loaders.For(ctx).EmoteSetByID.Load(id)
+		set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(id)
 		if err != nil {
 			return nil
 		}
-		return set
+		return helpers.EmoteSetStructureToModel(set, r.Ctx.Config().CdnURL)
 	}
 
 	ch := make(chan *model.EmoteSet, 1)

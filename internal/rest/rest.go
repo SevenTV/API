@@ -8,8 +8,6 @@ import (
 	"github.com/SevenTV/Common/utils"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/rest/loaders"
-	"github.com/seventv/api/internal/rest/rest"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 )
@@ -39,8 +37,6 @@ func New(gCtx global.Context) error {
 	s.SetupHandlers()
 	s.V3(gCtx)
 	s.V2(gCtx)
-
-	loaders := loaders.New(gCtx)
 
 	srv := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -79,7 +75,6 @@ func New(gCtx global.Context) error {
 
 			// Routing
 			ctx.Response.Header.Set("Content-Type", "application/json") // default to JSON
-			ctx.SetUserValue(string(rest.LoadersKey), loaders)          // Apply loaders to context
 			s.router.Handler(ctx)
 		},
 		ReadTimeout:                  time.Second * 600,

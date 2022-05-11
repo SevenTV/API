@@ -16,7 +16,6 @@ import (
 	"github.com/seventv/api/internal/gql/v2/complexity"
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v2/middleware"
 	"github.com/seventv/api/internal/gql/v2/resolvers"
 	"github.com/seventv/api/internal/gql/v2/types"
@@ -71,9 +70,8 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return errors.ErrInternalServerError()
 	})
 
-	loader := loaders.New(gCtx)
 	return func(ctx *fasthttp.RequestCtx) {
-		lCtx := context.WithValue(context.WithValue(gCtx, loaders.LoadersKey, loader), helpers.UserKey, ctx.UserValue("user"))
+		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 		lCtx = context.WithValue(lCtx, helpers.RequestCtxKey, ctx)
 
 		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -11,7 +11,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -37,7 +36,17 @@ func (r *Resolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, e
 }
 
 func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.EmoteSet, error) {
-	return loaders.For(ctx).EmoteSetByUserID.Load(obj.ID)
+	sets, err := r.Ctx.Inst().Loaders.EmoteSetByUserID().Load(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.EmoteSet, len(sets))
+	for i, v := range sets {
+		result[i] = helpers.EmoteSetStructureToModel(v, r.Ctx.Config().CdnURL)
+	}
+
+	return result, nil
 }
 
 // Connections lists the users' connections
@@ -68,13 +77,13 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 	for i, v := range obj.Editors {
 		ids[i] = v.ID
 	}
-	users, errs := loaders.For(ctx).UserByID.LoadAll(ids)
 
+	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
 	result := []*model.UserEditor{}
 	for _, e := range obj.Editors {
 		for _, u := range users {
 			if e.ID == u.ID {
-				e.User = helpers.UserStructureToPartialModel(u)
+				e.User = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 				result = append(result, e)
 				break
 			}

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/dataloader"
+	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
@@ -39,7 +40,13 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
 						models[i] = x
+					} else {
+						errs[i] = mongo.ErrNoDocuments
 					}
+				}
+			} else {
+				for i := range errs {
+					errs[i] = err
 				}
 			}
 

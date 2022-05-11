@@ -5,17 +5,16 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID, init *bool) (<-chan *model.EmotePartial, error) {
 	getEmote := func() *model.EmotePartial {
-		emote, err := loaders.For(ctx).EmoteByID.Load(id)
+		emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(id)
 		if err != nil {
 			return nil
 		}
-		return helpers.EmoteStructureToPartialModel(emote)
+		return helpers.EmoteStructureToPartialModel(helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL))
 	}
 
 	ch := make(chan *model.EmotePartial, 1)

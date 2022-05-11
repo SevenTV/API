@@ -10,7 +10,6 @@ import (
 	"github.com/SevenTV/Common/structures/v3/query"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/loaders"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,13 +29,13 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 		if actor == nil {
 			return nil, errors.ErrUnauthorized()
 		}
-		user, err = loaders.For(ctx).UserByID.Load(actor.ID)
+		user, err = r.Ctx.Inst().Loaders.UserByID().Load(actor.ID)
 	default:
 		uid, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
-			user, err = loaders.For(ctx).UserByUsername.Load(strings.ToLower(id))
+			user, err = r.Ctx.Inst().Loaders.UserByUsername().Load(strings.ToLower(id))
 		} else {
-			user, err = loaders.For(ctx).UserByID.Load(uid)
+			user, err = r.Ctx.Inst().Loaders.UserByID().Load(uid)
 		}
 		if err != nil {
 			return nil, err

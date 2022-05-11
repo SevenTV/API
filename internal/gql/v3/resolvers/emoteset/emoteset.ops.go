@@ -13,7 +13,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -106,10 +105,10 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	}()
 
 	setModel := helpers.EmoteSetStructureToModel(b.EmoteSet, r.Ctx.Config().CdnURL)
-	emotes, errs := loaders.For(ctx).EmoteByID.LoadAll(emoteIDs)
+	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {
-			setModel.Emotes[i].Emote = e
+			setModel.Emotes[i].Emote = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 		}
 	}
 

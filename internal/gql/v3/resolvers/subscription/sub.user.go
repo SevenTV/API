@@ -6,7 +6,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,11 +16,11 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 	}
 
 	getUser := func() *model.UserPartial {
-		user, err := loaders.For(ctx).UserByID.Load(actor.ID)
+		user, err := r.Ctx.Inst().Loaders.UserByID().Load(actor.ID)
 		if err != nil {
 			return nil
 		}
-		return helpers.UserStructureToPartialModel(user)
+		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
 	}
 
 	ch := make(chan *model.UserPartial, 1)
@@ -48,11 +47,11 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 
 func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) (<-chan *model.UserPartial, error) {
 	getUser := func() *model.UserPartial {
-		user, err := loaders.For(ctx).UserByID.Load(id)
+		user, err := r.Ctx.Inst().Loaders.UserByID().Load(id)
 		if err != nil {
 			return nil
 		}
-		return helpers.UserStructureToPartialModel(user)
+		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
 	}
 
 	ch := make(chan *model.UserPartial, 1)

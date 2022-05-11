@@ -11,7 +11,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -97,5 +97,11 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	go func() {
 		events.Publish(r.Ctx, "emotes", obj.ID)
 	}()
-	return loaders.For(ctx).EmoteByID.Load(obj.ID)
+
+	emote, err = r.Ctx.Inst().Loaders.EmoteByID().Load(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
 }

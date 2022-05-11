@@ -22,7 +22,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/complexity"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	middlewarev3 "github.com/seventv/api/internal/gql/v3/middleware"
 	"github.com/seventv/api/internal/gql/v3/resolvers"
 	"github.com/seventv/api/internal/gql/v3/types"
@@ -105,9 +104,8 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 	// 	},
 	// }
 
-	loader := loaders.New(gCtx)
 	return func(ctx *fasthttp.RequestCtx) {
-		lCtx := context.WithValue(context.WithValue(gCtx, loaders.LoadersKey, loader), helpers.UserKey, ctx.UserValue("user"))
+		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 
 		// if wsTransport.Supports(ctx) {
 		// wsTransport.Do(ctx, lCtx, exec)

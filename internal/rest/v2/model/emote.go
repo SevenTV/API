@@ -6,7 +6,6 @@ import (
 	v2structures "github.com/SevenTV/Common/structures/v2"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
-	"github.com/seventv/api/internal/global"
 )
 
 type Emote struct {
@@ -23,7 +22,7 @@ type Emote struct {
 	URLs             [][2]string `json:"urls"`
 }
 
-func NewEmote(ctx global.Context, s structures.Emote) *Emote {
+func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	version, _ := s.GetVersion(s.ID)
 	width := make([]int32, 4)
 	height := make([]int32, 4)
@@ -44,7 +43,7 @@ func NewEmote(ctx global.Context, s structures.Emote) *Emote {
 				height[pos] = f.Height
 				urls[pos] = [2]string{
 					fmt.Sprintf("%d", pos+1),
-					fmt.Sprintf("https://%s/emote/%s/%s", ctx.Config().CdnURL, version.ID.Hex(), f.Name),
+					fmt.Sprintf("https://%s/emote/%s/%s", cdnURL, version.ID.Hex(), f.Name),
 				}
 				pos++
 			}

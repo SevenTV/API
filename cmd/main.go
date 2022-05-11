@@ -16,6 +16,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql"
 	"github.com/seventv/api/internal/health"
+	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/monitoring"
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
@@ -100,6 +101,10 @@ func main() {
 		gCtx.Inst().Prometheus = prometheus.New(prometheus.Options{
 			Labels: config.Monitoring.Labels.ToPrometheus(),
 		})
+	}
+
+	{
+		gCtx.Inst().Loaders = loaders.New(gCtx)
 	}
 
 	wg := sync.WaitGroup{}

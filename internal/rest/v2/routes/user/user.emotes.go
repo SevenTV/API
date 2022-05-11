@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/rest/loaders"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 )
@@ -35,11 +34,11 @@ func (*emotes) Config() rest.RouteConfig {
 // @Router /users/{user}/emotes [get]
 func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	key, _ := ctx.UserValue("user").String()
-	user, err := loaders.For(ctx).UserByIdentifier.Load(key)
+	user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(key)
 	if err != nil {
 		return errors.From(err)
 	}
-	if user == nil || user.ID.IsZero() {
+	if user.ID.IsZero() {
 		return errors.ErrUnknownUser()
 	}
 
@@ -48,14 +47,17 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	if err != nil {
 		return errors.ErrUnknownUser().SetDetail("No Twitch Connection but this is a v2 request")
 	}
-	emotes, err := loaders.For(ctx).EmotesByEmoteSetID.Load(con.EmoteSetID)
+
+	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(con.EmoteSetID)
 	if err != nil {
 		return errors.From(err)
 	}
 
-	result := make([]*model.Emote, len(emotes))
-	for i, e := range emotes {
-		result[i] = model.NewEmote(r.Ctx, *e)
+	result := []*model.Emote{}
+	for _, e := range emoteSet.Emotes {
+		if e.Emote != nil {
+			result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))
+		}
 	}
 
 	return ctx.JSON(rest.OK, result)

@@ -7,7 +7,7 @@ import (
 	"github.com/SevenTV/Common/structures/v3/mutations"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -39,5 +39,10 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 		return nil, err
 	}
 
-	return loaders.For(ctx).EmoteSetByID.Load(b.EmoteSet.ID)
+	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(b.EmoteSet.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.EmoteSetStructureToModel(emoteSet, r.Ctx.Config().CdnURL), nil
 }

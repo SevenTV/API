@@ -14,6 +14,7 @@ type Instances struct {
 	S3         instance.S3
 	RMQ        instance.RMQ
 	Prometheus instance.Prometheus
+	Loaders    instance.Loaders
 
 	Query  *query.Query
 	Mutate *mutations.Mutate

@@ -7,7 +7,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
-	"github.com/seventv/api/internal/gql/v3/loaders"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -23,9 +22,11 @@ func (r *Resolver) User(ctx context.Context, obj *model.UserEditor) (*model.User
 	if obj.User != nil && obj.User.ID != structures.DeletedEmote.ID {
 		return obj.User, nil
 	}
-	u, err := loaders.For(ctx).UserByID.Load(obj.ID)
+
+	u, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.ID)
 	if err != nil {
 		return nil, err
 	}
-	return helpers.UserStructureToPartialModel(u), nil
+
+	return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL)), nil
 }

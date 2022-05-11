@@ -5,7 +5,7 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/loaders"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -22,5 +22,10 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.User,
 		return nil, nil
 	}
 
-	return loaders.For(ctx).UserByID.Load(*obj.OwnerID)
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(*obj.OwnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
