@@ -60,3 +60,6 @@ clean:
 work:
 	echo "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
 	go mod tidy
+
+dev:
+	go run cmd/main.go
