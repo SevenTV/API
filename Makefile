@@ -54,7 +54,8 @@ clean:
 		internal/gql/v3/gen/generated/generated-gqlgen.go \
 		internal/gql/v3/gen/model/models-gqlgen.go \
 		internal/rest/v2/docs \
-		internal/rest/v3/docs
+		internal/rest/v3/docs \
+		node_modules
 
 work:
 	echo "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
