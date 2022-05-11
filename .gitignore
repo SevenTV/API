@@ -13,3 +13,4 @@ packrd/
 *-gqlgen.go
 *_gen.go
 node_modules/
+rest/v*/docs

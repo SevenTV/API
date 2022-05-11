@@ -1,4 +1,4 @@
-all: gql rest linux
+all: api linux
 
 BUILDER := "unknown"
 VERSION := "unknown"
@@ -34,13 +34,6 @@ go_installs:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/99designs/gqlgen@v0.17.5
 
-api: gql rest
-
-gql:
-	gqlgen --config ./gqlgen.v3.yml
-#	gqlgen --config ./gqlgen.v2.yml
-
-rest:
-# Generate docs
-	swag init --dir src/server/v3 -g v3.go -o gen/v3/docs
-	swag init --dir src/server/v2 -g v2.go -o gen/v2/docs
+api: 
+	swag init --dir rest/v3 -g v3.go -o rest/v3/docs & swag init --dir rest/v2 -g v2.go -o rest/v2/docs
+	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml

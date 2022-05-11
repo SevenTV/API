@@ -36,25 +36,25 @@ http:
 
 # RabbitMQ Settings
 rmq:
-    server_url: ""
-    job_queue_name: ""
-    result_queue_name: ""
-    update_queue_name: ""
+  server_url: ""
+  job_queue_name: ""
+  result_queue_name: ""
+  update_queue_name: ""
 
 aws:
-    session_token: ""
-    secret_key: ""
-    region: ""
-    internal_bucket: ""
-    public_bucket: ""
+  session_token: ""
+  secret_key: ""
+  region: ""
+  internal_bucket: ""
+  public_bucket: ""
 
 # Configure platforms
 platforms:
-    twitch:
-        enabled: true
-        client_id: ""
-        client_secret: ""
-        redirect_uri: ""
+  twitch:
+    enabled: true
+    client_id: ""
+    client_secret: ""
+    redirect_uri: ""
 
 credentials:
   jwt_secret: ""
