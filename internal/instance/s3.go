@@ -11,4 +11,5 @@ import (
 type S3 interface {
 	UploadFile(ctx context.Context, opts *s3manager.UploadInput) error
 	DownloadFile(ctx context.Context, output io.WriterAt, opts *s3.GetObjectInput) error
+	ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 }

@@ -30,16 +30,36 @@ func (mockAcknowledger) Reject(tag uint64, requeue bool) error {
 }
 
 type MockInstance struct {
-	mp *sync_map.Map[string, *mockState]
+	mp        *sync_map.Map[string, *mockState]
+	connected bool
+	mtx       sync.Mutex
 }
 
 func NewMock() (instance.RMQ, error) {
 	return &MockInstance{
-		mp: &sync_map.Map[string, *mockState]{},
+		mp:        &sync_map.Map[string, *mockState]{},
+		connected: true,
 	}, nil
 }
 
+func (i *MockInstance) Connected() bool {
+	return i.connected
+}
+
+func (i *MockInstance) SetConnected(connected bool) {
+	i.mtx.Lock()
+	i.connected = connected
+	i.mtx.Unlock()
+}
+
 func (i *MockInstance) Publish(req instance.RmqPublishRequest) error {
+	i.mtx.Lock()
+	if !i.connected {
+		i.mtx.Unlock()
+		return amqp.ErrClosed
+	}
+	i.mtx.Unlock()
+
 	v, _ := i.mp.LoadOrStore(req.RoutingKey, &mockState{})
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
@@ -83,6 +103,13 @@ func (i *MockInstance) Subscribe(ctx context.Context, req instance.RmqSubscribeR
 			case <-ctx.Done():
 				return
 			case <-tick.C:
+				i.mtx.Lock()
+				if !i.connected {
+					i.mtx.Unlock()
+					return
+				}
+				i.mtx.Unlock()
+
 				v.mtx.Lock()
 				for len(v.arr) != 0 {
 					msg := v.arr[len(v.arr)-1]

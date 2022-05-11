@@ -9,6 +9,7 @@ import (
 type RMQ interface {
 	Publish(req RmqPublishRequest) error
 	Subscribe(ctx context.Context, req RmqSubscribeRequest) (<-chan amqp.Delivery, error)
+	Connected() bool
 }
 
 type RmqPublishRequest struct {

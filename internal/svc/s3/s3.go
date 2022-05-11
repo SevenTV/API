@@ -38,6 +38,10 @@ func New(ctx context.Context, o Options) (instance.S3, error) {
 	}, nil
 }
 
+func (a *Instance) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error) {
+	return a.s3.ListBucketsWithContext(ctx, &s3.ListBucketsInput{})
+}
+
 func (a *Instance) UploadFile(ctx context.Context, opts *s3manager.UploadInput) error {
 	_, err := a.uploader.UploadWithContext(ctx, opts)
 
