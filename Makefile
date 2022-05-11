@@ -1,4 +1,4 @@
-.PHONY: build lint deps dev_deps generate clean
+.PHONY: build lint deps dev_deps generate clean work
 
 BUILDER := "unknown"
 VERSION := "unknown"
@@ -56,3 +56,6 @@ clean:
 		internal/rest/v2/docs \
 		internal/rest/v3/docs
 
+work:
+	echo "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
+	go mod tidy
