@@ -1,4 +1,4 @@
-all: api linux
+.PHONY: build lint deps dev_deps generate clean
 
 BUILDER := "unknown"
 VERSION := "unknown"
@@ -15,25 +15,43 @@ else
 	VERSION = ${API_VERSION};
 endif
 
-linux:
-	GOOS=linux GOARCH=amd64 go build -v -ldflags "-X 'main.Version=${VERSION}' -X 'main.Unix=$(shell date +%s)' -X 'main.User=${BUILDER}'" -o bin/rest .
+build:
+	GOOS=linux GOARCH=amd64 go build -v -ldflags "-X 'main.Version=${VERSION}' -X 'main.Unix=$(shell date +%s)' -X 'main.User=${BUILDER}'" -o out/api cmd/*.go
 
 lint:
 	staticcheck ./...
 	go vet ./...
-	golangci-lint run --go=1.18
+	golangci-lint run
 	yarn prettier --write .
 
-deps: go_installs
+format:
+	gofmt -s -w .
+
+deps:
+	go install github.com/swaggo/swag/cmd/swag@v1.8.1
+	go install github.com/99designs/gqlgen@v0.17.5
 	go mod download
+
+dev_deps:
+	go install honnef.co/go/tools/cmd/staticcheck@v0.3.1
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@master # TODO fix this version, currently master to lint go1.18 files
 	yarn
 
-go_installs:
-	go install honnef.co/go/tools/cmd/staticcheck@2022.1
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	go install github.com/swaggo/swag/cmd/swag@latest
-	go install github.com/99designs/gqlgen@v0.17.5
+generate: 
+	swag init --dir internal/rest/v3 -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
+	gqlgen --config ./gqlgen.v3.yml 
+	gqlgen --config ./gqlgen.v2.yml
 
-api: 
-	swag init --dir rest/v3 -g v3.go -o rest/v3/docs & swag init --dir rest/v2 -g v2.go -o rest/v2/docs
-	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
+test:
+	go test -count=1 -cover -parallel $$(nproc) -race ./...
+
+clean:
+	rm -rf \
+		out \
+		internal/gql/v2/gen/generated/generated-gqlgen.go \
+		internal/gql/v2/gen/model/models-gqlgen.go \
+		internal/gql/v3/gen/generated/generated-gqlgen.go \
+		internal/gql/v3/gen/model/models-gqlgen.go \
+		internal/rest/v2/docs \
+		internal/rest/v3/docs
+
