@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.5
-	github.com/SevenTV/Common v0.0.0-20220416145422-0b3ce3e265e2
+	github.com/SevenTV/Common v0.0.0-20220511035427-4179c33337ea
 	github.com/SevenTV/GQL v0.0.0-20220308032648-fc49a1968a0a
 	github.com/bugsnag/panicwrap v1.3.4
 	github.com/fasthttp/websocket v1.5.0
@@ -36,6 +36,9 @@ require (
 	github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 // indirect
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	golang.org/x/tools v0.1.10 // indirect
