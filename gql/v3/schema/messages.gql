@@ -1,0 +1,60 @@
+extend type Query {
+  inbox(user_id: ObjectID!, after_id: ObjectID, limit: Int): [InboxMessage!]!
+    @hasPermissions
+  mod_requests(after_id: ObjectID): [ModRequestMessage!]!
+}
+
+extend type Mutation {
+  readMessages(message_ids: [ObjectID!]!, read: Boolean!): Int! @hasPermissions
+  sendInboxMessage(
+    recipients: [ObjectID!]!
+    subject: String!
+    content: String!
+    important: Boolean
+    anonymous: Boolean
+  ): InboxMessage @hasPermissions(role: [SEND_MESSAGES])
+}
+
+interface Message {
+  id: ObjectID!
+  kind: MessageKind!
+  created_at: Time!
+  author: User!
+  read: Boolean!
+  read_at: Time
+}
+
+type InboxMessage implements Message {
+  id: ObjectID!
+  kind: MessageKind!
+  created_at: Time!
+  author: User!
+  read: Boolean!
+  read_at: Time
+
+  subject: String!
+  content: String!
+  important: Boolean!
+  starred: Boolean!
+  pinned: Boolean!
+  placeholders: StringMap!
+}
+
+type ModRequestMessage implements Message {
+  id: ObjectID!
+  kind: MessageKind!
+  created_at: Time!
+  author: User!
+  read: Boolean!
+  read_at: Time
+
+  target_kind: Int!
+  target_id: ObjectID!
+}
+
+enum MessageKind {
+  EMOTE_COMMENT
+  MOD_REQUEST
+  INBOX
+  NEWS
+}

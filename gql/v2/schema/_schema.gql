@@ -1,0 +1,44 @@
+scalar Time
+scalar ObjectID
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @internal on FIELD_DEFINITION
+
+type Meta {
+  announcement: String!
+  featured_broadcast: String!
+  roles: [String!]!
+}
+
+type Broadcast {
+  id: String!
+  title: String!
+  thumbnail_url: String!
+  viewer_count: Int!
+  type: String!
+  game_name: String!
+  game_id: String!
+  language: String!
+  tags: [String!]!
+  mature: Boolean!
+  started_at: String!
+  user_id: String!
+}
+
+type Response {
+  # Deprecated: use ok to check success
+  status: Int!
+  # Whether or not the request succeeded
+  ok: Boolean!
+  # Message in response
+  message: String!
+}

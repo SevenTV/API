@@ -1,0 +1,20 @@
+type Report {
+  # The user id of the reporter.
+  reporter_id: String
+  # The user/emote id of the reported.
+  target_id: String
+  # The type that was reported either user or emote.
+  target_type: String!
+  # The reason of the report.
+  reason: String!
+  # If a moderator has marked this as cleared.
+  cleared: Boolean!
+  # The user target of this report filled if target_type is user.
+  u_target: UserPartial
+  # The emote target of this report filled if the target_type is emote.
+  e_target: Emote
+  # The reporter who reported this emote.
+  reporter: UserPartial
+  # Logs of this report.
+  audit_entries: [String!]!
+}

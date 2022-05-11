@@ -1,0 +1,113 @@
+extend type Query {
+  emote(id: ObjectID!): Emote
+  emotes(
+    query: String!
+    page: Int
+    limit: Int
+    filter: EmoteSearchFilter
+    sort: Sort
+  ): EmoteSearchResult!
+}
+
+extend type Subscription {
+  emote(id: ObjectID!, init: Boolean): EmotePartial!
+}
+
+extend type Mutation {
+  emote(id: ObjectID!): EmoteOps!
+}
+
+type EmoteOps {
+  id: ObjectID!
+  update(params: EmoteUpdate!): Emote! @goField(forceResolver: true)
+}
+
+type Emote {
+  id: ObjectID!
+  name: String!
+  flags: Int!
+  lifecycle: Int!
+  tags: [String!]!
+  animated: Boolean!
+  created_at: Time!
+
+  owner_id: ObjectID!
+  owner: User! @goField(forceResolver: true)
+
+  channels(page: Int, limit: Int): UserSearchResult!
+    @goField(forceResolver: true)
+
+  images(formats: [ImageFormat!]): [Image!]!
+  versions: [EmoteVersion!]!
+  listed: Boolean!
+
+  reports: [Report!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+type EmotePartial {
+  id: ObjectID!
+  name: String!
+  flags: Int!
+  lifecycle: Int!
+  tags: [String!]!
+  animated: Boolean!
+  created_at: Time!
+  owner_id: ObjectID!
+  owner: User! @goField(forceResolver: true)
+  images(formats: [ImageFormat!]): [Image!]!
+  versions: [EmoteVersion!]!
+  listed: Boolean!
+}
+
+input EmoteSearchFilter {
+  category: EmoteSearchCategory
+  case_sensitive: Boolean
+  exact_match: Boolean
+  ignore_tags: Boolean
+}
+
+type EmoteVersion {
+  id: ObjectID!
+  name: String!
+  description: String!
+  timestamp: Time!
+  images(formats: [ImageFormat!]): [Image!]!
+  lifecycle: Int!
+  listed: Boolean!
+}
+
+enum EmoteSearchCategory {
+  ALL
+  GLOBAL
+  TRENDING
+}
+
+type EmoteSearchResult {
+  count: Int!
+  items: [Emote]!
+}
+
+enum ChannelEmoteListItemAction {
+  ADD
+  UPDATE
+  REMOVE
+}
+
+input UserEmoteInput {
+  id: String!
+  channels: [String!]
+  alias: String
+}
+
+input EmoteUpdate {
+  name: String
+  version_name: String
+  version_description: String
+  flags: Int
+  owner_id: ObjectID
+  tags: [String!]
+  listed: Boolean
+  deleted: Boolean
+}

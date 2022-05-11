@@ -1,0 +1,60 @@
+# Log Level
+level: info
+
+# URL to the web-app
+website_url: https://example.com/
+
+# Redis Settings
+redis:
+  uri: redis://username:password@url/db
+  username: ""
+  password: ""
+  database: 0
+
+# MongoDB Settings
+mongo:
+  uri: mongodb://username:password@url:port/?authSource=db
+  db: db
+  direct: false
+
+# HTTP Server Settings
+http:
+  addr: "0.0.0.0"
+  ports:
+    gql: 3000
+    rest: 3100
+  type: tcp
+
+  # The default amount of quota points granted on a new query
+  quota_default_limit: 1000
+  # The maximum amount of queries exceeding quota before a client's IP is temporarily blocked
+  quota_max_bad_queries: 5
+
+  # Cookie settings
+  cookie_domain: "localhost"
+  cookie_secure: false
+
+# RabbitMQ Settings
+rmq:
+    server_url: ""
+    job_queue_name: ""
+    result_queue_name: ""
+    update_queue_name: ""
+
+aws:
+    session_token: ""
+    secret_key: ""
+    region: ""
+    internal_bucket: ""
+    public_bucket: ""
+
+# Configure platforms
+platforms:
+    twitch:
+        enabled: true
+        client_id: ""
+        client_secret: ""
+        redirect_uri: ""
+
+credentials:
+  jwt_secret: ""

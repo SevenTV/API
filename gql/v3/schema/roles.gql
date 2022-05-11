@@ -1,0 +1,44 @@
+extend type Query {
+  roles: [Role]!
+  role(id: ObjectID!): Role
+}
+
+extend type Mutation {
+  createRole(data: CreateRoleInput!): Role @hasPermissions(role: [MANAGE_ROLES])
+  editRole(role_id: ObjectID!, data: EditRoleInput!): Role
+    @hasPermissions(role: [MANAGE_ROLES])
+  deleteRole(role_id: ObjectID!): String! @hasPermissions(role: [MANAGE_ROLES])
+  setUserRole(
+    user_id: ObjectID!
+    role_id: ObjectID!
+    action: ListItemAction!
+  ): User @hasPermissions(role: [MANAGE_USERS])
+}
+
+type Role {
+  id: ObjectID!
+  name: String!
+  color: Int!
+  allowed: String!
+  denied: String!
+  position: Int!
+  created_at: Time!
+  invisible: Boolean!
+
+  members(page: Int, limit: Int): [User!]! @goField(forceResolver: true)
+}
+
+input CreateRoleInput {
+  name: String!
+  color: Int!
+  allowed: String!
+  denied: String!
+}
+
+input EditRoleInput {
+  name: String
+  color: Int
+  allowed: String
+  denied: String
+  position: Int
+}

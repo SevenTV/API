@@ -1,0 +1,17 @@
+type Image {
+  name: String!
+  format: ImageFormat!
+  url: String!
+  width: Int!
+  height: Int!
+  animated: Boolean!
+  time: Int!
+  length: Int!
+}
+
+enum ImageFormat {
+  AVIF
+  WEBP
+  GIF
+  PNG
+}

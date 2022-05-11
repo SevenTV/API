@@ -1,0 +1,98 @@
+extend type Query {
+  currentUser: User
+  user(id: ObjectID!): User!
+  users(query: String!): [User!]!
+}
+
+extend type Subscription {
+  currentUser(init: Boolean): UserPartial
+  user(id: ObjectID!, init: Boolean): UserPartial!
+}
+
+extend type Mutation {
+  user(id: ObjectID!): UserOps
+}
+
+type UserOps {
+  id: ObjectID!
+  connections(id: String!, data: UserConnectionUpdate!): [UserConnection]
+    @goField(forceResolver: true)
+}
+
+type User {
+  id: ObjectID!
+  user_type: String!
+  username: String!
+  display_name: String!
+  created_at: Time!
+  avatar_url: String!
+  biography: String!
+  tag_color: Int!
+
+  editors: [UserEditor!]! @goField(forceResolver: true)
+  editor_of: [UserEditor!]! @goField(forceResolver: true)
+
+  roles: [Role!]! @goField(forceResolver: true)
+
+  emote_sets: [EmoteSet!]! @goField(forceResolver: true)
+  owned_emotes: [Emote!]! @goField(forceResolver: true)
+  connections(type: [ConnectionPlatform!]): [UserConnection]!
+    @goField(forceResolver: true)
+
+  inbox_unread_count: Int! @goField(forceResolver: true) @hasPermissions
+
+  reports: [Report!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+type UserPartial {
+  id: ObjectID!
+  user_type: String!
+  username: String!
+  display_name: String!
+  created_at: Time!
+  avatar_url: String!
+  biography: String!
+  tag_color: Int!
+  roles: [Role!]! @goField(forceResolver: true)
+  connections(type: [ConnectionPlatform!]): [UserConnection]!
+}
+
+type UserEditor {
+  id: ObjectID!
+  user: UserPartial! @goField(forceResolver: true)
+  permissions: Int!
+  visible: Boolean!
+  added_at: Time!
+}
+
+type UserEmote {
+  emote: Emote! @goField(forceResolver: true)
+  connections: [String!]!
+  alias: String
+  added_at: Time!
+}
+
+type UserConnection {
+  id: String!
+  display_name: String!
+  platform: ConnectionPlatform!
+  linked_at: Time!
+  emote_slots: Int!
+  emote_set_id: ObjectID
+}
+
+enum ConnectionPlatform {
+  TWITCH
+  YOUTUBE
+}
+
+input UserConnectionUpdate {
+  emote_set_id: ObjectID
+}
+
+type UserSearchResult {
+  total: Int!
+  items: [User!]!
+}

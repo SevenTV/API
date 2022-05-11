@@ -1,0 +1,63 @@
+extend type Query {
+  reports(
+    status: ReportStatus
+    limit: Int
+    after_id: String
+    before_id: String
+  ): [Report]! @hasPermissions(role: [MANAGE_REPORTS])
+  report(id: ObjectID!): Report @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+extend type Mutation {
+  createReport(data: CreateReportInput!): Report
+    @hasPermissions(role: [CREATE_REPORT])
+  editReport(report_id: ObjectID!, data: EditReportInput!): Report
+    @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+type Report {
+  id: ObjectID!
+  target_kind: TargetKind!
+  target_id: ObjectID!
+  subject: String!
+  body: String!
+  priority: Int!
+  status: ReportStatus!
+  created_at: Time!
+  notes: [String!]!
+
+  reporter: User! @goField(forceResolver: true)
+  assignees: [User!]! @goField(forceResolver: true)
+}
+
+enum TargetKind {
+  EMOTE
+  USER
+}
+
+enum ReportStatus {
+  OPEN
+  ASSIGNED
+  CLOSED
+}
+
+input CreateReportInput {
+  target_kind: TargetKind!
+  target_id: String!
+  subject: String!
+  body: String!
+}
+
+input EditReportInput {
+  priority: Int
+  status: ReportStatus
+  assignee: String
+  note: EditReportNoteInput
+}
+
+input EditReportNoteInput {
+  timestamp: String
+  content: String
+  internal: Boolean
+  reply: String
+}
