@@ -10,7 +10,7 @@ website_old_url: https://old.example.com/
 cdn_url: cdn.7tv.app
 
 # Redis Settings
-redis: 
+redis:
   addresses:
     - redis://foo.bar
   sentinel: false
