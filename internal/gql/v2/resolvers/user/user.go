@@ -71,6 +71,9 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 	result := []string{}
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
+		if errors.Compare(err, errors.ErrUnknownEmoteSet()) {
+			return result, nil
+		}
 		return result, err
 	}
 

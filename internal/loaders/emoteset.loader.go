@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/dataloader"
-	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/instance"
@@ -24,7 +24,11 @@ func emoteSetByID(gCtx global.Context) instance.EmoteSetLoaderByID {
 			models := make([]structures.EmoteSet, len(keys))
 			errs := make([]error, len(keys))
 
-			sets, err := gCtx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": keys}}).Items()
+			result := gCtx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": keys}})
+			if result.Empty() {
+				return models, errs
+			}
+			sets, err := result.Items()
 
 			m := make(map[primitive.ObjectID]structures.EmoteSet)
 			if err == nil {
@@ -36,7 +40,7 @@ func emoteSetByID(gCtx global.Context) instance.EmoteSetLoaderByID {
 					if x, ok := m[v]; ok {
 						models[i] = x
 					} else {
-						errs[i] = mongo.ErrNoDocuments
+						errs[i] = errors.ErrUnknownEmoteSet()
 					}
 				}
 			} else {

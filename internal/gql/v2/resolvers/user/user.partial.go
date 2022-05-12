@@ -45,6 +45,9 @@ func (r *ResolverPartial) EmoteIds(ctx context.Context, obj *model.UserPartial) 
 	result := []string{}
 	emoteSets, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
+		if errors.Compare(err, errors.ErrUnknownEmoteSet()) { // return empty result if emote set not found
+			return result, nil
+		}
 		return result, err
 	}
 

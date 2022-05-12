@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/dataloader"
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
@@ -27,9 +28,14 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 			}
 
 			// Fetch users
-			users, _, err := gCtx.Inst().Query.SearchUsers(ctx, bson.M{
+			result := gCtx.Inst().Query.Users(ctx, bson.M{
 				keyName: bson.M{"$in": keys},
 			})
+			if result.Empty() {
+				return items, errs
+			}
+			users, err := result.Items()
+
 			if err == nil {
 				m := make(map[T]structures.User)
 				for _, u := range users {
@@ -44,6 +50,8 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
 						items[i] = x
+					} else {
+						errs[i] = errors.ErrUnknownUser()
 					}
 				}
 			} else {

@@ -3,6 +3,7 @@ package emote
 import (
 	"context"
 
+	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
@@ -27,7 +28,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, er
 	}
 
 	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
-	if err != nil {
+	if err != nil && !errors.Compare(err, errors.ErrUnknownUser()) {
 		return nil, err
 	}
 
