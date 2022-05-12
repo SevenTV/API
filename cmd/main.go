@@ -13,6 +13,8 @@ import (
 
 	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/redis"
+	"github.com/SevenTV/Common/structures/v3/mutations"
+	"github.com/SevenTV/Common/structures/v3/query"
 	"github.com/bugsnag/panicwrap"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
@@ -136,6 +138,11 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx)
+	}
+
+	{
+		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
+		gCtx.Inst().Mutate = mutations.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 	}
 
 	wg := sync.WaitGroup{}
