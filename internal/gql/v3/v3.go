@@ -5,6 +5,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -13,9 +14,10 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/SevenTV/Common/errors"
+	"github.com/fasthttp/websocket"
 	"go.uber.org/zap"
 
-	// wsTransport "github.com/SevenTV/api/internal/gql/websocket"
+	wsTransport "github.com/seventv/api/internal/gql/websocket"
 
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v3/cache"
@@ -25,6 +27,7 @@ import (
 	middlewarev3 "github.com/seventv/api/internal/gql/v3/middleware"
 	"github.com/seventv/api/internal/gql/v3/resolvers"
 	"github.com/seventv/api/internal/gql/v3/types"
+	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -78,42 +81,42 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return helpers.ErrInternalServerError
 	})
 
-	// wsTransport := wsTransport.Websocket{
-	// 	KeepAlivePingInterval: 10 * time.Second,
-	// 	InitFunc: func(ctx context.Context, initPayload wsTransport.InitPayload) (context.Context, error) {
-	// 		authHeader := initPayload.Authorization()
+	wsTransport := wsTransport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		InitFunc: func(ctx context.Context, initPayload wsTransport.InitPayload) (context.Context, error) {
+			authHeader := initPayload.Authorization()
 
-	// 		if strings.HasPrefix(authHeader, "Bearer ") {
-	// 			tok := strings.TrimPrefix(authHeader, "Bearer ")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				tok := strings.TrimPrefix(authHeader, "Bearer ")
 
-	// 			user, err := middleware.DoAuth(gCtx, tok)
-	// 			if err != nil {
-	// 				goto handler
-	// 			}
+				user, err := middleware.DoAuth(gCtx, tok)
+				if err != nil {
+					goto handler
+				}
 
-	// 			ctx = context.WithValue(ctx, helpers.UserKey, user)
-	// 		}
+				ctx = context.WithValue(ctx, helpers.UserKey, user)
+			}
 
-	// 	handler:
-	// 		return ctx, nil
-	// 	},
-	// 	Upgrader: websocket.FastHTTPUpgrader{
-	// 		CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
-	// 			return true
-	// 		},
-	// 	},
-	// }
+		handler:
+			return ctx, nil
+		},
+		Upgrader: websocket.FastHTTPUpgrader{
+			CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
+				return true
+			},
+		},
+	}
 
 	return func(ctx *fasthttp.RequestCtx) {
 		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 
-		// if wsTransport.Supports(ctx) {
-		// wsTransport.Do(ctx, lCtx, exec)
-		// } else {
-		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			srv.ServeHTTP(w, r.WithContext(lCtx))
-		}))(ctx)
-		// }
+		if wsTransport.Supports(ctx) {
+			wsTransport.Do(ctx, lCtx, exec)
+		} else {
+			fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				srv.ServeHTTP(w, r.WithContext(lCtx))
+			}))(ctx)
+		}
 
 	}
 }
