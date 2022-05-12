@@ -20,8 +20,13 @@ func emoteByID(gCtx global.Context) instance.EmoteLoaderByID {
 			defer cancel()
 
 			// Fetch emote data from the database
-			models := make([]structures.Emote, len(keys))
+			items := make([]structures.Emote, len(keys))
 			errs := make([]error, len(keys))
+
+			// Initially fill the response with deleted emotes in case some cannot be found
+			for i := 0; i < len(items); i++ {
+				items[i] = structures.DeletedEmote
+			}
 
 			// Fetch emotes
 			emotes, err := gCtx.Inst().Query.Emotes(ctx, bson.M{
@@ -43,12 +48,12 @@ func emoteByID(gCtx global.Context) instance.EmoteLoaderByID {
 							continue
 						}
 						x.ID = v
-						models[i] = x
+						items[i] = x
 					}
 				}
 			}
 
-			return models, errs
+			return items, errs
 		},
 	})
 }

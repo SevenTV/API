@@ -40,8 +40,7 @@ dev_deps:
 
 generate: 
 	swag init --dir internal/rest/v3 -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
-	gqlgen --config ./gqlgen.v3.yml 
-	gqlgen --config ./gqlgen.v2.yml
+	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
 
 test:
 	go test -count=1 -cover -parallel $$(nproc) -race ./...

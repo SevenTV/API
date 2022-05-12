@@ -58,6 +58,9 @@ func PublishLegacyEventAPI(
 		name = ae.Name
 	}
 
+	if set.Owner == nil {
+		return nil
+	}
 	evt := Event{
 		Channel: set.Owner.Username,
 		EmoteID: emote.ID,

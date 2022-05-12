@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/dataloader"
-	"github.com/SevenTV/Common/mongo"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
@@ -19,8 +18,13 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 			ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
 			defer cancel()
 
-			models := make([]structures.User, len(keys))
+			items := make([]structures.User, len(keys))
 			errs := make([]error, len(keys))
+
+			// Initially fill the response with deleted emotes in case some cannot be found
+			for i := 0; i < len(items); i++ {
+				items[i] = structures.DeletedUser
+			}
 
 			// Fetch users
 			users, _, err := gCtx.Inst().Query.SearchUsers(ctx, bson.M{
@@ -39,9 +43,7 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
-						models[i] = x
-					} else {
-						errs[i] = mongo.ErrNoDocuments
+						items[i] = x
 					}
 				}
 			} else {
@@ -50,7 +52,7 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 				}
 			}
 
-			return models, errs
+			return items, errs
 		},
 	})
 }
