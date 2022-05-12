@@ -10,8 +10,11 @@ website_old_url: https://old.example.com/
 cdn_url: cdn.7tv.app
 
 # Redis Settings
-redis:
-  uri: redis://username:password@url/db
+redis: 
+  addresses:
+    - redis://foo.bar
+  sentinel: false
+  master_name: ""
   username: ""
   password: ""
   database: 0
@@ -42,7 +45,7 @@ http:
 
 # RabbitMQ Settings
 rmq:
-  server_url: ""
+  uri: ""
   job_queue_name: ""
   result_queue_name: ""
   update_queue_name: ""
