@@ -21,7 +21,7 @@ build:
 lint:
 	staticcheck ./...
 	go vet ./...
-	golangci-lint run
+	golangci-lint run --go=1.18
 	yarn prettier --check .
 
 format:
@@ -34,8 +34,8 @@ deps:
 	go mod download
 
 dev_deps:
-	go install honnef.co/go/tools/cmd/staticcheck@v0.3.1
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@master # TODO fix this version, currently master to lint go1.18 files
+	go install honnef.co/go/tools/cmd/staticcheck@2022.1
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	yarn
 
 generate: 
