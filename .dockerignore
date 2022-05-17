@@ -1,0 +1,17 @@
+*.png
+*.gif
+*.webp
+*.avif
+out/
+tmp/
+*.yaml
+!example.config.yaml
+!docker-compose.yaml
+!.github/**/*.yaml
+*-gqlgen.go
+*_gen.go
+node_modules/
+internal/rest/v*/docs
+.vscode/
+go.work
+go.work.sum

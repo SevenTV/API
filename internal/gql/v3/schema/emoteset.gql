@@ -1,0 +1,47 @@
+extend type Query {
+  emoteSet(id: ObjectID!): EmoteSet!
+  namedEmoteSet(name: EmoteSetName!): EmoteSet!
+}
+
+extend type Subscription {
+  emoteSet(id: ObjectID!, init: Boolean): EmoteSet!
+}
+
+extend type Mutation {
+  emoteSet(id: ObjectID!): EmoteSetOps
+  createEmoteSet(data: CreateEmoteSetInput!): EmoteSet
+    @hasPermissions(role: [CREATE_EMOTE_SET])
+}
+
+type EmoteSetOps {
+  id: ObjectID!
+  emotes(id: ObjectID!, action: ListItemAction!, name: String): [ActiveEmote!]!
+    @goField(forceResolver: true)
+}
+
+type EmoteSet {
+  id: ObjectID!
+  name: String!
+  tags: [String!]!
+  emotes: [ActiveEmote!]!
+  emote_slots: Int!
+  owner_id: ObjectID
+  owner: User @goField(forceResolver: true)
+}
+
+type ActiveEmote {
+  id: ObjectID!
+  name: String!
+  flags: Int!
+  timestamp: Time!
+  emote: Emote
+}
+
+input CreateEmoteSetInput {
+  name: String!
+  privileged: Boolean @hasPermissions(role: [SUPER_ADMINISTRATOR])
+}
+
+enum EmoteSetName {
+  GLOBAL
+}

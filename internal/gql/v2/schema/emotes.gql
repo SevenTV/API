@@ -1,0 +1,95 @@
+extend type Query {
+  # Get audit logs
+  # audit_logs(page: Int!, limit: Int, types: [Int!]): [AuditLog!]!
+  # Get emote by id.
+  emote(id: String!): Emote @deprecated
+  # Search for emotes.
+  search_emotes(
+    query: String!
+    limit: Int
+    page: Int
+    pageSize: Int
+    submitted_by: String
+    globalState: String
+    sortBy: String
+    sortOrder: Int
+    channel: String
+    filter: EmoteFilter
+  ): [Emote]!
+  #
+  #  Get a role by id
+  #role(id: String!): Role
+  # Search for users.
+  # search_users(query: String!, page: Int, limit: Int): [UserPartial]!
+  # Get featured stream
+  # featured_broadcast(): String!
+  # Get meta
+  # meta(): Meta
+}
+
+extend type Mutation {
+  # Edit an emote. Requires permission.
+  editEmote(emote: EmoteInput!, reason: String): Emote
+  # Delete an emote. Requires permission.
+  deleteEmote(id: String!, reason: String!): Boolean
+}
+
+type Emote {
+  # Id of the emote
+  id: String!
+  # name of the emote
+  name: String!
+  # original name of the emote; only present if a custom name is set
+  original_name: String
+  # id of the owner of the emote
+  owner_id: String!
+  # visibility of the emote
+  visibility: Int!
+  # the mime/content-type of the emote
+  mime: String!
+  # the emote status
+  status: Int!
+  # tags for this emote
+  tags: [String!]!
+  # date of creation
+  created_at: String!
+  # Get audit log entries for this emote.
+  audit_entries: [AuditLog!]
+  # Get the channels the emote is added to
+  channels(page: Int, limit: Int): [UserPartial] @goField(forceResolver: true)
+  # Get the amount of channels the emote is added to
+  channel_count: Int!
+  # Get the owner of this emote.
+  owner: User
+  # Get the reports on emote. Requries Permission.
+  reports: [Report]
+  # The provider of this emote
+  provider: String!
+  # The third party provider's ID definition of this emote, if the provider is not 7TV
+  provider_id: String
+  # CDN URLs to this emote
+  urls: [[String!]!]!
+  # Get the width of the emote in pixels
+  width: [Int!]!
+  # Get the height of the emote in pixels
+  height: [Int!]!
+}
+
+input EmoteFilter {
+  width_range: [Int!]
+  visibility: Int
+  visibility_clear: Int
+}
+
+input EmoteInput {
+  # Id of the emote
+  id: String!
+  # name of the emote
+  name: String
+  # id of the owner of the emote
+  owner_id: String
+  # visibility of the emote
+  visibility: Int
+  # tags for this emote
+  tags: [String!]
+}

@@ -1,0 +1,8 @@
+type Role {
+  id: String!
+  name: String!
+  position: Int!
+  color: Int!
+  allowed: String!
+  denied: String!
+}

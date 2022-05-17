@@ -1,0 +1,166 @@
+extend type Query {
+  # Get a user by id, login or current authenticated user (@me).
+  user(id: String!): User
+  # Search for users.
+  search_users(query: String!, page: Int, limit: Int): [UserPartial]!
+}
+
+extend type Mutation {
+  # Add an emote to a channel. Requires permission.
+  addChannelEmote(channel_id: String!, emote_id: String!, reason: String): User
+  # Edit a channel emote with overrides
+  editChannelEmote(
+    channel_id: String!
+    emote_id: String!
+    data: ChannelEmoteInput!
+    reason: String
+  ): User
+  # Remove an emote from a channel. Requires permission.
+  removeChannelEmote(
+    channel_id: String!
+    emote_id: String!
+    reason: String
+  ): User
+
+  # Add an editor to a channel. Requires permission.
+  addChannelEditor(
+    channel_id: String!
+    editor_id: String!
+    reason: String
+  ): User
+  # Remove an editor from a channel. Requires permission.
+  removeChannelEditor(
+    channel_id: String!
+    editor_id: String!
+    reason: String
+  ): User
+}
+
+type User {
+  # id of this user
+  id: String!
+  # email of this user
+  email: String
+  # rank of this user
+  rank: Int! @deprecated
+  # user descriptino
+  description: String!
+  # role of this user
+  role: Role! @goField(forceResolver: true)
+  # emotes of this user
+  emote_ids: [String!]! @goField(forceResolver: true)
+  # emote aliases of this user
+  emote_aliases: [[String!]!]! @goField(forceResolver: true)
+  # editor ids for this user
+  editor_ids: [String!]!
+  # date of creation
+  created_at: String!
+  # twitch id
+  twitch_id: String!
+  # twitch display name
+  display_name: String!
+  # twitch login
+  login: String!
+  # twitch broadcaster type
+  broadcaster_type: String!
+  # twitch profile picture
+  profile_image_url: String!
+  # YouTube ID
+  youtube_id: String!
+  # Get the emotes added to this users channel.
+  emotes: [Emote!]! @goField(forceResolver: true)
+  emote_set_id: String! @internal
+  # Get the emotes this user has uploaded.
+  owned_emotes: [Emote!]!
+  # Get the third party emotes of this users channel. (BTTV/FFZ)
+  third_party_emotes: [Emote!]!
+  # Get the editors of this user.
+  editors: [UserPartial!]! @goField(forceResolver: true)
+  # Get where this user is an editor.
+  editor_in: [UserPartial!]! @goField(forceResolver: true)
+  # Get the reports on this uer. Requries Permission.
+  reports: [Report]
+  # Get the logs on this user. Requries Permission.
+  audit_entries: [AuditLog!]
+  # Get the bans on this user. Requries Permission.
+  bans: [Ban!]
+  # Get whether the user is banned
+  banned: Boolean!
+  # Get the user's maximum channel emote slots
+  emote_slots: Int!
+  # Get the user's follower count
+  follower_count: Int!
+  # Get the user's current live broadcast
+  broadcast: Broadcast
+  # Get the user's most recent notifications
+  notifications: [Notification]! @goField(forceResolver: true)
+  # Get amount of unread notifications this user has
+  notification_count: Int!
+  # Cosmetics
+  cosmetics: [UserCosmetic]!
+}
+
+type UserCosmetic {
+  id: String!
+  kind: String!
+  name: String!
+  selected: Boolean!
+  data: String!
+}
+
+type UserPartial {
+  # id of this user
+  id: String!
+  # email of this user
+  email: String
+  # rank of this user
+  rank: Int!
+  # role of this user
+  role: Role! @goField(forceResolver: true)
+  # emotes of this user
+  emote_ids: [String!]! @goField(forceResolver: true)
+  emote_set_id: String! @internal
+  # editor ids for this user
+  editor_ids: [String!]!
+  # date of creation
+  created_at: String!
+  # twitch id
+  twitch_id: String!
+  # twitch display name
+  display_name: String!
+  # twitch login
+  login: String!
+  # twitch profile picture
+  profile_image_url: String!
+}
+
+type Notification {
+  # The ID of the notification
+  id: String!
+  # Whether the notification is available to all users on the platform
+  announcement: Boolean!
+  # The title of the notification
+  title: String!
+  # When this notification was created
+  timestamp: String!
+  # The notification's formattable message parts
+  message_parts: [NotificationMessagePart!]!
+
+  # The users mentioned in this notification
+  users: [UserPartial]!
+  # The emotes mentioned in this notification
+  emotes: [Emote]!
+  # Whether the notification has been read
+  read: Boolean!
+  # When this notification was read
+  read_at: String
+}
+
+type NotificationMessagePart {
+  type: Int!
+  data: String!
+}
+
+input ChannelEmoteInput {
+  alias: String
+}

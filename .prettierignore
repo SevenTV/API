@@ -1,0 +1,3 @@
+# Ignore docs
+internal/rest/v*/docs/*
+.vscode/

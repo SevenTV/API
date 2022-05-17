@@ -1,0 +1,28 @@
+extend type Mutation {
+  createBan(
+    victim_id: ObjectID!
+    reason: String!
+    effects: Int!
+    expire_at: Time
+    anonymous: Boolean
+  ): Ban @hasPermissions(role: [MANAGE_BANS])
+  editBan(
+    ban_id: ObjectID!
+    reason: String
+    effects: Int
+    expire_at: String
+  ): Ban @hasPermissions(role: [MANAGE_BANS])
+}
+
+type Ban {
+  id: ObjectID!
+  reason: String!
+  effects: Int!
+  expire_at: Time!
+  created_at: Time!
+
+  victim_id: ObjectID!
+  victim: User @goField(forceResolver: true)
+  actor_id: ObjectID!
+  actor: User @goField(forceResolver: true)
+}

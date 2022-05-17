@@ -1,0 +1,34 @@
+scalar Time
+scalar ObjectID
+scalar StringMap
+
+schema {
+  query: Query
+  subscription: Subscription
+  mutation: Mutation
+}
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @internal on FIELD_DEFINITION
+
+# Sorting cursor, binding a specific order to a value
+input Sort {
+  value: String!
+  order: SortOrder!
+}
+
+# The order with which sorting should occur, either ASCENDING or DESCENDING
+enum SortOrder {
+  ASCENDING
+  DESCENDING
+}
+
+enum ListItemAction {
+  ADD
+  UPDATE
+  REMOVE
+}
