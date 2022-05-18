@@ -20,7 +20,7 @@ func New(gCtx global.Context) rest.Route {
 
 func (r *Route) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:    "/v2",
+		URI:    "/v2" + r.Ctx.Config().Http.VersionSuffix,
 		Method: rest.GET,
 		Children: []rest.Route{
 			auth.New(r.Ctx),

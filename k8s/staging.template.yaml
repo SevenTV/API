@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: app-staging
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      volumes:
+        - name: config
+          configMap:
+            name: api-config
+            defaultMode: 420
+      containers:
+        - name: api
+          image: harbor.disembark.dev/staging/api:${IMAGE_TAG}
+          ports:
+            - name: gql
+              containerPort: 3000
+              protocol: TCP
+            - name: rest
+              containerPort: 3100
+              protocol: TCP
+            - name: metrics
+              containerPort: 9100
+              protocol: TCP
+            - name: health
+              containerPort: 9200
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: api-secret
+          env:
+            - name: API_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: API_K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            limits:
+              cpu: "4"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+          livenessProbe:
+            tcpSocket:
+              port: health
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            tcpSocket:
+              port: health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 6
+          imagePullPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: app-staging
+  labels:
+    app: api
+spec:
+  ports:
+    - name: gql
+      protocol: TCP
+      port: 3000
+      targetPort: gql
+    - name: rest
+      protocol: TCP
+      port: 3100
+      targetPort: rest
+    - name: metrics
+      protocol: TCP
+      port: 9100
+      targetPort: metrics
+    - name: health
+      protocol: TCP
+      port: 9200
+      targetPort: health
+  selector:
+    app: api
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: app-staging
+data:
+  config.yaml: |
+    level: info
+
+    temp_folder: tmp
+
+    website_url: https://7tv.dev/
+    website_old_url: https://old.7tv.dev/
+    cdn_url: cdn.7tv.app
+
+    redis:
+      master_name: mymaster
+      database: 0
+      username: default
+      addresses:
+        - redis-main-headless.redis-main.svc.cluster.local:26379
+      sentinel: true
+
+    mongo:
+      db: 7tv_v3_stage_test3
+
+    http:
+      addr: "0.0.0.0"
+      ports:
+        gql: 3000
+        rest: 3100
+      type: tcp
+      version_suffix: "-stage"
+
+      quota_default_limit: 1000
+      quota_max_bad_queries: 5
+
+      cookie_domain: "7tv.io"
+      cookie_secure: true
+
+    health:
+      enabled: true
+      bind: 0.0.0.0:9200
+
+    metrics:
+      enabled: true
+      bind: 0.0.0.0:9100
+
+    rmq:
+      job_queue_name: "jobs_stage"
+      result_queue_name: "results_stage"
+      update_queue_name: "updates_stage"
+
+    aws:
+      region: "us-east-1"
+      internal_bucket: "cdn-e06f66b8-426e-45a5-9eeb-486360ccee00"
+      public_bucket: "cdn-e06f66b8-426e-45a5-9eeb-486360ccee00"
+      endpoint: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc.cluster.local
+
+    platforms:
+      twitch:
+        enabled: true
+        client_id: "wglrcd55waquikrkatyigdg1vqvmws"
+        redirect_uri: "https://7tv.io/v3-stage/auth/twitch/callback"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api
+  namespace: app-staging
+spec:
+  entryPoints:
+    - https
+  routes:
+    - kind: Rule
+      match: Host(`7tv.io`) && (PathPrefix(`/v3-stage/gql`) || PathPrefix(`/v2-stage/gql`))
+      services:
+        - kind: Service
+          name: api
+          namespace: app-staging
+          port: gql
+    - kind: Rule
+      match: Host(`7tv.io`) && (PathPrefix(`/v3-stage`) || PathPrefix(`/v2-stage`))
+      services:
+        - kind: Service
+          name: api
+          namespace: app-staging
+          port: rest
+  tls:
+    secretName: 7tv-io-cert

@@ -1,11 +1,9 @@
 package gql
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/utils"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
@@ -29,31 +27,21 @@ func New(gCtx global.Context) error {
 	router := router.New()
 
 	router.RedirectTrailingSlash = true
-	mid := func(ctx *fasthttp.RequestCtx) {
+	v3Route := func(ctx *fasthttp.RequestCtx) {
 		if err := middleware.Auth(gCtx)(ctx); err != nil {
 			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
-			goto handler
 		}
-
-	handler:
-		switch ctx.UserValue("v") {
-		case "v3":
-			gqlv3(ctx)
-		case "v2":
-			gqlv2(ctx)
-		default:
-			err := errors.ErrUnknownRoute()
-			b, _ := json.Marshal(map[string]interface{}{
-				"error":      err.Message(),
-				"error_code": err.Code(),
-			})
-			_, _ = ctx.Write(b)
-			ctx.SetContentType("application/json")
-			ctx.SetStatusCode(fasthttp.StatusNotFound)
-		}
+		gqlv3(ctx)
 	}
-	router.GET("/{v}", mid)
-	router.POST("/{v}", mid)
+
+	router.GET(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), v3Route)
+	router.POST(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), v3Route)
+	router.POST(fmt.Sprintf("/v2%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
+		if err := middleware.Auth(gCtx)(ctx); err != nil {
+			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
+		}
+		gqlv2(ctx)
+	})
 
 	router.HandleOPTIONS = true
 	server := fasthttp.Server{
@@ -61,24 +49,24 @@ func New(gCtx global.Context) error {
 			start := time.Now()
 			defer func() {
 				if err := recover(); err != nil {
-					zap.S().Errorw("panic in request handler",
+					zap.S().Errorw("panic in gql request handler",
 						"panic", err,
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 					ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
 				} else {
-					zap.S().Infow("request",
+					zap.S().Infow("gql request",
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				}
 			}()
@@ -88,6 +76,9 @@ func New(gCtx global.Context) error {
 			ctx.Response.Header.Set("Access-Control-Expose-Headers", "X-Collection-Size")
 			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
+			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
+			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)
 			if ctx.IsOptions() {
 				ctx.SetStatusCode(fasthttp.StatusNoContent)
 				return

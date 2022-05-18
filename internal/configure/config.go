@@ -109,9 +109,13 @@ type Config struct {
 	NoHeader      bool   `mapstructure:"noheader" json:"noheader"`
 	WebsiteURL    string `mapstructure:"website_url" json:"website_url"`
 	OldWebsiteURL string `mapstructure:"website_old_url" json:"website_old_url"`
-	NodeName      string `mapstructure:"node_name" json:"node_name"`
 	TempFolder    string `mapstructure:"temp_folder" json:"temp_folder"`
 	CdnURL        string `mapstructure:"cdn_url" json:"cdn_url"`
+
+	K8S struct {
+		NodeName string `mapstructure:"node_name" json:"node_name"`
+		PodName  string `mapstructure:"pod_name" json:"pod_name"`
+	} `mapstructure:"k8s" json:"k8s"`
 
 	Redis struct {
 		Username   string   `mapstructure:"username" json:"username"`
@@ -129,17 +133,18 @@ type Config struct {
 	} `mapstructure:"mongo" json:"mongo"`
 
 	Health struct {
-		Enabled bool
-		Bind    string
-	}
+		Enabled bool   `mapstructure:"enabled" json:"enabled"`
+		Bind    string `mapstructure:"bind" json:"bind"`
+	} `mapstructure:"health" json:"health"`
 
 	Monitoring struct {
-		Enabled bool
-		Bind    string
-		Labels  Labels
-	}
+		Enabled bool   `mapstructure:"enabled" json:"enabled"`
+		Bind    string `mapstructure:"bind" json:"bind"`
+		Labels  Labels `mapstructure:"labels" json:"labels"`
+	} `mapstructure:"monitoring" json:"monitoring"`
 
 	Http struct {
+		Type          string `mapstructure:"type" json:"type"`
 		Addr          string `mapstructure:"uri" json:"uri"`
 		VersionSuffix string `mapstructure:"version_suffix" json:"version_suffix"`
 		Ports         struct {
@@ -147,7 +152,6 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
-		Type             string `mapstructure:"type" json:"type"`
 		OauthRedirectURI string `mapstructure:"oauth_redirect_uri" json:"oauth_redirect_uri"`
 		Cookie           struct {
 			Domain string `mapstructure:"cookie_domain" json:"cookie_domain"`

@@ -43,23 +43,23 @@ func New(gCtx global.Context) error {
 			start := time.Now()
 			defer func() {
 				if err := recover(); err != nil {
-					zap.S().Errorw("panic in request handler",
+					zap.S().Errorw("panic in rest request handler",
 						"panic", err,
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				} else {
-					zap.S().Infow("request",
+					zap.S().Infow("rest request",
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				}
 			}()
@@ -69,6 +69,9 @@ func New(gCtx global.Context) error {
 			ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
+			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
+			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)
 			if ctx.IsOptions() {
 				return
 			}
