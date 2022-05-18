@@ -36,6 +36,15 @@ spec:
           envFrom:
             - secretRef:
                 name: api-secret
+          env:
+            - name: API_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: API_K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           resources:
             limits:
               cpu: "4"
