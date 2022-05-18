@@ -4,7 +4,6 @@ metadata:
   name: api
   namespace: app-staging
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: api
@@ -118,7 +117,7 @@ data:
       addresses:
         - redis-main-headless.redis-main.svc.cluster.local:26379
       sentinel: true
-    
+
     mongo:
       db: 7tv_v3_stage_test3
 

@@ -73,6 +73,9 @@ func New(gCtx global.Context) error {
 			ctx.Response.Header.Set("Access-Control-Expose-Headers", "X-Collection-Size")
 			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+
+			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
+			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)
 			if ctx.IsOptions() {
 				ctx.SetStatusCode(fasthttp.StatusNoContent)
 				return
