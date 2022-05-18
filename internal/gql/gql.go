@@ -27,7 +27,7 @@ func New(gCtx global.Context) error {
 	router := router.New()
 
 	router.RedirectTrailingSlash = true
-	router.GET(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
+	router.POST(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
 		if err := middleware.Auth(gCtx)(ctx); err != nil {
 			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 		}

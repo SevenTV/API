@@ -2,6 +2,7 @@ package externalapis
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/nicklaw5/helix"
@@ -25,6 +26,15 @@ func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]helix.User,
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("bad resp from twitch: %d - %s", resp.StatusCode, body)
+	}
 
 	var res helix.ManyUsers
 	if err = ReadRequestResponse(resp, &res); err != nil {
