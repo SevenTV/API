@@ -43,23 +43,23 @@ func New(gCtx global.Context) error {
 			start := time.Now()
 			defer func() {
 				if err := recover(); err != nil {
-					zap.S().Errorw("panic in request handler",
+					zap.S().Errorw("panic in rest request handler",
 						"panic", err,
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				} else {
-					zap.S().Infow("request",
+					zap.S().Infow("rest request",
 						"status", ctx.Response.StatusCode(),
 						"duration", time.Since(start)/time.Millisecond,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Response.Header.Peek("Cf-Connecting-IP")),
-						"origin", utils.B2S(ctx.Response.Header.Peek("Origin")),
+						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				}
 			}()
