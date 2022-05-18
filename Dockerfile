@@ -53,6 +53,13 @@ FROM $BASE_IMG as go-builder
 FROM $BASE_IMG as final
     WORKDIR /app
 
+    RUN apt-get update && \
+        apt-get install -y \
+            ca-certificates && \
+        apt-get autoremove -y && \
+        apt-get clean -y && \
+        rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+
     COPY --from=go-builder /tmp/build/out .
 
     CMD ./api
