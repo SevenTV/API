@@ -1,4 +1,4 @@
-name: Waterhose Lint, Build, Test, Deploy
+name: API Lint, Build, Test, Deploy
 
 on:
   push:
