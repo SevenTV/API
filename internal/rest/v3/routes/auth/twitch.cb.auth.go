@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -146,6 +147,23 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			zap.S().Errorw("twitch",
+				"error", err,
+			)
+
+			return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
+		}
+
+		zap.S().Errorw("twitch",
+			"error", fmt.Errorf("bad resp from twitch: %d - %s", resp.StatusCode, body),
+		)
+
+		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
+	}
 
 	grant := &OAuth2AuthorizedResponse{}
 	if err = externalapis.ReadRequestResponse(resp, grant); err != nil {
