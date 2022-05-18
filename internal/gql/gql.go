@@ -1,11 +1,9 @@
 package gql
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/utils"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
@@ -29,31 +27,18 @@ func New(gCtx global.Context) error {
 	router := router.New()
 
 	router.RedirectTrailingSlash = true
-	mid := func(ctx *fasthttp.RequestCtx) {
+	router.GET(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
 		if err := middleware.Auth(gCtx)(ctx); err != nil {
 			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
-			goto handler
 		}
-
-	handler:
-		switch ctx.UserValue("v") {
-		case "v3":
-			gqlv3(ctx)
-		case "v2":
-			gqlv2(ctx)
-		default:
-			err := errors.ErrUnknownRoute()
-			b, _ := json.Marshal(map[string]interface{}{
-				"error":      err.Message(),
-				"error_code": err.Code(),
-			})
-			_, _ = ctx.Write(b)
-			ctx.SetContentType("application/json")
-			ctx.SetStatusCode(fasthttp.StatusNotFound)
+		gqlv3(ctx)
+	})
+	router.POST(fmt.Sprintf("/v2%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
+		if err := middleware.Auth(gCtx)(ctx); err != nil {
+			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 		}
-	}
-	router.GET("/{v}", mid)
-	router.POST("/{v}", mid)
+		gqlv2(ctx)
+	})
 
 	router.HandleOPTIONS = true
 	server := fasthttp.Server{
