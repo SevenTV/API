@@ -11,6 +11,7 @@ require (
 	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/json-iterator/go v1.1.12
+	github.com/meilisearch/meilisearch-go v0.19.1
 	github.com/nicklaw5/helix v1.25.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/spf13/pflag v1.0.5

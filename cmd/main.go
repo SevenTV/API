@@ -16,6 +16,7 @@ import (
 	"github.com/SevenTV/Common/structures/v3/mutations"
 	"github.com/SevenTV/Common/structures/v3/query"
 	"github.com/bugsnag/panicwrap"
+	"github.com/meilisearch/meilisearch-go"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql"
@@ -138,6 +139,14 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx)
+	}
+
+	{
+		gCtx.Inst().MeilieSearch = meilisearch.NewClient(meilisearch.ClientConfig{
+			Host:    "http://meilisearch.meilisearch.svc.cluster.local",
+			APIKey:  "",
+			Timeout: time.Second * 5,
+		})
 	}
 
 	{

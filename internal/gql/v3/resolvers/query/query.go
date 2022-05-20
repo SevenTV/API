@@ -91,18 +91,11 @@ func (r *Resolver) Report(ctx context.Context, id primitive.ObjectID) (*model.Re
 }
 
 type Sort struct {
-	Value string    `json:"value"`
-	Order SortOrder `json:"order"`
+	Value string          `json:"value"`
+	Order model.SortOrder `json:"order"`
 }
 
-type SortOrder string
-
-var (
-	SortOrderAscending  SortOrder = "ASCENDING"
-	SortOrderDescending SortOrder = "DESCENDING"
-)
-
-var sortOrderMap = map[string]int32{
-	string(SortOrderDescending): 1,
-	string(SortOrderAscending):  -1,
+var sortOrderMap = map[model.SortOrder]int32{
+	model.SortOrderDescending: 1,
+	model.SortOrderAscending:  -1,
 }

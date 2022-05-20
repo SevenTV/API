@@ -2,12 +2,16 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
 	"github.com/SevenTV/Common/structures/v3/query"
 	"github.com/SevenTV/Common/utils"
+	"github.com/hashicorp/go-multierror"
+	"github.com/meilisearch/meilisearch-go"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
@@ -28,6 +32,16 @@ func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emo
 	}
 
 	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
+}
+
+type SearchHit struct {
+	ID           primitive.ObjectID `json:"id"`
+	Name         string             `json:"name"`
+	Tags         []string           `json:"tags"`
+	OwnerID      primitive.ObjectID `json:"owner_id"`
+	Listed       bool               `json:"listed"`
+	ChannelCount int                `json:"channel_count"`
+	CreatedAt    time.Time          `json:"created_at"`
 }
 
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
@@ -66,38 +80,108 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	// Retrieve sorting options
-	sortopt := &model.Sort{
+	sortopt := model.Sort{
 		Value: "popularity",
 		Order: model.SortOrderAscending,
 	}
 	if sortArg != nil {
-		sortopt = sortArg
+		sortopt = *sortArg
 	}
 
-	// Define sorting
-	// (will be ignored in the case of exact search)
-	order, validOrder := sortOrderMap[string(sortopt.Order)]
+	var (
+		result     []structures.Emote
+		totalCount int
+	)
+
+	order, validOrder := sortOrderMap[sortopt.Order]
 	field, validField := sortFieldMap[sortopt.Value]
-	sortMap := bson.M{}
-	if validField && validOrder {
-		sortMap = bson.M{field: order}
-	}
 
-	// Run query
-	result, totalCount, err := r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
-		Actor: actor,
-		Query: queryValue,
-		Page:  page,
-		Limit: limit,
-		Sort:  sortMap,
-		Filter: &query.SearchEmotesFilter{
-			CaseSensitive: filter.CaseSensitive,
-			ExactMatch:    filter.ExactMatch,
-			IgnoreTags:    filter.IgnoreTags,
-		},
-	})
-	if err != nil {
-		return nil, err
+	if r.Ctx.Inst().MeilieSearch.IsHealthy() {
+		sort := []string{}
+		filters := []string{}
+
+		var filter *string
+		if actor == nil || !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
+			filters = append(filters, "listed = true")
+		}
+		if len(filters) != 0 {
+			filter = utils.PointerOf("(" + strings.Join(filters, ") and (") + ")")
+		}
+
+		if validOrder && validField {
+			field := "created_at"
+			if sortopt.Value == "popularity" {
+				field = "channel_count"
+			}
+
+			if sortopt.Order == model.SortOrderAscending {
+				field += ":asc"
+			} else {
+				field += ":desc"
+			}
+			sort = append(sort, field)
+		}
+
+		resp, err := r.Ctx.Inst().MeilieSearch.Index("emotes").Search(queryValue, &meilisearch.SearchRequest{
+			Offset: int64(page - 1*limit),
+			Limit:  int64(limit),
+			Sort:   sort,
+			Filter: filter,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if len(resp.Hits) != 0 {
+			hits := []SearchHit{}
+			rawHits, _ := json.Marshal(resp.Hits)
+			err := json.Unmarshal(rawHits, &hits)
+			if err != nil {
+				return nil, err
+			}
+
+			ids := make([]primitive.ObjectID, len(hits))
+			for i, hit := range hits {
+				ids[i] = hit.ID
+			}
+
+			var errs []error
+			result, errs = r.Ctx.Inst().Loaders.EmoteByID().LoadAll(ids)
+
+			for _, v := range errs {
+				err = multierror.Append(err, v).ErrorOrNil()
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			totalCount = int(resp.NbHits)
+		}
+	} else {
+		// Define sorting
+		// (will be ignored in the case of exact search)
+		sortMap := bson.M{}
+		if validField && validOrder {
+			sortMap = bson.M{field: order}
+		}
+
+		// Run query
+		var err error
+		result, totalCount, err = r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
+			Actor: actor,
+			Query: queryValue,
+			Page:  page,
+			Limit: limit,
+			Sort:  sortMap,
+			Filter: &query.SearchEmotesFilter{
+				CaseSensitive: filter.CaseSensitive,
+				ExactMatch:    filter.ExactMatch,
+				IgnoreTags:    filter.IgnoreTags,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	models := make([]*model.Emote, len(result))
