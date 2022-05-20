@@ -145,7 +145,7 @@ func main() {
 		gCtx.Inst().MeilieSearch = meilisearch.NewClient(meilisearch.ClientConfig{
 			Host:    "http://meilisearch.meilisearch.svc.cluster.local:7700",
 			APIKey:  "",
-			Timeout: time.Second * 5,
+			Timeout: time.Second * 2,
 		})
 	}
 

@@ -123,7 +123,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 		}
 
 		resp, err := r.Ctx.Inst().MeilieSearch.Index("emotes").Search(queryValue, &meilisearch.SearchRequest{
-			Offset: int64(page - 1*limit),
+			Offset: int64((page - 1) * limit),
 			Limit:  int64(limit),
 			Sort:   sort,
 			Filter: filter,
