@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/SevenTV/Common/errors"
 	"github.com/SevenTV/Common/structures/v3"
@@ -41,7 +40,7 @@ type SearchHit struct {
 	OwnerID      primitive.ObjectID `json:"owner_id"`
 	Listed       bool               `json:"listed"`
 	ChannelCount int                `json:"channel_count"`
-	CreatedAt    time.Time          `json:"created_at"`
+	CreatedAt    int                `json:"created_at"`
 }
 
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
