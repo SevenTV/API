@@ -43,6 +43,10 @@ type SearchHit struct {
 	CreatedAt    int                `json:"created_at"`
 }
 
+func isTrue(b *bool) bool {
+	return b != nil && *b
+}
+
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
 	actor := auth.For(ctx)
 
@@ -81,7 +85,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	// Retrieve sorting options
 	sortopt := model.Sort{
 		Value: "popularity",
-		Order: model.SortOrderAscending,
+		Order: model.SortOrderDescending,
 	}
 	if sortArg != nil {
 		sortopt = *sortArg
@@ -95,7 +99,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	order, validOrder := sortOrderMap[sortopt.Order]
 	field, validField := sortFieldMap[sortopt.Value]
 
-	if r.Ctx.Inst().MeilieSearch.IsHealthy() {
+	if r.Ctx.Inst().MeilieSearch.IsHealthy() && (isTrue(filter.CaseSensitive) && isTrue(filter.ExactMatch) && isTrue(filter.IgnoreTags)) {
 		sort := []string{}
 		filters := []string{}
 

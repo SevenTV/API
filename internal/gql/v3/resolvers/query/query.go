@@ -96,6 +96,6 @@ type Sort struct {
 }
 
 var sortOrderMap = map[model.SortOrder]int32{
-	model.SortOrderDescending: 1,
-	model.SortOrderAscending:  -1,
+	model.SortOrderDescending: -1,
+	model.SortOrderAscending:  1,
 }
