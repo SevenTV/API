@@ -99,7 +99,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	order, validOrder := sortOrderMap[sortopt.Order]
 	field, validField := sortFieldMap[sortopt.Value]
 
-	if r.Ctx.Inst().MeilieSearch.IsHealthy() && (isTrue(filter.CaseSensitive) && isTrue(filter.ExactMatch) && isTrue(filter.IgnoreTags)) {
+	if r.Ctx.Inst().MeilieSearch.IsHealthy() && (!isTrue(filter.CaseSensitive) && !isTrue(filter.ExactMatch) && !isTrue(filter.IgnoreTags)) {
 		sort := []string{}
 		filters := []string{}
 
