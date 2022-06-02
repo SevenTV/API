@@ -149,7 +149,10 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 			}
 
 			var errs []error
-			result, errs = r.Ctx.Inst().Loaders.EmoteByID().LoadAll(ids)
+			result, err = r.Ctx.Inst().Query.Emotes(ctx, bson.M{
+				"versions.id": bson.M{"$in": ids},
+			}).Items()
+			// result, errs = r.Ctx.Inst().Loaders.EmoteByID().LoadAll(ids)
 
 			for _, v := range errs {
 				err = multierror.Append(err, v).ErrorOrNil()
