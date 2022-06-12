@@ -46,6 +46,11 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 	}
 
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	if err != nil {
+		// send empty slice if no emote set
+		return []*model.Emote{}, nil
+	}
+
 	arr := make([]*model.Emote, len(emoteSet.Emotes))
 	for i, emote := range emoteSet.Emotes {
 		em := helpers.EmoteStructureToModel(*emote.Emote, r.Ctx.Config().CdnURL)
@@ -59,7 +64,7 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 		arr[i] = em
 	}
 
-	return nil, err
+	return arr, nil
 }
 
 func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, error) {
@@ -93,7 +98,8 @@ func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]strin
 
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
-		return nil, err
+		// send empty slice if no emote set
+		return [][]string{}, nil
 	}
 
 	for _, e := range emoteSet.Emotes {

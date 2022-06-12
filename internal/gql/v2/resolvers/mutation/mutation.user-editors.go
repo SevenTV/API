@@ -27,7 +27,7 @@ func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, ed
 		return nil, errors.ErrBadObjectID()
 	}
 
-	target, _, err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionAdd, targetID, editorID)
+	target, _, err := r.doSetChannelEditor(ctx, actor, structures.ListItemActionAdd, targetID, editorID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string,
 		return nil, errors.ErrBadObjectID()
 	}
 
-	target, _, err := r.doSetChannelEditor(ctx, actor, mutations.ListItemActionRemove, targetID, editorID)
+	target, _, err := r.doSetChannelEditor(ctx, actor, structures.ListItemActionRemove, targetID, editorID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string,
 func (r *Resolver) doSetChannelEditor(
 	ctx context.Context,
 	actor *structures.User,
-	action mutations.ListItemAction,
+	action structures.ListItemAction,
 	targetID primitive.ObjectID,
 	editorID primitive.ObjectID,
 ) (structures.User, structures.User, error) {

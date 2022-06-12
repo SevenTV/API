@@ -44,6 +44,8 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/SevenTV/Common v0.0.0-20220511225419-547f3a794ab7 h1:z2YXvhAVUurJ9iPR2ddlwjgjP0GzMO1MoDiJRU5Fq9o=
 github.com/SevenTV/Common v0.0.0-20220511225419-547f3a794ab7/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
+github.com/SevenTV/Common v0.0.0-20220611064848-d59aba1c5945 h1:+qxQkPHCQQgFxGOHxQuEXTSK4XlFpw/1gJV+hlx8svI=
+github.com/SevenTV/Common v0.0.0-20220611064848-d59aba1c5945/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
 github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVbJomOvKkmgYbo=
