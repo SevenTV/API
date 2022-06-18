@@ -103,6 +103,13 @@ func BindEnvs(config *viper.Viper, iface interface{}, parts ...string) {
 	}
 }
 
+type MessageQueueMode string
+
+const (
+	MessageQueueModeRMQ = "RMQ"
+	MessageQueueModeSQS = "SQS"
+)
+
 type Config struct {
 	Level         string `mapstructure:"level" json:"level"`
 	ConfigFile    string `mapstructure:"config" json:"config"`
@@ -171,18 +178,29 @@ type Config struct {
 		} `mapstructure:"twitch" json:"twitch"`
 	} `mapstructure:"platforms" json:"platforms"`
 
-	RMQ struct {
-		URI                            string `mapstructure:"uri" json:"uri"`
-		ImageProcessorJobsQueueName    string `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
-		ImageProcessorResultsQueueName string `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
-	} `mapstructure:"rmq" json:"rmq"`
+	MessageQueue struct {
+		Mode                           MessageQueueMode `mapstructure:"mode" json:"mode"`
+		ImageProcessorJobsQueueName    string           `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
+		ImageProcessorResultsQueueName string           `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
+		RMQ                            struct {
+			URI                  string `mapstructure:"uri" json:"uri"`
+			MaxReconnectAttempts int    `mapstructure:"max_reconnect_attempts" json:"max_reconnect_attempts"`
+		} `mapstructure:"rmq" json:"rmq"`
+		SQS struct {
+			Region           string `mapstructure:"region" json:"region"`
+			AccessToken      string `mapstructure:"access_token" json:"access_token"`
+			SecretKey        string `mapstructure:"secret_key" json:"secret_key"`
+			MaxRetryAttempts int    `mapstructure:"max_retry_attempts" json:"max_retry_attempts"`
+		} `mapstructure:"sqs" json:"sqs"`
+	} `mapstructure:"message_queue" json:"message_queue"`
 
 	S3 struct {
-		AccessToken string `mapstructure:"access_token" json:"access_token"`
-		SecretKey   string `mapstructure:"secret_key" json:"secret_key"`
-		Region      string `mapstructure:"region" json:"region"`
-		Bucket      string `mapstructure:"bucket" json:"bucket"`
-		Endpoint    string `mapstructure:"endpoint" json:"endpoint"`
+		AccessToken    string `mapstructure:"access_token" json:"access_token"`
+		SecretKey      string `mapstructure:"secret_key" json:"secret_key"`
+		Region         string `mapstructure:"region" json:"region"`
+		InternalBucket string `mapstructure:"internal_bucket" json:"internal_bucket"`
+		PublicBucket   string `mapstructure:"public_bucket" json:"public_bucket"`
+		Endpoint       string `mapstructure:"endpoint" json:"endpoint"`
 	} `mapstructure:"s3" json:"s3"`
 
 	Auth struct {

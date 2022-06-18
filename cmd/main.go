@@ -20,13 +20,13 @@ import (
 	"github.com/seventv/api/internal/monitoring"
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
-	"github.com/seventv/api/internal/svc/rmq"
 	"github.com/seventv/api/internal/svc/s3"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
+	messagequeue "github.com/seventv/message-queue/go"
 	"go.uber.org/zap"
 )
 
@@ -116,11 +116,26 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().RMQ, err = rmq.New(gCtx, rmq.Options{
-			URI: config.RMQ.URI,
-		})
+		switch config.MessageQueue.Mode {
+		case configure.MessageQueueModeRMQ:
+			gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigRMQ{
+				AmqpURI:              config.MessageQueue.RMQ.URI,
+				MaxReconnectAttempts: config.MessageQueue.RMQ.MaxReconnectAttempts,
+			})
+		case configure.MessageQueueModeSQS:
+			gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigSQS{
+				Region: config.MessageQueue.SQS.Region,
+				Credentials: aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
+					return aws.Credentials{
+						AccessKeyID:     config.MessageQueue.SQS.AccessToken,
+						SecretAccessKey: config.MessageQueue.SQS.SecretKey,
+					}, nil
+				}),
+				RetryMaxAttempts: config.MessageQueue.SQS.MaxRetryAttempts,
+			})
+		}
 		if err != nil {
-			zap.S().Warnw("failed to setup rmq handler",
+			zap.S().Fatalw("failed to setup mq handler",
 				"error", err,
 			)
 		}

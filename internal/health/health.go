@@ -23,7 +23,7 @@ func New(gCtx global.Context) <-chan struct{} {
 			}()
 
 			var (
-				rmqDown   bool
+				mqDown    bool
 				s3Down    bool
 				redisDown bool
 				mongoDown bool
@@ -40,9 +40,11 @@ func New(gCtx global.Context) <-chan struct{} {
 				cancel()
 			}
 
-			if gCtx.Inst().RMQ != nil && !gCtx.Inst().RMQ.Connected() {
-				rmqDown = true
-				zap.S().Warnw("rmq is not connected")
+			lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			mqDown = gCtx.Inst().MessageQueue != nil && !gCtx.Inst().MessageQueue.Connected(lCtx)
+			cancel()
+			if mqDown {
+				zap.S().Warnw("mq is not connected")
 			}
 
 			if gCtx.Inst().S3 != nil {
@@ -67,7 +69,7 @@ func New(gCtx global.Context) <-chan struct{} {
 				cancel()
 			}
 
-			if rmqDown || s3Down || redisDown || mongoDown {
+			if mqDown || s3Down || redisDown || mongoDown {
 				ctx.SetStatusCode(500)
 			}
 		},

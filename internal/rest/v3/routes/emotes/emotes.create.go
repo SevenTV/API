@@ -3,6 +3,7 @@ package emotes
 import (
 	"bytes"
 	"fmt"
+	"path"
 	"regexp"
 	"time"
 
@@ -13,10 +14,14 @@ import (
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/api/internal/rest/v3/model"
+	"github.com/seventv/api/internal/svc/s3"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"github.com/seventv/image-processor/go/container"
+	"github.com/seventv/image-processor/go/task"
+	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -53,7 +58,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	ctx.SetContentType("application/json")
 
 	// Check RMQ status
-	if r.Ctx.Inst().RMQ == nil {
+	if r.Ctx.Inst().MessageQueue == nil || !r.Ctx.Inst().MessageQueue.Connected(ctx) {
 		return errors.ErrMissingInternalDependency().SetDetail("Emote Processing Service Unavailable")
 	}
 
@@ -122,132 +127,6 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	id := primitive.NewObjectIDFromTimestamp(time.Now())
 	body := req.Body()
-
-	// at this point we need to verify that whatever they upload is a "valid" file accepted file.
-	// imgType, err := containers.ToType(body)
-	// if err != nil {
-	// 	return errors.ErrInvalidRequest().SetDetail("Unknown Upload Format")
-	// }
-	// if the file fails to be validated by the container check then its not a file type we support.
-	// we then want to check some infomation about the file.
-	// like the number of frames and the width and height of the images.
-	// frameCount := 0
-	// width := 0
-	// height := 0
-	// tmpPath := ""
-
-	// {
-	// 	tmp := r.Ctx.Config().TempFolder
-	// 	if tmp == "" {
-	// 		tmp = "tmp"
-	// 	}
-	// 	if err := os.MkdirAll(tmp, 0700); err != nil {
-	// 		logrus.WithError(err).Error("failed to create temp folder")
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-	// 	tmpPath = path.Join(tmp, fmt.Sprintf("%s.%s", id.Hex(), imgType))
-	// 	if err := os.WriteFile(tmpPath, body, 0600); err != nil {
-	// 		logrus.WithError(err).Error("failed to write temp file")
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-	// 	defer os.Remove(tmpPath)
-	// }
-
-	// switch imgType {
-	// case image.AVI, image.AVIF, image.FLV, image.MP4, image.WEBM, image.GIF, image.JPEG, image.PNG, image.TIFF:
-	// 	// use ffprobe to get the number of frames and width/height
-	// 	// ffprobe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames,width,height -of csv=p=0 file.ext
-
-	// 	output, err := exec.CommandContext(ctx,
-	// 		"ffprobe",
-	// 		"-v", "fatal",
-	// 		"-select_streams", "v:0",
-	// 		"-count_frames",
-	// 		"-show_entries",
-	// 		"stream=nb_read_frames,width,height",
-	// 		"-of", "csv=p=0",
-	// 		tmpPath,
-	// 	).Output()
-	// 	if err != nil {
-	// 		logrus.WithError(err).Error("failed to run ffprobe command")
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	splits := strings.Split(strings.TrimSpace(utils.B2S(output)), ",")
-	// 	if len(splits) != 3 {
-	// 		logrus.Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	width, err = strconv.Atoi(splits[0])
-	// 	if err != nil {
-	// 		logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	height, err = strconv.Atoi(splits[1])
-	// 	if err != nil {
-	// 		logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	frameCount, err = strconv.Atoi(splits[2])
-	// 	if err != nil {
-	// 		logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-	// case image.WEBP:
-	// 	// use a webpmux -info to get the frame count and width/height
-	// 	output, err := exec.CommandContext(ctx,
-	// 		"webpmux",
-	// 		"-info",
-	// 		tmpPath,
-	// 	).Output()
-	// 	if err != nil {
-	// 		logrus.WithError(err).Error("failed to run webpmux command")
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	matches := webpMuxRegex.FindAllStringSubmatch(utils.B2S(output), 1)
-	// 	if len(matches) == 0 {
-	// 		logrus.Errorf("webpmux command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	width, err = strconv.Atoi(matches[0][1])
-	// 	if err != nil {
-	// 		logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	height, err = strconv.Atoi(matches[0][2])
-	// 	if err != nil {
-	// 		logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 		return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 	}
-
-	// 	if matches[0][3] != "" {
-	// 		frameCount, err = strconv.Atoi(matches[0][3])
-	// 		if err != nil {
-	// 			logrus.WithError(err).Errorf("ffprobe command returned bad results: %s", output)
-	// 			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// 		}
-	// 	} else {
-	// 		frameCount = 1
-	// 	}
-	// }
-
-	// if frameCount > MAX_FRAMES {
-	// 	return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Too Many Frames (got %d, but the maximum is %d)", frameCount, MAX_FRAMES))
-	// }
-
-	// if width > MAX_WIDTH || width <= 0 {
-	// 	return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad Input Width (got %d, but the maximum is %d)", width, MAX_WIDTH))
-	// }
-
-	// if height > MAX_HEIGHT || height <= 0 {
-	// 	return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad Input Height (got %d, but the maximum is %d", height, MAX_HEIGHT))
-	// }
 
 	// Create the emote in DB
 	eb := structures.NewEmoteBuilder(structures.Emote{
@@ -339,24 +218,18 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
 		}
 	}
-	// ,
-	// 		internalFilekey,
-	// 		bytes.NewBuffer(body),
-	// 		utils.PointerOf(mime.TypeByExtension(path.Ext(tmpPath))),
-	// 		aws.AclPrivate,
-	// 		aws.DefaultCacheControl,
-	// at this point we are confident that the image is valid and that we can send it over to the EmoteProcessor and it will succeed.
-	// fileKey := fmt.Sprintf("%s.%s", id.Hex(), imgType)
-	fileKey := fmt.Sprintf("%s.%s", id.Hex(), "TODO")
+
+	fileType := container.Match(body)
+	fileKey := fmt.Sprintf("%s.%s", id.Hex(), fileType.Extension)
 	internalFilekey := fmt.Sprintf("internal/emote/%s", fileKey)
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
 		&s3manager.UploadInput{
 			Body:        bytes.NewBuffer(body),
 			Key:         aws.String(internalFilekey),
-			ACL:         aws.String("TODO"),
-			Bucket:      aws.String(r.Ctx.Config().S3.Bucket),
-			ContentType: aws.String("TODO"),
+			ACL:         s3.AclPrivate,
+			Bucket:      aws.String(r.Ctx.Config().S3.InternalBucket),
+			ContentType: aws.String(fileType.MIME.Value),
 		},
 	); err != nil {
 		zap.S().Errorw("failed to upload image to s3",
@@ -365,34 +238,47 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrMissingInternalDependency().SetDetail("Failed to establish connection with the CDN Service")
 	}
 
-	// providerDetails, _ := json.Marshal(job.RawProviderDetailsAws{
-	// 	Bucket: r.Ctx.Config().S3.Bucket,
-	// 	Key:    internalFilekey,
-	// })
+	taskData, err := json.Marshal(task.Task{
+		ID:    id.Hex(),
+		Flags: task.TaskFlagALL,
+		Input: task.TaskInput{
+			Bucket: r.Ctx.Config().S3.InternalBucket,
+			Key:    internalFilekey,
+		},
+		Output: task.TaskOutput{
+			Prefix:       path.Join("emotes", id.Hex()),
+			ACL:          *s3.AclPublicRead,
+			Bucket:       r.Ctx.Config().S3.PublicBucket,
+			CacheControl: *s3.DefaultCacheControl,
+		},
+		SmallestMaxWidth:  96,
+		SmallestMaxHeight: 32,
+		Scales:            []int{1, 2, 3, 4},
+	})
+	if err == nil {
+		err = r.Ctx.Inst().MessageQueue.Publish(ctx, messagequeue.OutgoingMessage{
+			Queue:   r.Ctx.Config().MessageQueue.ImageProcessorJobsQueueName,
+			Headers: messagequeue.MessageHeaders{},
+			Flags: messagequeue.MessageFlags{
+				ID:          id.Hex(),
+				ContentType: "application/json",
+				ReplyTo:     r.Ctx.Config().MessageQueue.ImageProcessorResultsQueueName,
+				Timestamp:   time.Now(),
+				RMQ: messagequeue.MessageFlagsRMQ{
+					DeliveryMode: messagequeue.RMQDeliveryModePersistent,
+				},
+				SQS: messagequeue.MessageFlagsSQS{},
+			},
+			Body: taskData,
+		})
+	}
+	if err != nil {
+		zap.S().Errorw("failed to marshal task",
+			"error", err,
+		)
 
-	// consumerDetails, _ := json.Marshal(job.ResultConsumerDetailsAws{
-	// 	Bucket:    r.Ctx.Config().S3.Bucket,
-	// 	KeyFolder: fmt.Sprintf("emote/%s", id.Hex()),
-	// })
-
-	// msg, _ := json.Marshal(&job.Job{
-	// 	ID:                    id.Hex(),
-	// 	RawProvider:           job.AwsProvider,
-	// 	RawProviderDetails:    providerDetails,
-	// 	ResultConsumer:        job.AwsConsumer,
-	// 	ResultConsumerDetails: consumerDetails,
-	// })
-
-	// if err := r.Ctx.Inst().RMQ.Publish(instance.RmqPublishRequest{
-	// 	RoutingKey: r.Ctx.Config().RMQ.ImageProcessorJobsQueueName,
-	// 	Publishing: amqp.Publishing{
-	// 		ContentType: "application/json",
-	// 		Body:        msg,
-	// 	},
-	// }); err != nil {
-	// 	logrus.WithError(err).Errorf("failed to add job to rmq")
-	// 	return errors.ErrInternalServerError().SetDetail("Internal Server Error")
-	// }
+		return errors.ErrInternalServerError().SetDetail("failed to create task")
+	}
 
 	// Create a mod request for the new emote to be approved
 	mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
