@@ -178,6 +178,15 @@ type Config struct {
 		} `mapstructure:"twitch" json:"twitch"`
 	} `mapstructure:"platforms" json:"platforms"`
 
+	ImageLimits struct {
+		Emotes struct {
+			MaxProcessingTimeSeconds int `mapstructure:"max_processing_time_seconds" json:"max_processing_time_seconds"`
+			MaxWidth                 int `mapstructure:"max_width" json:"max_width"`
+			MaxHeight                int `mapstructure:"max_height" json:"max_height"`
+			MaxFrameCount            int `mapstructure:"max_frame_count" json:"max_frame_count"`
+		} `mapstructure:"emotes" json:"emotes"`
+	} `mapstructure:"image_limits" json:"image_limits"`
+
 	MessageQueue struct {
 		Mode                           MessageQueueMode `mapstructure:"mode" json:"mode"`
 		ImageProcessorJobsQueueName    string           `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`

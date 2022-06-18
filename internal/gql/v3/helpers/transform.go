@@ -281,7 +281,7 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 func EmoteFileStructureToModel(s *structures.EmoteFile, format model.ImageFormat, url string) *model.Image {
 	return &model.Image{
 		Name:     s.Name,
-		Format:   format,
+		git Format:   format,
 		URL:      url,
 		Width:    int(s.Width),
 		Height:   int(s.Height),

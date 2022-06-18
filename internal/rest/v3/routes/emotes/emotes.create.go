@@ -254,6 +254,12 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		SmallestMaxWidth:  96,
 		SmallestMaxHeight: 32,
 		Scales:            []int{1, 2, 3, 4},
+		Limits: task.TaskLimits{
+			MaxProcessingTime: time.Duration(r.Ctx.Config().ImageLimits.Emotes.MaxProcessingTimeSeconds) * time.Second,
+			MaxFrameCount:     r.Ctx.Config().ImageLimits.Emotes.MaxFrameCount,
+			MaxWidth:          r.Ctx.Config().ImageLimits.Emotes.MaxWidth,
+			MaxHeight:         r.Ctx.Config().ImageLimits.Emotes.MaxHeight,
+		},
 	})
 	if err == nil {
 		err = r.Ctx.Inst().MessageQueue.Publish(ctx, messagequeue.OutgoingMessage{
