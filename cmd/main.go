@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SevenTV/Common/mongo"
+	"github.com/SevenTV/Common/mongo/indexing"
 	"github.com/SevenTV/Common/redis"
 	"github.com/SevenTV/Common/structures/v3/mutations"
 	"github.com/SevenTV/Common/structures/v3/query"
@@ -103,6 +104,15 @@ func main() {
 				"error", err,
 			)
 		}
+
+		// Run collsync
+		go func() {
+			if err := indexing.CollSync(gCtx.Inst().Mongo, indexing.DatabaseRefAPI); err != nil {
+				zap.S().Errorw("couldn't set up indexes",
+					"error", err,
+				)
+			}
+		}()
 	}
 
 	{

@@ -57,7 +57,7 @@ clean:
 		node_modules
 
 work:
-	echo "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
+	echo -e "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
 	go mod tidy
 
 dev:
