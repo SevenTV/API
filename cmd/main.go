@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
