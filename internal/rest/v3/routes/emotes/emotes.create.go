@@ -254,6 +254,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		SmallestMaxWidth:  96,
 		SmallestMaxHeight: 32,
 		Scales:            []int{1, 2, 3, 4},
+		ResizeRatio:       task.ResizeRatioNothing,
 		Limits: task.TaskLimits{
 			MaxProcessingTime: time.Duration(r.Ctx.Config().ImageLimits.Emotes.MaxProcessingTimeSeconds) * time.Second,
 			MaxFrameCount:     r.Ctx.Config().ImageLimits.Emotes.MaxFrameCount,
