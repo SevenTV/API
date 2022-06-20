@@ -20,6 +20,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/swaggo/swag v1.8.3
 	go.mongodb.org/mongo-driver v1.9.1
+	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.21.0
 )
 
@@ -60,7 +61,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/tools v0.1.10 // indirect
@@ -91,7 +91,6 @@ require (
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/streadway/amqp v1.0.0
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/valyala/fasthttp v1.37.0
 	github.com/vektah/gqlparser/v2 v2.4.5
