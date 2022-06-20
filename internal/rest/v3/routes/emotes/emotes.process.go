@@ -58,7 +58,7 @@ func (epl *EmoteProcessingListener) Listen() {
 
 				go func() {
 					for range tick.C {
-						if err := msg.Extend(context.Background(), time.Second*30); err != nil {
+						if err := msg.Extend(context.Background(), time.Second*30); err != nil && err != messagequeue.ErrUnimplemented {
 							zap.S().Errorw("failed to extend message",
 								"error", err,
 							)
