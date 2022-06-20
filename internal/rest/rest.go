@@ -82,7 +82,7 @@ func New(gCtx global.Context) error {
 		},
 		ReadTimeout:                  time.Second * 600,
 		IdleTimeout:                  time.Second * 10,
-		MaxRequestBodySize:           2e16,
+		MaxRequestBodySize:           int(6 * 1024 * 1024), // 6MB
 		DisablePreParseMultipartForm: true,
 		LogAllErrors:                 true,
 		StreamRequestBody:            true,
