@@ -13,8 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/SevenTV/Common/errors"
 	"github.com/fasthttp/websocket"
+	"github.com/seventv/common/errors"
 	"go.uber.org/zap"
 
 	wsTransport "github.com/seventv/api/internal/gql/websocket"

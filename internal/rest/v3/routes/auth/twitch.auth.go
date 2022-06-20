@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SevenTV/Common/auth"
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/utils"
 	"github.com/google/go-querystring/query"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/auth"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 )

@@ -5,9 +5,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 )

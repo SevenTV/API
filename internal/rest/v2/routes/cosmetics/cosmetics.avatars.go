@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v3/middleware"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
 )

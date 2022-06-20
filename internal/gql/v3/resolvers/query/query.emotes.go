@@ -4,13 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/structures/v3/query"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/structures/v3/query"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

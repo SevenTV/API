@@ -3,9 +3,9 @@ package query
 import (
 	"context"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
+	"github.com/seventv/common/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

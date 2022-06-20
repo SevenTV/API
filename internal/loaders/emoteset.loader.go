@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/SevenTV/Common/dataloader"
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/instance"
+	"github.com/seventv/common/dataloader"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

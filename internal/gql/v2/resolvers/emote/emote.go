@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v2/types"
+	"github.com/seventv/common/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

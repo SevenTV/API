@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SevenTV/Common/utils"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 
 	v2 "github.com/seventv/api/internal/gql/v2"

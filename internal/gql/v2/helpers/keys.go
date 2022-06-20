@@ -1,6 +1,6 @@
 package helpers
 
-import "github.com/SevenTV/Common/utils"
+import "github.com/seventv/common/utils"
 
 const (
 	UserKey       = utils.Key("user")

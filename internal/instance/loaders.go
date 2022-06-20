@@ -1,8 +1,8 @@
 package instance
 
 import (
-	"github.com/SevenTV/Common/dataloader"
-	"github.com/SevenTV/Common/structures/v3"
+	"github.com/seventv/common/dataloader"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

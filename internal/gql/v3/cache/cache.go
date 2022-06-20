@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/SevenTV/Common/redis"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/redis"
 	"go.uber.org/zap"
 )
 

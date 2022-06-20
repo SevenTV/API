@@ -5,10 +5,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"

@@ -1,8 +1,8 @@
 package model
 
 import (
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 )
 
 type User struct {

@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/structures/v3"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
 )
 
 func hasPermission(gCtx global.Context) func(ctx context.Context, obj interface{}, next graphql.Resolver, role []model.Permission) (res interface{}, err error) {

@@ -1,9 +1,9 @@
 package loaders
 
 import (
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/instance"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

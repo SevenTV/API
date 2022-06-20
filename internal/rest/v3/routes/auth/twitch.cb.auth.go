@@ -8,16 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SevenTV/Common/auth"
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-querystring/query"
 	"github.com/seventv/api/internal/externalapis"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/auth"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -225,6 +225,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		}).Decode(&ub.User); err == mongo.ErrNoDocuments {
 			// User doesn't yet exist: create it
 			ub.SetUsername(twUser.Login).
+				SetDisplayName(twUser.DisplayName).
 				SetEmail(twUser.Email).
 				SetDiscriminator("").
 				SetAvatarID("").

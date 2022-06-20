@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/routes/auth"
 	"github.com/seventv/api/internal/rest/v2/routes/cosmetics"
 	"github.com/seventv/api/internal/rest/v2/routes/emotes"
 	"github.com/seventv/api/internal/rest/v2/routes/user"
+	"github.com/seventv/common/errors"
 )
 
 type Route struct {

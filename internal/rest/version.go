@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"runtime/debug"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	v2 "github.com/seventv/api/internal/rest/v2"
 	v3 "github.com/seventv/api/internal/rest/v3"
+	"github.com/seventv/common/errors"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 )

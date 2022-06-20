@@ -4,13 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SevenTV/Common/auth"
-	"github.com/SevenTV/Common/errors"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/structures/v3/query"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/auth"
+	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/structures/v3/query"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

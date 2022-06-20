@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
 )

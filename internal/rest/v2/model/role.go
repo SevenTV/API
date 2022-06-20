@@ -1,8 +1,8 @@
 package model
 
 import (
-	v2structures "github.com/SevenTV/Common/structures/v2"
-	"github.com/SevenTV/Common/structures/v3"
+	v2structures "github.com/seventv/common/structures/v2"
+	"github.com/seventv/common/structures/v3"
 )
 
 type Role struct {

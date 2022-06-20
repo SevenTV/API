@@ -3,9 +3,9 @@ package docs
 import (
 	"os"
 
-	"github.com/SevenTV/Common/errors"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/errors"
 )
 
 type Route struct {

@@ -11,11 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SevenTV/Common/mongo"
-	"github.com/SevenTV/Common/mongo/indexing"
-	"github.com/SevenTV/Common/redis"
-	"github.com/SevenTV/Common/structures/v3/mutations"
-	"github.com/SevenTV/Common/structures/v3/query"
 	"github.com/bugsnag/panicwrap"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
@@ -27,6 +22,11 @@ import (
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/rmq"
 	"github.com/seventv/api/internal/svc/s3"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/mongo/indexing"
+	"github.com/seventv/common/redis"
+	"github.com/seventv/common/structures/v3/mutations"
+	"github.com/seventv/common/structures/v3/query"
 	"go.uber.org/zap"
 )
 

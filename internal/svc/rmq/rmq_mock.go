@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SevenTV/Common/sync_map"
 	"github.com/seventv/api/internal/instance"
+	"github.com/seventv/common/sync_map"
 	"github.com/streadway/amqp"
 )
 

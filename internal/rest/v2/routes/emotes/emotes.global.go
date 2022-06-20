@@ -1,12 +1,12 @@
 package emotes
 
 import (
-	"github.com/SevenTV/Common/errors"
-	v2structures "github.com/SevenTV/Common/structures/v2"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/api/internal/rest/v3/middleware"
+	"github.com/seventv/common/errors"
+	v2structures "github.com/seventv/common/structures/v2"
 )
 
 type globals struct {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/utils"
 )
 
 func SetCacheControl(gCtx global.Context, maxAge int, args []string) rest.Middleware {

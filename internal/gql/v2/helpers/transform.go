@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	v2structures "github.com/SevenTV/Common/structures/v2"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
+	v2structures "github.com/seventv/common/structures/v2"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 )
 
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")

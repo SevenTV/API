@@ -46,9 +46,6 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
-github.com/SevenTV/Common v0.0.0-20220611064848-d59aba1c5945 h1:+qxQkPHCQQgFxGOHxQuEXTSK4XlFpw/1gJV+hlx8svI=
-github.com/SevenTV/Common v0.0.0-20220611064848-d59aba1c5945/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
-github.com/SevenTV/Common v0.0.0-20220619191333-367ce811b19e h1:NzTOxFB1+ni62iu1ga97annfaEr6y+/PNglNA6HAHGM=
 github.com/SevenTV/Common v0.0.0-20220619191333-367ce811b19e/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
@@ -336,6 +333,12 @@ github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436 h1:sfTahD3f2BSjx9U3
 github.com/savsgio/gotils v0.0.0-20220401102855-e56b59f40436/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
+github.com/seventv/common v0.0.0-20220611064848-d59aba1c5945 h1:+qxQkPHCQQgFxGOHxQuEXTSK4XlFpw/1gJV+hlx8svI=
+github.com/seventv/common v0.0.0-20220611064848-d59aba1c5945/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
+github.com/seventv/common v0.0.0-20220619191333-367ce811b19e h1:NzTOxFB1+ni62iu1ga97annfaEr6y+/PNglNA6HAHGM=
+github.com/seventv/common v0.0.0-20220619191333-367ce811b19e/go.mod h1:k1+/uNULz0uSb6IPHI6G8HJutERV3IzF6i3gVk5hYT0=
+github.com/seventv/common v0.0.0-20220619194424-4013cd50d123 h1:n75aHLrMYVbrsnU+oTpfIX2Y3jNcuYMpZafCs6SIc2I=
+github.com/seventv/common v0.0.0-20220619194424-4013cd50d123/go.mod h1:bnzdJye3QyjqIOlzKg+rzt7py2SGCWgsU6V/OVVAfuc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=

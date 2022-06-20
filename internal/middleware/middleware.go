@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/SevenTV/Common/errors"
+	"github.com/seventv/common/errors"
 	"github.com/valyala/fasthttp"
 )
 

@@ -3,9 +3,9 @@ package model
 import (
 	"fmt"
 
-	v2structures "github.com/SevenTV/Common/structures/v2"
-	"github.com/SevenTV/Common/structures/v3"
-	"github.com/SevenTV/Common/utils"
+	v2structures "github.com/seventv/common/structures/v2"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 )
 
 type Emote struct {
