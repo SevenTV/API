@@ -72,7 +72,9 @@ type EmoteVersion {
   id: ObjectID!
   name: String!
   description: String!
-  timestamp: Time!
+  created_at: Time!
+  started_at: Time!
+  completed_at: Time!
   images(formats: [ImageFormat!]): [Image!]!
   archive: Archive!
   lifecycle: Int!
