@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.10
-	github.com/aws/aws-sdk-go v1.44.17
+	github.com/aws/aws-sdk-go v1.44.38
 	github.com/bugsnag/panicwrap v1.3.4
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/google/go-querystring v1.1.0
