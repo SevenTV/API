@@ -75,7 +75,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/valyala/fasthttp v1.37.0
-	github.com/vektah/gqlparser/v2 v2.4.2
+	github.com/vektah/gqlparser/v2 v2.4.5
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
