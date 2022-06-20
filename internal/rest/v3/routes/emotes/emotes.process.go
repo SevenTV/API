@@ -1,6 +1,7 @@
 package emotes
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +50,35 @@ func (epl *EmoteProcessingListener) Listen() {
 				)
 				continue
 			}
-			go epl.HandleResultEvent(evt)
+			go func() {
+				tick := time.NewTicker(time.Second * 10)
+				ctx, cancel := context.WithCancel(epl.Ctx)
+				defer cancel()
+				defer tick.Stop()
+
+				go func() {
+					for range tick.C {
+						if err := msg.Extend(context.Background(), time.Second*30); err != nil {
+							zap.S().Errorw("failed to extend message",
+								"error", err,
+							)
+							cancel()
+							return
+						}
+					}
+				}()
+				if err := epl.HandleResultEvent(ctx, evt); err != nil {
+					zap.S().Errorw("failed to handle result",
+						"error", multierr.Append(err, msg.Requeue(context.Background())),
+					)
+				} else {
+					if err = msg.Ack(ctx); err != nil {
+						zap.S().Errorw("failed to ack message",
+							"error", err,
+						)
+					}
+				}
+			}()
 		} else {
 			zap.S().Warnw("bad message type from queue",
 				"msg", msg,
@@ -59,7 +89,7 @@ func (epl *EmoteProcessingListener) Listen() {
 	zap.S().Info("stopped emote processing listener")
 }
 
-func (epl *EmoteProcessingListener) HandleResultEvent(evt task.Result) error {
+func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt task.Result) error {
 	// Fetch the emote
 	eb := structures.NewEmoteBuilder(structures.Emote{})
 	id, err := primitive.ObjectIDFromHex(evt.ID)
@@ -67,7 +97,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(evt task.Result) error {
 		return err
 	}
 
-	if err := epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).FindOne(epl.Ctx, bson.M{
+	if err := epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"versions.id": id,
 	}).Decode(eb.Emote); err != nil {
 		return err
@@ -131,11 +161,11 @@ func (epl *EmoteProcessingListener) HandleResultEvent(evt task.Result) error {
 	eb.Update.Set(fmt.Sprintf("versions.%d.archive_file", verIndex), ver.ArchiveFile)
 
 	// Update database
-	_, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(epl.Ctx, bson.M{
+	_, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
 		"versions.id": id,
 	}, eb.Update)
 
-	epl.Ctx.Inst().Redis.RawClient().Publish(epl.Ctx, fmt.Sprintf("7tv-events:sub:emotes:%s", id.Hex()), "1")
+	epl.Ctx.Inst().Redis.RawClient().Publish(ctx, fmt.Sprintf("7tv-events:sub:emotes:%s", id.Hex()), "1")
 	return err
 }
 
