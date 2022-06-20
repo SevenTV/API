@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 
 	v2structures "github.com/seventv/common/structures/v2"
 	"github.com/seventv/common/structures/v3"
@@ -22,31 +23,19 @@ type Emote struct {
 	URLs             [][2]string `json:"urls"`
 }
 
+const webpMime = "image/webp"
+
 func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	version, _ := s.GetVersion(s.ID)
-	width := make([]int32, 4)
-	height := make([]int32, 4)
-	urls := make([][2]string, 4)
+	files := []structures.EmoteFile{}
 	status := structures.EmoteLifecycle(0)
 	if !version.ID.IsZero() {
-		for _, format := range version.Formats {
-			if format.Name != structures.EmoteFormatNameWEBP {
+		for _, file := range version.ImageFiles {
+			if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
 				continue
 			}
-			pos := 0
-			for _, f := range format.Files {
-				if version.FrameCount > 1 && !f.Animated || pos > 4 {
-					continue
-				}
 
-				width[pos] = f.Width
-				height[pos] = f.Height
-				urls[pos] = [2]string{
-					fmt.Sprintf("%d", pos+1),
-					fmt.Sprintf("https://%s/emote/%s/%s", cdnURL, version.ID.Hex(), f.Name),
-				}
-				pos++
-			}
+			files = append(files, file)
 		}
 		status = version.State.Lifecycle
 	}
@@ -76,13 +65,30 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 		owner = *s.Owner
 	}
 
+	width := make([]int32, len(files))
+	height := make([]int32, len(files))
+	urls := make([][2]string, len(files))
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Width > files[j].Width
+	})
+
+	for i, file := range files {
+		width[i] = file.Width
+		height[i] = file.Height
+		urls[i] = [2]string{
+			fmt.Sprintf("%d", i+1),
+			fmt.Sprintf("https://%s/emote/%s/%s", cdnURL, version.ID.Hex(), file.Name),
+		}
+	}
+
 	return &Emote{
 		ID:               s.ID.Hex(),
 		Name:             s.Name,
 		Owner:            NewUser(owner),
 		Visibility:       int32(vis),
 		VisibilitySimple: simpleVis,
-		Mime:             string(structures.EmoteFormatNameWEBP),
+		Mime:             webpMime,
 		Status:           int8(status),
 		Tags:             s.Tags,
 		Width:            width,

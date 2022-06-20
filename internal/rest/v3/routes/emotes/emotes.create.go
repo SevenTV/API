@@ -139,7 +139,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			SetTags(tags, true).
 			AddVersion(structures.EmoteVersion{
 				ID:        id,
-				Timestamp: id.Timestamp(),
+				CreatedAt: id.Timestamp(),
 				// FrameCount: int32(frameCount),
 				State: structures.EmoteVersionState{
 					Lifecycle: structures.EmoteLifecyclePending,
@@ -179,8 +179,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 				ID:          id,
 				Name:        args.Version.Name,
 				Description: args.Version.Description,
-				// FrameCount:  int32(frameCount),
-				Timestamp: id.Timestamp(),
+				CreatedAt:   id.Timestamp(),
 				State: structures.EmoteVersionState{
 					Lifecycle: structures.EmoteLifecyclePending,
 				},
@@ -202,7 +201,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 					ID:          id,
 					Name:        args.Version.Name,
 					Description: args.Version.Description,
-					Timestamp:   id.Timestamp(),
+					CreatedAt:   id.Timestamp(),
 					// FrameCount:  int32(frameCount),
 					State: structures.EmoteVersionState{
 						Lifecycle: structures.EmoteLifecyclePending,

@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -14,30 +15,18 @@ import (
 
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
+const webpMime = "image/webp"
+
 func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	version, _ := s.GetVersion(s.ID)
+	files := []structures.EmoteFile{}
 
-	width := make([]int, 4)
-	height := make([]int, 4)
-	urls := make([][]string, 4)
-	for _, format := range version.Formats {
-		if format.Name != structures.EmoteFormatNameWEBP {
+	for _, file := range version.ImageFiles {
+		if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
 			continue
 		}
-		pos := 0
-		for _, f := range format.Files {
-			if version.FrameCount > 1 && !f.Animated || pos > 4 {
-				continue
-			}
 
-			width[pos] = int(f.Width)
-			height[pos] = int(f.Height)
-			urls[pos] = []string{
-				fmt.Sprintf("%d", pos+1),
-				fmt.Sprintf("//%s/emote/%s/%s", cdnURL, version.ID.Hex(), f.Name),
-			}
-			pos++
-		}
+		files = append(files, file)
 	}
 
 	vis := 0
@@ -54,6 +43,23 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	owner := structures.DeletedUser
 	if s.Owner != nil {
 		owner = *s.Owner
+	}
+
+	width := make([]int, len(files))
+	height := make([]int, len(files))
+	urls := make([][]string, len(files))
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Width > files[j].Width
+	})
+
+	for i, file := range files {
+		width[i] = int(file.Width)
+		height[i] = int(file.Height)
+		urls[i] = []string{
+			fmt.Sprintf("%d", i+1),
+			fmt.Sprintf("https://%s/emote/%s/%s", cdnURL, version.ID.Hex(), file.Name),
+		}
 	}
 
 	return &model.Emote{

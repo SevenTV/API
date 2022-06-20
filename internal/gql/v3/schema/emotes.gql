@@ -74,6 +74,7 @@ type EmoteVersion {
   description: String!
   timestamp: Time!
   images(formats: [ImageFormat!]): [Image!]!
+  archive: Archive!
   lifecycle: Int!
   listed: Boolean!
 }

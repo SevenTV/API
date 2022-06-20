@@ -18,20 +18,26 @@ func NewPartial(r types.Resolver) generated.EmotePartialResolver {
 	return &ResolverPartial{r}
 }
 
+var imageFormatConverter = map[model.ImageFormat]string{
+	model.ImageFormatAvif: "image/avif",
+	model.ImageFormatGif:  "image/gif",
+	model.ImageFormatPng:  "image/png",
+	model.ImageFormatWebp: "image/webp",
+}
+
 func (r *ResolverPartial) Images(ctx context.Context, obj *model.EmotePartial, format []model.ImageFormat) ([]*model.Image, error) {
+	if len(format) != 0 {
+		return obj.Images, nil
+	}
+
 	result := []*model.Image{}
 	for _, im := range obj.Images {
-		ok := len(format) == 0
-		if !ok {
-			for _, f := range format {
-				if im.Format == f {
-					result = append(result, im)
-				}
+		for _, f := range format {
+			if im.ContentType == imageFormatConverter[f] {
+				result = append(result, im)
+				break
 			}
-			continue
 		}
-
-		result = append(result, im)
 	}
 
 	return result, nil

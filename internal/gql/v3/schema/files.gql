@@ -1,0 +1,25 @@
+type Image {
+  name: String!
+  content_type: String!
+  url: String!
+  width: Int!
+  height: Int!
+  frame_count: Int!
+  size: Int!
+  sha3: String!
+}
+
+enum ImageFormat {
+  AVIF
+  WEBP
+  GIF
+  PNG
+}
+
+type Archive {
+  name: String!
+  content_type: String!
+  url: String!
+  size: Int!
+  sha3: String!
+}

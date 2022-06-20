@@ -348,8 +348,8 @@ github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d h1:Q+gqLBOPkFGHyCJx
 github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20220619194424-4013cd50d123 h1:n75aHLrMYVbrsnU+oTpfIX2Y3jNcuYMpZafCs6SIc2I=
-github.com/seventv/common v0.0.0-20220619194424-4013cd50d123/go.mod h1:bnzdJye3QyjqIOlzKg+rzt7py2SGCWgsU6V/OVVAfuc=
+github.com/seventv/common v0.0.0-20220620154016-99e0e6eba719 h1:MNjQyvlGztWsRGXidmjRotB91cflCjAeMaotq9L4ot4=
+github.com/seventv/common v0.0.0-20220620154016-99e0e6eba719/go.mod h1:bnzdJye3QyjqIOlzKg+rzt7py2SGCWgsU6V/OVVAfuc=
 github.com/seventv/image-processor/go v0.0.0-20220619215755-bfd2b5d58a65 h1:NiF5NkEehA3uBRZ+Z5PtxNDN/bObm2Xr64iazVIKko8=
 github.com/seventv/image-processor/go v0.0.0-20220619215755-bfd2b5d58a65/go.mod h1:N8rEyrz01B6VtqI0omerwrvn3UVYrJBh0ue2nBF4HH0=
 github.com/seventv/message-queue/go v0.0.0-20220619190956-5ba4b3010269 h1:u2vGk/DbH48YLocfVz+joOVYIWt9CdNQciEhFbJJBg4=

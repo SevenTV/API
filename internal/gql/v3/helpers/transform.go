@@ -159,7 +159,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 
 	// Sort by version timestamp
 	sort.Slice(s.Versions, func(i, j int) bool {
-		return s.Versions[i].Timestamp.After(s.Versions[j].Timestamp)
+		return s.Versions[i].CreatedAt.After(s.Versions[j].CreatedAt)
 	})
 	for _, ver := range s.Versions {
 		if ver.State.Lifecycle < structures.EmoteLifecycleProcessing || ver.IsUnavailable() {
@@ -169,19 +169,8 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		files := ver.GetFiles("", true)
 		vimages := make([]*model.Image, len(files))
 		for i, fi := range files {
-			format := model.ImageFormatWebp
-
-			switch fi.Format() {
-			case structures.EmoteFormatNameAVIF:
-				format = model.ImageFormatAvif
-			case structures.EmoteFormatNameGIF:
-				format = model.ImageFormatGif
-			case structures.EmoteFormatNamePNG:
-				format = model.ImageFormatPng
-			}
-
 			url := fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), fi.Name)
-			img := EmoteFileStructureToModel(&fi, format, url)
+			img := EmoteFileStructureToModel(&fi, url)
 			vimages[i] = img
 		}
 
@@ -278,16 +267,16 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 	}
 }
 
-func EmoteFileStructureToModel(s *structures.EmoteFile, format model.ImageFormat, url string) *model.Image {
+func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
 	return &model.Image{
-		Name:     s.Name,
-		git Format:   format,
-		URL:      url,
-		Width:    int(s.Width),
-		Height:   int(s.Height),
-		Animated: s.Animated,
-		Time:     int(s.ProcessingTime),
-		Length:   int(s.Length),
+		Name:        s.Name,
+		URL:         url,
+		Width:       int(s.Width),
+		Height:      int(s.Height),
+		ContentType: s.ContentType,
+		FrameCount:  int(s.FrameCount),
+		Size:        int(s.Size),
+		Sha3:        s.SHA3,
 	}
 }
 
