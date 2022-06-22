@@ -34,7 +34,7 @@ jobs:
     env:
       DEPLOY_PROD: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'production') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') }}
       DEPLOY_STAGE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'staging') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'dev') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'staged')) }}
-      GOLANGCI_LINT_CACHE: ~/.cache/golangci-lint
+      GOLANGCI_LINT_CACHE: /home/runner/.cache/golangci-lint
     concurrency:
       group: ${{ github.workflow }}-ci-${{ github.ref }}
       cancel-in-progress: true

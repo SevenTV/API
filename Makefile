@@ -32,7 +32,6 @@ deps:
 	go mod download
 
 dev_deps:
-	go install honnef.co/go/tools/cmd/staticcheck@2022.1
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	yarn
 
