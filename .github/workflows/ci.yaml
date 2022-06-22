@@ -48,6 +48,9 @@ jobs:
         with:
           node-version: "18"
 
+      - name: Install Yarn
+        run: npm install -g yarn
+
       - name: Checkout code
         uses: actions/checkout@v3
         with:
