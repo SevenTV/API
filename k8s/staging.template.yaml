@@ -177,28 +177,28 @@ spec:
             backend:
               service:
                 name: api
-                port: 
+                port:
                   name: gql
           - pathType: Prefix
             path: /v3
             backend:
               service:
                 name: api
-                port: 
+                port:
                   name: rest
           - pathType: Prefix
             path: /v2/gql
             backend:
               service:
                 name: api
-                port: 
+                port:
                   name: gql
           - pathType: Prefix
             path: /v2
             backend:
               service:
                 name: api
-                port: 
+                port:
                   number: rest
   tls:
     - hosts:
