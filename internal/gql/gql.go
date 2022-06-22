@@ -31,6 +31,7 @@ func New(gCtx global.Context) error {
 		if err := middleware.Auth(gCtx)(ctx); err != nil {
 			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 		}
+
 		gqlv3(ctx)
 	}
 
@@ -40,6 +41,7 @@ func New(gCtx global.Context) error {
 		if err := middleware.Auth(gCtx)(ctx); err != nil {
 			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 		}
+
 		gqlv2(ctx)
 	})
 
@@ -94,6 +96,7 @@ func New(gCtx global.Context) error {
 
 	go func() {
 		<-gCtx.Done()
+
 		_ = server.Shutdown()
 	}()
 

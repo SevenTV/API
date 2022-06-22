@@ -25,6 +25,11 @@ type Route struct {
 	Ctx global.Context
 }
 
+type aggregatedCosmeticsResult struct {
+	Entitlements []*structures.Entitlement[bson.Raw] `bson:"entitlements"`
+	Users        []*structures.User                  `bson:"users"`
+}
+
 func New(gCtx global.Context) rest.Route {
 	return &Route{gCtx}
 }
@@ -71,12 +76,14 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				"error", err,
 			)
 		}
+
 		return ctx.JSON(rest.OK, result)
 	}
 
 	// Fetch roles
 	roles, _ := r.Ctx.Inst().Query.Roles(ctx, bson.M{})
 	roleMap := make(map[primitive.ObjectID]structures.Role)
+
 	for _, r := range roles {
 		roleMap[r.ID] = r
 	}
@@ -132,16 +139,20 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		zap.S().Errorw("mongo, failed to spawn cosmetic entitlements aggregation",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	// Decode data
 	data := &aggregatedCosmeticsResult{}
+
 	cur.Next(ctx)
+
 	if err = multierror.Append(cur.Decode(data), cur.Close(ctx)).ErrorOrNil(); err != nil {
 		zap.S().Errorw("mongo, failed to decode aggregated cosmetic entitlements",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
@@ -155,19 +166,25 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		bson.M{},
 		options.Find().SetSort(bson.M{"priority": -1}),
 	)
+
 	if err != nil {
 		zap.S().Errorw("mongo, failed to fetch cosmetics data",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	if err = cur.All(ctx, &cosmetics); err != nil {
 		zap.S().Errorw("mongo, failed to decode cosmetics data",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	cosMap := make(map[primitive.ObjectID]*structures.Cosmetic[bson.Raw])
+
 	for _, cos := range cosmetics {
 		cosMap[cos.ID] = cos
 	}
@@ -181,33 +198,41 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			ents[ent.Kind] = map[primitive.ObjectID]structures.Entitlement[bson.Raw]{}
 			m = ents[ent.Kind]
 		}
+
 		m[ent.ID] = *ent
 	}
 
 	// Map users with their roles
 	userMap := make(map[primitive.ObjectID]structures.User)
 	userCosmetics := make(map[primitive.ObjectID][2]bool) // [0]: badge, [1] paint
+
 	for _, u := range data.Users {
 		if u == nil {
 			continue
 		}
+
 		userMap[u.ID] = *u
 		userCosmetics[u.ID] = [2]bool{false, false}
 	}
+
 	for _, ent := range ents[structures.EntitlementKindRole] {
 		u := userMap[ent.UserID]
+
 		ent, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
 		if err != nil {
 			continue
 		}
+
 		if !u.ID.IsZero() && utils.Contains(u.RoleIDs, ent.Data.ObjectReference) {
 			continue
 		}
+
 		u.RoleIDs = append(u.RoleIDs, ent.Data.ObjectReference)
 	}
 
 	usersToIdentifiers := func(ul []structures.User) []string {
 		s := make([]string, len(ul))
+
 		switch idType {
 		case "object_id":
 			for i, u := range ul {
@@ -227,6 +252,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				}
 			}
 		}
+
 		return s
 	}
 
@@ -235,13 +261,16 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		Badges: []*model.CosmeticBadge{},
 		Paints: []*model.CosmeticPaint{},
 	}
+
 	for _, ent := range ents[structures.EntitlementKindBadge] {
 		ent, err := structures.ConvertEntitlement[structures.EntitlementDataBadge](ent)
 		if err != nil {
 			continue
 		}
+
 		cos := cosMap[ent.Data.ObjectReference]
 		u := userMap[ent.UserID]
+
 		uc := userCosmetics[u.ID]
 		if uc[0] || !ent.Data.Selected {
 			continue // user already has a badge
@@ -253,13 +282,16 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			userCosmetics[u.ID] = uc
 		}
 	}
+
 	for _, ent := range ents[structures.EntitlementKindPaint] {
 		ent, err := structures.ConvertEntitlement[structures.EntitlementDataPaint](ent)
 		if err != nil {
 			continue
 		}
+
 		cos := cosMap[ent.Data.ObjectReference]
 		u := userMap[ent.UserID]
+
 		uc := userCosmetics[u.ID]
 		if uc[1] || !ent.Data.Selected {
 			continue // user already has a paint
@@ -276,19 +308,23 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		if len(cos.Users) == 0 {
 			continue // skip if cosmetic has no users
 		}
+
 		switch cos.Kind {
 		case structures.CosmeticKindBadge:
 			badge, err := structures.ConvertCosmetic[structures.CosmeticDataBadge](*cos)
 			if err != nil {
 				continue
 			}
+
 			urls := make([][2]string, 3)
+
 			for i := 1; i <= 3; i++ {
 				a := [2]string{}
 				a[0] = strconv.Itoa(i)
 				a[1] = fmt.Sprintf("https://%s/badge/%s/%dx", r.Ctx.Config().CdnURL, badge.ID.Hex(), i)
 				urls[i-1] = a
 			}
+
 			result.Badges = append(result.Badges, &model.CosmeticBadge{
 				ID:      cos.ID.Hex(),
 				Name:    cos.Name,
@@ -302,14 +338,17 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			if err != nil {
 				continue
 			}
+
 			stops := make([]model.CosmeticPaintGradientStop, len(paint.Data.Stops))
 			dropShadows := make([]model.CosmeticPaintDropShadow, len(paint.Data.DropShadows))
+
 			for i, stop := range paint.Data.Stops {
 				stops[i] = model.CosmeticPaintGradientStop{
 					At:    stop.At,
 					Color: stop.Color,
 				}
 			}
+
 			for i, shadow := range paint.Data.DropShadows {
 				dropShadows[i] = model.CosmeticPaintDropShadow{
 					OffsetX: shadow.OffsetX,
@@ -318,6 +357,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 					Color:   shadow.Color,
 				}
 			}
+
 			result.Paints = append(result.Paints, &model.CosmeticPaint{
 				ID:          paint.ID.Hex(),
 				Name:        cos.Name,
@@ -349,9 +389,4 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	return ctx.JSON(rest.OK, result)
-}
-
-type aggregatedCosmeticsResult struct {
-	Entitlements []*structures.Entitlement[bson.Raw] `bson:"entitlements"`
-	Users        []*structures.User                  `bson:"users"`
 }

@@ -23,6 +23,7 @@ func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, ed
 
 	targetID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	editorID, er2 := primitive.ObjectIDFromHex(editorIDArg)
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -43,6 +44,7 @@ func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string,
 
 	targetID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	editorID, er2 := primitive.ObjectIDFromHex(editorIDArg)
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -62,22 +64,28 @@ func (r *Resolver) doSetChannelEditor(
 	targetID primitive.ObjectID,
 	editorID primitive.ObjectID,
 ) (structures.User, structures.User, error) {
-	var target structures.User
-	var editor structures.User
+	var (
+		target structures.User
+		editor structures.User
+	)
 
 	users := []structures.User{}
+
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 		"_id": bson.M{"$in": bson.A{targetID, editorID}},
 	})
 	if err != nil {
 		return target, editor, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	if err = cur.All(ctx, &users); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return target, editor, errors.ErrUnknownUser()
 		}
+
 		return target, editor, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	for _, u := range users {
 		switch u.ID {
 		case targetID:
@@ -86,6 +94,7 @@ func (r *Resolver) doSetChannelEditor(
 			editor = u
 		}
 	}
+
 	if target.ID.IsZero() {
 		return target, editor, errors.ErrUnknownUser()
 	}
@@ -100,5 +109,6 @@ func (r *Resolver) doSetChannelEditor(
 	}); err != nil {
 		return target, editor, err
 	}
+
 	return target, editor, nil
 }

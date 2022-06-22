@@ -43,6 +43,7 @@ func (r *Resolver) ChannelCount(ctx context.Context, obj *model.Emote) (int, err
 		zap.S().Errorw("failed to count documents for emotes",
 			"err", err,
 		)
+
 		return 0, err
 	}
 
@@ -50,6 +51,6 @@ func (r *Resolver) ChannelCount(ctx context.Context, obj *model.Emote) (int, err
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.Emote) ([]*model.Report, error) {
-	// return loaders.For(ctx).ReportsByEmoteID.Load(obj.ID)
+	// TODO
 	return nil, nil
 }

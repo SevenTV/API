@@ -21,6 +21,7 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 		err  error
 		user structures.User
 	)
+
 	switch id {
 	case "@me":
 		// Handle @me (fetch actor)
@@ -29,6 +30,7 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 		if actor == nil {
 			return nil, errors.ErrUnauthorized()
 		}
+
 		user, err = r.Ctx.Inst().Loaders.UserByID().Load(actor.ID)
 	default:
 		uid, err := primitive.ObjectIDFromHex(id)
@@ -37,6 +39,7 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 		} else {
 			user, err = r.Ctx.Inst().Loaders.UserByID().Load(uid)
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -47,10 +50,12 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if _, banned := bans.MemoryHole[user.ID]; banned {
 			return nil, errors.ErrUnknownUser()
 		}
 	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +68,7 @@ func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, 
 	if actor == nil || !actor.HasPermission(structures.RolePermissionManageUsers) {
 		return nil, errors.ErrInsufficientPrivilege()
 	}
+
 	users, totalCount, err := r.Ctx.Inst().Query.SearchUsers(ctx, bson.M{}, query.UserSearchOptions{
 		Page:  1,
 		Limit: 250,
@@ -77,9 +83,10 @@ func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, 
 		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 	}
 
-	rctx := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)
+	rctx, _ := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)
 	if rctx != nil {
 		rctx.Response.Header.Set("X-Collection-Size", strconv.Itoa(totalCount))
 	}
+
 	return result, nil
 }

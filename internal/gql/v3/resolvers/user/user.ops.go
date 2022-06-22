@@ -39,6 +39,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrUnknownUser()
 		}
+
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
@@ -49,9 +50,11 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		if err != nil {
 			return nil, errors.ErrUnknownUserConnection()
 		}
+
 		oldSetID := conn.EmoteSetID
 
 		setID := *d.EmoteSetID
+
 		if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutations.SetUserActiveEmoteSet{
 			EmoteSetID:   *d.EmoteSetID,
 			Platform:     structures.UserConnectionPlatformTwitch,
@@ -62,6 +65,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				"error", err,
 				"connection_id", conn.ID,
 			)
+
 			return nil, err
 		}
 
@@ -70,8 +74,11 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{setID, oldSetID}}})
 			if !sets.Empty() {
 				go func() {
-					var newSet structures.EmoteSet
-					var oldSet structures.EmoteSet
+					var (
+						newSet structures.EmoteSet
+						oldSet structures.EmoteSet
+					)
+
 					items, _ := sets.Items()
 					for _, es := range items {
 						switch es.ID {
@@ -89,23 +96,28 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 								if ae.Emote == nil {
 									continue
 								}
+
 								if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
 									zap.S().Errorw("redis",
 										"error", err,
 									)
 								}
+
 								time.Sleep(time.Millisecond * 10) // todo
 							}
 						}
+
 						for _, ae := range newSet.Emotes {
 							if ae.Emote == nil {
 								continue
 							}
+
 							if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
 								zap.S().Errorw("redis",
 									"error", err,
 								)
 							}
+
 							time.Sleep(time.Millisecond * 10) // todo
 						}
 					}
@@ -113,11 +125,13 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			}
 		}
 	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	result := helpers.UserStructureToModel(b.User, r.Ctx.Config().CdnURL)
 	events.Publish(r.Ctx, "users", b.User.ID)
+
 	return result.Connections, nil
 }

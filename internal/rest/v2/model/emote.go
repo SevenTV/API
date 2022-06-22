@@ -29,6 +29,7 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	version, _ := s.GetVersion(s.ID)
 	files := []structures.EmoteFile{}
 	status := structures.EmoteLifecycle(0)
+
 	if !version.ID.IsZero() {
 		for _, file := range version.ImageFiles {
 			if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
@@ -37,6 +38,7 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 
 			files = append(files, file)
 		}
+
 		status = version.State.Lifecycle
 	}
 
@@ -44,14 +46,17 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	if !version.State.Listed {
 		vis |= int(v2structures.EmoteVisibilityUnlisted)
 	}
+
 	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsZeroWidth)) {
 		vis |= int(v2structures.EmoteVisibilityZeroWidth)
 	}
+
 	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsPrivate)) {
 		vis |= int(v2structures.EmoteVisibilityPrivate)
 	}
 
 	simpleVis := []string{}
+
 	for v, s := range v2structures.EmoteVisibilitySimpleMap {
 		if !utils.BitField.HasBits(int64(vis), int64(v)) {
 			continue

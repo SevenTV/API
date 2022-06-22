@@ -31,6 +31,7 @@ func New() *Config {
 	})
 	tmp := viper.New()
 	defaultConfig := bytes.NewReader(b)
+
 	tmp.SetConfigType("json")
 	checkErr(tmp.ReadConfig(defaultConfig))
 	checkErr(config.MergeConfigMap(viper.AllSettings()))
@@ -44,6 +45,7 @@ func New() *Config {
 	// File
 	config.SetConfigFile(config.GetString("config"))
 	config.AddConfigPath(".")
+
 	if err := config.ReadInConfig(); err == nil {
 		checkErr(config.MergeInConfig())
 	}
@@ -68,13 +70,16 @@ func New() *Config {
 func bindEnvs(config *viper.Viper, iface interface{}, parts ...string) {
 	ifv := reflect.ValueOf(iface)
 	ift := reflect.TypeOf(iface)
+
 	for i := 0; i < ift.NumField(); i++ {
 		v := ifv.Field(i)
 		t := ift.Field(i)
+
 		tv, ok := t.Tag.Lookup("mapstructure")
 		if !ok {
 			continue
 		}
+
 		switch v.Kind() {
 		case reflect.Struct:
 			bindEnvs(config, v.Interface(), append(parts, tv)...)
@@ -87,13 +92,16 @@ func bindEnvs(config *viper.Viper, iface interface{}, parts ...string) {
 func BindEnvs(config *viper.Viper, iface interface{}, parts ...string) {
 	ifv := reflect.ValueOf(iface)
 	ift := reflect.TypeOf(iface)
+
 	for i := 0; i < ift.NumField(); i++ {
 		v := ifv.Field(i)
 		t := ift.Field(i)
+
 		tv, ok := t.Tag.Lookup("mapstructure")
 		if !ok {
 			continue
 		}
+
 		switch v.Kind() {
 		case reflect.Struct:
 			BindEnvs(config, v.Interface(), append(parts, tv)...)
@@ -116,7 +124,6 @@ type Config struct {
 	NoHeader      bool   `mapstructure:"noheader" json:"noheader"`
 	WebsiteURL    string `mapstructure:"website_url" json:"website_url"`
 	OldWebsiteURL string `mapstructure:"website_old_url" json:"website_old_url"`
-	TempFolder    string `mapstructure:"temp_folder" json:"temp_folder"`
 	CdnURL        string `mapstructure:"cdn_url" json:"cdn_url"`
 
 	K8S struct {
@@ -151,23 +158,17 @@ type Config struct {
 	} `mapstructure:"monitoring" json:"monitoring"`
 
 	Http struct {
-		Type          string `mapstructure:"type" json:"type"`
-		Addr          string `mapstructure:"uri" json:"uri"`
+		Addr          string `mapstructure:"addr" json:"addr"`
 		VersionSuffix string `mapstructure:"version_suffix" json:"version_suffix"`
 		Ports         struct {
 			GQL  int `mapstructure:"gql" json:"gql"`
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
-		OauthRedirectURI string `mapstructure:"oauth_redirect_uri" json:"oauth_redirect_uri"`
-		Cookie           struct {
-			Domain string `mapstructure:"cookie_domain" json:"cookie_domain"`
-			Secure bool   `mapstructure:"cookie_secure" json:"cookie_secure"`
-		}
-		Quota struct {
-			DefaultLimit  int32 `mapstructure:"quota_default_limit" json:"quota_default_limit"`
-			MaxBadQueries int64 `mapstructure:"quota_max_bad_queries" json:"quota_max_bad_queries"`
-		}
+		Cookie struct {
+			Domain string `mapstructure:"domain" json:"domain"`
+			Secure bool   `mapstructure:"secure" json:"secure"`
+		} `mapstructure:"cookie" json:"cookie"`
 	} `mapstructure:"http" json:"http"`
 
 	Platforms struct {
@@ -178,23 +179,32 @@ type Config struct {
 		} `mapstructure:"twitch" json:"twitch"`
 	} `mapstructure:"platforms" json:"platforms"`
 
-	ImageLimits struct {
+	Limits struct {
+		Quota struct {
+			DefaultLimit  int32 `mapstructure:"default_limit" json:"default_limit"`
+			MaxBadQueries int64 `mapstructure:"max_bad_queries" json:"max_bad_queries"`
+		} `mapstructure:"quota" json:"quota"`
+
 		Emotes struct {
 			MaxProcessingTimeSeconds int `mapstructure:"max_processing_time_seconds" json:"max_processing_time_seconds"`
 			MaxWidth                 int `mapstructure:"max_width" json:"max_width"`
 			MaxHeight                int `mapstructure:"max_height" json:"max_height"`
 			MaxFrameCount            int `mapstructure:"max_frame_count" json:"max_frame_count"`
+			MaxTags                  int `mapstructure:"max_tags" json:"max_tags"`
 		} `mapstructure:"emotes" json:"emotes"`
-	} `mapstructure:"image_limits" json:"image_limits"`
+	} `mapstructure:"limits" json:"limits"`
 
 	MessageQueue struct {
-		Mode                           MessageQueueMode `mapstructure:"mode" json:"mode"`
-		ImageProcessorJobsQueueName    string           `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
-		ImageProcessorResultsQueueName string           `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
-		RMQ                            struct {
+		Mode MessageQueueMode `mapstructure:"mode" json:"mode"`
+
+		ImageProcessorJobsQueueName    string `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
+		ImageProcessorResultsQueueName string `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
+
+		RMQ struct {
 			URI                  string `mapstructure:"uri" json:"uri"`
 			MaxReconnectAttempts int    `mapstructure:"max_reconnect_attempts" json:"max_reconnect_attempts"`
 		} `mapstructure:"rmq" json:"rmq"`
+
 		SQS struct {
 			Region           string `mapstructure:"region" json:"region"`
 			AccessToken      string `mapstructure:"access_token" json:"access_token"`
@@ -211,13 +221,6 @@ type Config struct {
 		PublicBucket   string `mapstructure:"public_bucket" json:"public_bucket"`
 		Endpoint       string `mapstructure:"endpoint" json:"endpoint"`
 	} `mapstructure:"s3" json:"s3"`
-
-	Auth struct {
-		Platforms []struct {
-			Name    string `mapstructure:"name" json:"name"`
-			Enabled bool   `mapstructure:"enabled" json:"enabled"`
-		} `mapstructure:"platforms" json:"platforms"`
-	} `mapstructure:"auth" json:"auth"`
 
 	Credentials struct {
 		JWTSecret string `mapstructure:"jwt_secret" json:"jwt_secret"`

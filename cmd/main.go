@@ -40,6 +40,7 @@ var (
 
 func init() {
 	debug.SetGCPercent(2000)
+
 	if i, err := strconv.Atoi(Unix); err == nil {
 		Time = time.Unix(int64(i), 0).Format(time.RFC3339)
 	}
@@ -175,13 +176,16 @@ func main() {
 
 	if gCtx.Config().Health.Enabled {
 		wg.Add(1)
+
 		go func() {
 			defer wg.Done()
 			<-health.New(gCtx)
 		}()
 	}
+
 	if gCtx.Config().Monitoring.Enabled {
 		wg.Add(1)
+
 		go func() {
 			defer wg.Done()
 			<-monitoring.New(gCtx)
@@ -189,9 +193,11 @@ func main() {
 	}
 
 	done := make(chan struct{})
+
 	go func() {
 		<-sig
 		cancel()
+
 		go func() {
 			select {
 			case <-time.After(time.Minute):
@@ -207,9 +213,11 @@ func main() {
 		close(done)
 	}()
 
-	wg.Add(1)
+	wg.Add(2)
+
 	go func() {
 		defer wg.Done()
+
 		if err := rest.New(gCtx); err != nil {
 			zap.S().Fatalw("rest failed",
 				"error", err,
@@ -217,9 +225,9 @@ func main() {
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		if err := gql.New(gCtx); err != nil {
 			zap.S().Fatalw("gql failed",
 				"error", err,

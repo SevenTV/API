@@ -22,26 +22,33 @@ func New(r types.Resolver) generated.EmoteResolver {
 	}
 }
 
-const EMOTE_CHANNEL_QUERY_SIZE_MOST = 50
-const EMOTE_CHANNEL_QUERY_PAGE_CAP = 500
+const (
+	EMOTE_CHANNEL_QUERY_SIZE_MOST = 50
+	EMOTE_CHANNEL_QUERY_PAGE_CAP  = 500
+)
 
 func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int, limitArg *int) ([]*model.UserPartial, error) {
 	limit := EMOTE_CHANNEL_QUERY_SIZE_MOST
 	if limitArg != nil {
 		limit = *limitArg
 	}
+
 	if limit > EMOTE_CHANNEL_QUERY_SIZE_MOST {
 		limit = EMOTE_CHANNEL_QUERY_SIZE_MOST
 	} else if limit < 1 {
 		return nil, errors.ErrInvalidRequest().SetDetail("limit cannot be less than 1")
 	}
+
 	page := 1
+
 	if pageArg != nil {
 		page = *pageArg
 	}
+
 	if page < 1 {
 		page = 1
 	}
+
 	if page > EMOTE_CHANNEL_QUERY_PAGE_CAP {
 		return nil, errors.ErrInvalidRequest().SetFields(errors.Fields{
 			"PAGE":  strconv.Itoa(page),
@@ -53,6 +60,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 	if err != nil {
 		return nil, err
 	}
+
 	users, _, err := r.Ctx.Inst().Query.EmoteChannels(ctx, emoteID, page, limit)
 	if err != nil {
 		return nil, err
@@ -62,5 +70,6 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 	for i, u := range users {
 		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 	}
+
 	return result, nil
 }

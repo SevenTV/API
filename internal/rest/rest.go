@@ -27,10 +27,11 @@ func New(gCtx global.Context) error {
 
 	s := HttpServer{}
 
-	s.listener, err = net.Listen(gCtx.Config().Http.Type, fmt.Sprintf("%s:%d", gCtx.Config().Http.Addr, port))
+	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", gCtx.Config().Http.Addr, port))
 	if err != nil {
 		return err
 	}
+
 	s.router = router.New()
 
 	// Add versions
@@ -92,6 +93,7 @@ func New(gCtx global.Context) error {
 	// Gracefully exit when the global context is canceled
 	go func() {
 		<-gCtx.Done()
+
 		_ = srv.Shutdown()
 	}()
 

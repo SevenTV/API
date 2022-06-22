@@ -33,6 +33,7 @@ func (r *ResolverPartial) Role(ctx context.Context, obj *model.UserPartial) (*mo
 			obj.Role = helpers.RoleStructureToModel(structures.NilRole)
 		}
 	}
+
 	return obj.Role, nil
 }
 
@@ -43,16 +44,19 @@ func (r *ResolverPartial) EmoteIds(ctx context.Context, obj *model.UserPartial) 
 	}
 
 	result := []string{}
+
 	emoteSets, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		if errors.Compare(err, errors.ErrUnknownEmoteSet()) { // return empty result if emote set not found
 			return result, nil
 		}
+
 		return result, err
 	}
 
 	for _, e := range emoteSets.Emotes {
 		result = append(result, e.ID.Hex())
 	}
+
 	return result, nil
 }

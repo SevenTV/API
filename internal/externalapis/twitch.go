@@ -18,6 +18,7 @@ func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]helix.User,
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Add("Client-Id", gCtx.Config().Platforms.Twitch.ClientID)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 

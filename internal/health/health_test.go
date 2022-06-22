@@ -27,6 +27,9 @@ func TestHealth(t *testing.T) {
 	gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigMock{})
 	testutil.IsNil(t, err, "mq init successful")
 
+	mq, _ := gCtx.Inst().MessageQueue.(*messagequeue.InstanceMock)
+	s3, _ := gCtx.Inst().S3.(*s3.MockInstance)
+
 	// TODO we need to mock redis :-)
 	// gCtx.Inst().Redis, err = redis.NewMock()
 	// testutil.IsNil(t, err, "redis init successful")
@@ -41,21 +44,24 @@ func TestHealth(t *testing.T) {
 
 	resp, err := http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusOK, resp.StatusCode, "response code all up")
 
-	gCtx.Inst().MessageQueue.(*messagequeue.InstanceMock).SetConnected(false)
+	mq.SetConnected(false)
 
 	resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code rmq down")
 
-	gCtx.Inst().MessageQueue.(*messagequeue.InstanceMock).SetConnected(true)
-	gCtx.Inst().S3.(*s3.MockInstance).SetConnected(false)
+	mq.SetConnected(true)
+	s3.SetConnected(false)
 
 	resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code s3 down")
 

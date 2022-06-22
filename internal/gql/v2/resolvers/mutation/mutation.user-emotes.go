@@ -27,6 +27,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	// Parse passed arguments
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -67,6 +68,7 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	// Parse passed arguments
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -82,6 +84,7 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	if err != nil {
 		return nil, errors.ErrUnknownEmoteSet()
 	}
+
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
 	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
 		"_id": twConn.EmoteSetID,
@@ -112,6 +115,7 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	// Parse passed arguments
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -127,6 +131,7 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	if err != nil {
 		return nil, errors.ErrUnknownEmoteSet()
 	}
+
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
 	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
 		"_id": twConn.EmoteSetID,
@@ -161,6 +166,7 @@ func (r *Resolver) doSetChannelEmote(
 		zap.S().Errorw("failed to update emotes in set",
 			"error", err,
 		)
+
 		return err
 	}
 
@@ -168,5 +174,6 @@ func (r *Resolver) doSetChannelEmote(
 	go func() {
 		events.Publish(r.Ctx, "emote_sets", b.EmoteSet.ID)
 	}()
+
 	return nil
 }

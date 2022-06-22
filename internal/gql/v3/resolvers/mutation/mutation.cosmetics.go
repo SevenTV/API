@@ -19,14 +19,17 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 	if def.Color != nil {
 		mainColor = *def.Color
 	}
+
 	angle := 90
 	if def.Angle != nil {
 		angle = *def.Angle
 	}
+
 	shape := ""
 	if def.Shape != nil {
 		shape = *def.Shape
 	}
+
 	imgURL := ""
 	if def.ImageURL != nil {
 		imgURL = *def.ImageURL
@@ -72,8 +75,11 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 		zap.S().Errorw("failed to create new paint cosmetic",
 			"error", err,
 		)
+
 		return primitive.NilObjectID, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	return result.InsertedID.(primitive.ObjectID), nil
+	id, _ := result.InsertedID.(primitive.ObjectID)
+
+	return id, nil
 }

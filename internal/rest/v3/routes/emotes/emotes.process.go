@@ -41,18 +41,23 @@ func (epl *EmoteProcessingListener) Listen() {
 	}
 
 	evt := task.Result{}
+
 	var msg *messagequeue.IncomingMessage
+
 	for msg = range messages {
 		if msg.Headers().ContentType() == "application/json" {
 			if err := json.Unmarshal(msg.Body(), &evt); err != nil {
 				zap.S().Errorw("bad message type from queue",
 					"msg", msg,
 				)
+
 				continue
 			}
+
 			go func() {
 				tick := time.NewTicker(time.Second * 10)
 				ctx, cancel := context.WithCancel(epl.Ctx)
+
 				defer cancel()
 				defer tick.Stop()
 
@@ -63,10 +68,12 @@ func (epl *EmoteProcessingListener) Listen() {
 								"error", err,
 							)
 							cancel()
+
 							return
 						}
 					}
 				}()
+
 				if err := epl.HandleResultEvent(ctx, evt); err != nil {
 					zap.S().Errorw("failed to handle result",
 						"error", multierr.Append(err, msg.Requeue(context.Background())),
@@ -93,6 +100,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	// Fetch the emote
 	eb := structures.NewEmoteBuilder(structures.Emote{})
 	id, err := primitive.ObjectIDFromHex(evt.ID)
+
 	if err != nil {
 		return err
 	}

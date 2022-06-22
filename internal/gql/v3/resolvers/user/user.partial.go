@@ -27,10 +27,12 @@ func (r *ResolverPartial) Roles(ctx context.Context, obj *model.UserPartial) ([]
 	for _, rol := range obj.Roles {
 		m[rol.ID] = rol
 	}
+
 	for _, rol := range defaults {
 		if _, ok := m[rol.ID]; ok {
 			continue
 		}
+
 		m[rol.ID] = helpers.RoleStructureToModel(rol)
 	}
 
@@ -38,10 +40,12 @@ func (r *ResolverPartial) Roles(ctx context.Context, obj *model.UserPartial) ([]
 	for _, rol := range m {
 		result = append(result, rol)
 	}
+
 	sort.Slice(result, func(i, j int) bool {
 		a := result[i]
 		b := result[j]
 		return a.Position > b.Position
 	})
+
 	return result, nil
 }

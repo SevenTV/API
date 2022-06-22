@@ -27,6 +27,7 @@ func Auth(gCtx global.Context) Middleware {
 		if len(s) != 2 {
 			return errors.ErrUnauthorized().SetDetail("Bad Authorization Header")
 		}
+
 		t := s[1]
 
 		user, err := DoAuth(gCtx, t)
@@ -35,6 +36,7 @@ func Auth(gCtx global.Context) Middleware {
 		}
 
 		ctx.SetUserValue("user", user)
+
 		return nil
 	}
 }
@@ -42,6 +44,7 @@ func Auth(gCtx global.Context) Middleware {
 func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 	// Verify the token
 	claims := &auth.JWTClaimUser{}
+
 	_, err := auth.VerifyJWT(ctx.Config().Credentials.JWTSecret, strings.Split(t, "."), claims)
 	if err != nil {
 		return nil, errors.ErrUnauthorized().SetDetail(err.Error())
@@ -51,6 +54,7 @@ func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 	if claims.UserID == "" {
 		return nil, errors.ErrUnauthorized().SetDetail("Bad Token")
 	}
+
 	userID, err := primitive.ObjectIDFromHex(claims.UserID)
 	if err != nil {
 		return nil, errors.ErrUnauthorized().SetDetail(err.Error())
@@ -72,6 +76,7 @@ func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 	if err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail("Failed")
 	}
+
 	if ban, noAuth := bans.NoAuth[userID]; noAuth {
 		return nil, errors.ErrInsufficientPrivilege().SetDetail("You are banned!").SetFields(errors.Fields{
 			"ban": map[string]string{
@@ -80,6 +85,7 @@ func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 			},
 		})
 	}
+
 	if _, noRights := bans.NoPermissions[userID]; noRights {
 		user.Roles = []structures.Role{structures.RevocationRole}
 	}

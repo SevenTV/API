@@ -41,9 +41,11 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 				for _, u := range users {
 					switch keyName {
 					case "username":
-						m[utils.ToAny(u.Username).(T)] = u
+						v, _ := utils.ToAny(u.Username).(T)
+						m[v] = u
 					default:
-						m[utils.ToAny(u.ID).(T)] = u
+						v, _ := utils.ToAny(u.ID).(T)
+						m[v] = u
 					}
 				}
 

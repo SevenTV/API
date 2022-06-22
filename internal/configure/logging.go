@@ -12,6 +12,7 @@ func initLogging(level string) {
 	log.SetOutput(io.Discard)
 
 	var lvl zapcore.Level
+
 	switch level {
 	case "debug":
 		lvl = zap.DebugLevel

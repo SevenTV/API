@@ -34,6 +34,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 	if err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	if len(emotes) == 0 {
 		return nil, errors.ErrUnknownEmote()
 	}
@@ -46,16 +47,20 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 	if opt.Name != nil {
 		eb.SetName(*opt.Name)
 	}
+
 	if opt.OwnerID != nil {
 		ownerID, err := primitive.ObjectIDFromHex(*opt.OwnerID)
 		if err != nil {
 			return nil, errors.ErrBadObjectID()
 		}
+
 		eb.SetOwnerID(ownerID)
 	}
+
 	if opt.Tags != nil {
 		eb.SetTags(opt.Tags, true)
 	}
+
 	if opt.Visibility != nil {
 		vis := int64(*opt.Visibility)
 		flags := emote.Flags
@@ -66,6 +71,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 			for i, ver := range emote.Versions {
 				targetIDs[i] = ver.ID
 			}
+
 			result, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
 				Actor: actor,
 				Targets: map[structures.ObjectKind]bool{
@@ -87,6 +93,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 					return err
 				}
 			}
+
 			return nil
 		}
 
@@ -95,6 +102,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 			if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 				return nil, errors.ErrInsufficientPrivilege().SetDetail("Not allowed to list this emote")
 			}
+
 			version.State.Listed = true
 			eb.UpdateVersion(version.ID, version)
 
@@ -165,6 +173,7 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	if err != nil {
 		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	if len(emotes) == 0 {
 		return nil, errors.ErrUnknownEmote()
 	}

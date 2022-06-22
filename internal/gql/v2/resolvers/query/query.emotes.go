@@ -57,6 +57,7 @@ func (r *Resolver) SearchEmotes(
 	if limitArg != nil {
 		limit = *limitArg
 	}
+
 	if limit > query.EMOTES_QUERY_LIMIT {
 		limit = query.EMOTES_QUERY_LIMIT
 	}
@@ -65,6 +66,7 @@ func (r *Resolver) SearchEmotes(
 	if sortByArg == nil {
 		sortByArg = utils.PointerOf("popularity")
 	}
+
 	if sortOrderArg == nil {
 		sortOrderArg = utils.PointerOf(0)
 	}
@@ -72,6 +74,7 @@ func (r *Resolver) SearchEmotes(
 	sortField, validField := sortFieldMap[*sortByArg]
 	sortOrder, validOrder := sortOrderMap[*sortOrderArg]
 	sortMap := bson.M{}
+
 	if validField && validOrder {
 		sortMap = bson.M{sortField: sortOrder}
 	}
@@ -79,6 +82,7 @@ func (r *Resolver) SearchEmotes(
 	// Global State
 	filterDoc := bson.M{}
 	onlyListed := true
+
 	if globalStateArg != nil && *globalStateArg != "include" {
 		set, err := r.Ctx.Inst().Query.GlobalEmoteSet(ctx)
 		if err == nil {
@@ -95,12 +99,17 @@ func (r *Resolver) SearchEmotes(
 			}
 		}
 	}
+
 	if filterArg != nil {
-		var vis int32
-		var visc int32
+		var (
+			vis  int32
+			visc int32
+		)
+
 		if filterArg.Visibility != nil {
 			vis = int32(*filterArg.Visibility)
 		}
+
 		if filterArg.VisibilityClear != nil {
 			visc = int32(*filterArg.VisibilityClear)
 		}
@@ -121,6 +130,7 @@ func (r *Resolver) SearchEmotes(
 
 			// Fetch emotes
 			emoteIDs := make([]primitive.ObjectID, len(result))
+
 			for i, msg := range result {
 				if msg, err := structures.ConvertMessage[structures.MessageDataModRequest](msg); err == nil {
 					emoteIDs[i] = msg.Data.TargetID
@@ -149,6 +159,7 @@ func (r *Resolver) SearchEmotes(
 	}
 
 	models := make([]*model.Emote, len(result))
+
 	for i, e := range result {
 		// Bring forward the latest version
 		if len(e.Versions) > 0 {
@@ -157,6 +168,7 @@ func (r *Resolver) SearchEmotes(
 				e.ID = ver.ID
 			}
 		}
+
 		models[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 	}
 
@@ -164,6 +176,7 @@ func (r *Resolver) SearchEmotes(
 	if rctx != nil {
 		rctx.Response.Header.Set("X-Collection-Size", strconv.Itoa(totalCount))
 	}
+
 	return models, nil
 }
 

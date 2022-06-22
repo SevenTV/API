@@ -80,6 +80,7 @@ func New(gCtx global.Context) <-chan struct{} {
 		zap.S().Infow("Health enabled",
 			"bind", gCtx.Config().Health.Bind,
 		)
+
 		if err := srv.ListenAndServe(gCtx.Config().Health.Bind); err != nil {
 			zap.S().Fatalw("failed to bind health",
 				"error", err,
@@ -89,6 +90,7 @@ func New(gCtx global.Context) <-chan struct{} {
 
 	go func() {
 		<-gCtx.Done()
+
 		_ = srv.Shutdown()
 	}()
 

@@ -48,6 +48,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	state := utils.B2S(ctx.QueryArgs().Peek("state"))
 	if state == "" {
 		ctx.SetStatusCode(rest.BadRequest)
+
 		return errors.ErrMissingRequiredField().SetFields(errors.Fields{"query": "state"})
 	}
 
@@ -55,19 +56,24 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	csrfToken := strings.Split(utils.B2S(ctx.Request.Header.Cookie(TWITCH_CSRF_COOKIE_NAME)), ".")
 	if len(csrfToken) != 3 {
 		ctx.SetStatusCode(rest.BadRequest)
+
 		return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Bad State (found %d segments when 3 were expected)", len(csrfToken)))
 	}
 
 	// Verify the token
 	csrfClaim := &auth.JWTClaimOAuth2CSRF{}
+
 	token, err := auth.VerifyJWT(r.Ctx.Config().Credentials.JWTSecret, csrfToken, csrfClaim)
 	if err != nil {
 		zap.S().Errorw("jwt",
 			"error", err,
 		)
+
 		ctx.SetStatusCode(rest.BadRequest)
+
 		return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
 	}
+
 	{
 		b, err := json.Marshal(token.Claims)
 		if err != nil {
@@ -76,6 +82,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 			)
 
 			ctx.SetStatusCode(rest.BadRequest)
+
 			return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
 		}
 
@@ -83,7 +90,9 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 			zap.S().Errorw("json",
 				"error", err,
 			)
+
 			ctx.SetStatusCode(rest.BadRequest)
+
 			return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
 		}
 	}
@@ -123,7 +132,9 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("querystring",
 			"error", err,
 		)
+
 		ctx.SetStatusCode(rest.InternalServerError)
+
 		return errors.ErrInternalServerError()
 	}
 
@@ -133,7 +144,9 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("twitch",
 			"error", err,
 		)
+
 		ctx.SetStatusCode(rest.InternalServerError)
+
 		return errors.ErrInternalServerError().SetDetail("Internal Request to External Provider Failed")
 	}
 
@@ -146,6 +159,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
@@ -170,7 +184,9 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("ReadRequestResponse",
 			"error", err,
 		)
+
 		ctx.SetStatusCode(rest.InternalServerError)
+
 		return errors.ErrInternalServerError().SetDetail("Failed to decode data sent by the External Provider")
 	}
 
@@ -180,15 +196,19 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("Twitch, GetUsers",
 			"error", err,
 		)
+
 		ctx.SetStatusCode(rest.InternalServerError)
+
 		return errors.ErrInternalServerError().SetDetail("Couldn't fetch user data from the External Provider")
 	}
+
 	if len(users) == 0 {
 		ctx.SetStatusCode(rest.InternalServerError)
+
 		return errors.ErrInternalServerError().SetDetail("No user data response from the External Provider")
 	}
-	twUser := users[0]
 
+	twUser := users[0]
 	// Create a new User
 	ub := structures.NewUserBuilder(structures.User{
 		RoleIDs:     []structures.ObjectID{},
@@ -220,9 +240,10 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	var userID primitive.ObjectID
 	{
 		// Find user
-		if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+		err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 			"connections.id": twUser.ID,
-		}).Decode(&ub.User); err == mongo.ErrNoDocuments {
+		}).Decode(&ub.User)
+		if err == mongo.ErrNoDocuments {
 			// User doesn't yet exist: create it
 			ub.SetUsername(twUser.Login).
 				SetDisplayName(twUser.DisplayName).
@@ -237,14 +258,16 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 					"error", err,
 				)
 				ctx.SetStatusCode(rest.InternalServerError)
-				return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 
+				return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 			}
-			userID = r.InsertedID.(primitive.ObjectID)
+
+			userID, _ = r.InsertedID.(primitive.ObjectID)
 		} else if err != nil {
 			zap.S().Errorw("mongo",
 				"error", err,
 			)
+
 			return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 		} else if len(ub.Update) > 0 {
 			// User exists; update
@@ -255,8 +278,10 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 				zap.S().Errorw("mongo",
 					"error", err,
 				)
+
 				return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 			}
+
 			userID = ub.User.ID
 		} else {
 			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
@@ -266,9 +291,11 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 				if err == mongo.ErrNoDocuments {
 					return errors.ErrUnknownUser()
 				}
+
 				zap.S().Errorw("mongo",
 					"error", err,
 				)
+
 				return errors.ErrInternalServerError().SetDetail(err.Error())
 			}
 			userID = ub.User.ID
@@ -277,6 +304,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Generate an access token for the user
 	tokenTTL := time.Now().Add(time.Hour * 168)
+
 	userToken, err := auth.SignJWT(r.Ctx.Config().Credentials.JWTSecret, &auth.JWTClaimUser{
 		UserID:       userID.Hex(),
 		TokenVersion: ub.User.TokenVersion,
@@ -291,6 +319,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("jwt",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(fmt.Sprintf("Token Sign Failure (%s)", err.Error()))
 	}
 
@@ -312,6 +341,8 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	if csrfClaim.OldRedirect {
 		websiteURL = r.Ctx.Config().OldWebsiteURL
 	}
+
 	ctx.Redirect(fmt.Sprintf("%s/oauth2?%s", websiteURL, params.Encode()), int(rest.Found))
+
 	return nil
 }

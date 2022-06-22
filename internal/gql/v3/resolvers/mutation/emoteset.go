@@ -26,6 +26,7 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 	if input.Privileged != nil && *input.Privileged {
 		isPrivileged = true
 	}
+
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{}).
 		SetName(input.Name).
 		SetPrivileged(isPrivileged).

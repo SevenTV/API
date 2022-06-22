@@ -73,6 +73,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	req := &ctx.Request
+
 	var (
 		name  string
 		tags  []string
@@ -111,8 +112,8 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	// Validate: Tags
 	{
 		uniqueTags := map[string]bool{}
-		if len(args.Tags) > MAX_TAGS {
-			return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Too many emote tags %d when the max is %d", len(args.Tags), MAX_TAGS))
+		if len(args.Tags) > r.Ctx.Config().Limits.Emotes.MaxTags {
+			return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Too many emote tags %d when the max is %d", len(args.Tags), r.Ctx.Config().Limits.Emotes.MaxTags))
 		}
 
 		for _, v := range args.Tags {
@@ -211,14 +212,16 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			zap.S().Errorw("mongo, failed to create pending emote in DB",
 				"error", err,
 			)
+
 			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
 		}
 	} else {
 		if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).UpdateByID(ctx, *args.ParentID, eb.Update); err != nil {
 			zap.S().Errorw("mongo, failed to add version of emote in DB",
 				"error", err,
-				"PARENT_EMOTE_ID", (*args.ParentID).Hex(),
+				"PARENT_EMOTE_ID", args.ParentID.Hex(),
 			)
+
 			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
 		}
 	}
@@ -237,6 +240,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("failed to upload image to s3",
 			"error", err,
 		)
+
 		return errors.ErrMissingInternalDependency().SetDetail("Failed to establish connection with the CDN Service")
 	}
 
@@ -258,10 +262,10 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		Scales:            []int{1, 2, 3, 4},
 		ResizeRatio:       task.ResizeRatioNothing,
 		Limits: task.TaskLimits{
-			MaxProcessingTime: time.Duration(r.Ctx.Config().ImageLimits.Emotes.MaxProcessingTimeSeconds) * time.Second,
-			MaxFrameCount:     r.Ctx.Config().ImageLimits.Emotes.MaxFrameCount,
-			MaxWidth:          r.Ctx.Config().ImageLimits.Emotes.MaxWidth,
-			MaxHeight:         r.Ctx.Config().ImageLimits.Emotes.MaxHeight,
+			MaxProcessingTime: time.Duration(r.Ctx.Config().Limits.Emotes.MaxProcessingTimeSeconds) * time.Second,
+			MaxFrameCount:     r.Ctx.Config().Limits.Emotes.MaxFrameCount,
+			MaxWidth:          r.Ctx.Config().Limits.Emotes.MaxWidth,
+			MaxHeight:         r.Ctx.Config().Limits.Emotes.MaxHeight,
 		},
 	})
 	if err == nil {
@@ -281,6 +285,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			Body: taskData,
 		})
 	}
+
 	if err != nil {
 		zap.S().Errorw("failed to marshal task",
 			"error", err,
@@ -300,13 +305,6 @@ type createData struct {
 	Tags        []string             `json:"tags"`
 	Flags       structures.EmoteFlag `json:"flags"`
 }
-
-const (
-	MAX_FRAMES = 750
-	MAX_WIDTH  = 1000
-	MAX_HEIGHT = 1000
-	MAX_TAGS   = 6
-)
 
 var (
 	emoteNameRegex = regexp.MustCompile(`^[-_A-Za-z():0-9]{2,100}$`)

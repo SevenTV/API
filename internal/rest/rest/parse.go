@@ -21,15 +21,10 @@ func (p *Param) String() (string, bool) {
 	if p.v == nil {
 		return "", false
 	}
-	var s string
-	switch t := p.v.(type) {
-	case string:
-		s = t
-	default:
-		return "", false
-	}
 
-	return s, true
+	s, ok := p.v.(string)
+
+	return s, ok
 }
 
 // Int32 parses the param into an int32
@@ -43,6 +38,7 @@ func (p *Param) Int32() (int32, error) {
 	if err != nil {
 		return 0, errors.ErrBadInt().SetDetail(err.Error())
 	}
+
 	return int32(i), nil
 }
 
@@ -57,6 +53,7 @@ func (p *Param) Int64() (int64, error) {
 	if err != nil {
 		return 0, errors.ErrBadInt().SetDetail(err.Error())
 	}
+
 	return int64(i), nil
 }
 
@@ -71,6 +68,7 @@ func (p *Param) ObjectID() (primitive.ObjectID, error) {
 	if err != nil {
 		return primitive.NilObjectID, errors.ErrBadObjectID().SetDetail(err.Error())
 	}
+
 	return oid, nil
 }
 
@@ -82,5 +80,6 @@ func (p *Param) User() *structures.User {
 	default:
 		return nil
 	}
+
 	return u
 }

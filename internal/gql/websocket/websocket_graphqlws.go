@@ -75,10 +75,12 @@ func (me graphqlwsMessageExchanger) Send(m *message) error {
 
 func (t *graphqlwsMessageType) UnmarshalText(text []byte) (err error) {
 	var found bool
+
 	for _, candidate := range allGraphqlwsMessageTypes {
 		if string(candidate) == string(text) {
 			*t = candidate
 			found = true
+
 			break
 		}
 	}
@@ -154,6 +156,7 @@ func (t *graphqlwsMessageType) fromMessageType(mt messageType) (err error) {
 
 func (m graphqlwsMessage) toMessage() (message, error) {
 	mt, err := m.Type.toMessageType()
+
 	return message{
 		payload: m.Payload,
 		id:      m.ID,
@@ -165,5 +168,6 @@ func (m *graphqlwsMessage) fromMessage(msg *message) (err error) {
 	err = m.Type.fromMessageType(msg.t)
 	m.ID = msg.id
 	m.Payload = msg.payload
+
 	return err
 }

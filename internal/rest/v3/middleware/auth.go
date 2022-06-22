@@ -20,13 +20,16 @@ func Auth(gCtx global.Context) rest.Middleware {
 		// Parse token from header
 		h := utils.B2S(ctx.Request.Header.Peek("Authorization"))
 		s := strings.Split(h, "Bearer ")
+
 		if len(s) != 2 {
 			return errors.ErrUnauthorized().SetFields(errors.Fields{"message": "Bad Authorization Header"})
 		}
+
 		t := s[1]
 
 		// Verify the token
 		claims := &auth.JWTClaimUser{}
+
 		_, err := auth.VerifyJWT(gCtx.Config().Credentials.JWTSecret, strings.Split(t, "."), claims)
 		if err != nil {
 			return errors.ErrUnauthorized().SetFields(errors.Fields{"message": err.Error()})
@@ -36,6 +39,7 @@ func Auth(gCtx global.Context) rest.Middleware {
 		if claims.UserID == "" {
 			return errors.ErrUnauthorized().SetFields(errors.Fields{"message": "Bad Token"})
 		}
+
 		userID, err := primitive.ObjectIDFromHex(claims.UserID)
 		if err != nil {
 			return errors.ErrUnauthorized().SetFields(errors.Fields{"message": err.Error()})
@@ -57,6 +61,7 @@ func Auth(gCtx global.Context) rest.Middleware {
 		if err != nil {
 			return errors.From(err)
 		}
+
 		if ban, noAuth := bans.NoAuth[userID]; noAuth {
 			return errors.ErrInsufficientPrivilege().
 				SetDetail("You are banned").
@@ -65,11 +70,13 @@ func Auth(gCtx global.Context) rest.Middleware {
 					"ban_expire_date": ban.ExpireAt.Format(time.RFC3339),
 				})
 		}
+
 		if _, noRights := bans.NoPermissions[userID]; noRights {
 			user.Roles = []structures.Role{structures.RevocationRole}
 		}
 
 		ctx.SetActor(&user)
+
 		return nil
 	}
 }

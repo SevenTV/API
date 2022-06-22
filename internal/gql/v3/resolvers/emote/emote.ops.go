@@ -34,9 +34,11 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	if err != nil {
 		return nil, err
 	}
+
 	if len(emotes) == 0 {
 		return nil, errors.ErrUnknownEmote()
 	}
+
 	emote := emotes[0]
 	ver, _ := emote.GetVersion(obj.ID)
 	eb := structures.NewEmoteBuilder(emote)
@@ -45,6 +47,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	if !actor.HasPermission(structures.RolePermissionEditAnyEmote) && ver.IsUnavailable() {
 		return nil, errors.ErrUnknownEmote()
 	}
+
 	if ver.IsProcessing() {
 		return nil, errors.ErrInsufficientPrivilege().SetDetail("Cannot edit emote in a processing state")
 	}
@@ -66,24 +69,30 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		f := structures.EmoteFlag(*params.Flags)
 		eb.SetFlags(f)
 	}
+
 	// Edit listed (version)
 	versionUpdated := false
+
 	if params.Listed != nil {
 		ver.State.Listed = *params.Listed
 		versionUpdated = true
 	}
+
 	if params.VersionName != nil {
 		ver.Name = *params.VersionName
 		versionUpdated = true
 	}
+
 	if params.VersionDescription != nil {
 		ver.Description = *params.VersionDescription
 		versionUpdated = true
 	}
+
 	if params.Deleted != nil {
 		ver.State.Lifecycle = utils.Ternary(*params.Deleted, structures.EmoteLifecycleDeleted, structures.EmoteLifecycleLive)
 		versionUpdated = true
 	}
+
 	if versionUpdated {
 		eb.UpdateVersion(obj.ID, ver)
 	}

@@ -20,6 +20,7 @@ func NewUser(s structures.User) *User {
 		DisplayName: utils.Ternary(s.DisplayName != "", s.DisplayName, s.Username),
 		Role:        NewRole(s.GetHighestRole()),
 	}
+
 	tw, _, err := s.Connections.Twitch()
 	if err != nil {
 		u.TwitchID = tw.ID

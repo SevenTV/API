@@ -34,10 +34,12 @@ func (*emotes) Config() rest.RouteConfig {
 // @Router /users/{user}/emotes [get]
 func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	key, _ := ctx.UserValue("user").String()
+
 	user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(key)
 	if err != nil {
 		return errors.From(err)
 	}
+
 	if user.ID.IsZero() {
 		return errors.ErrUnknownUser()
 	}
@@ -54,6 +56,7 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	result := []*model.Emote{}
+
 	for _, e := range emoteSet.Emotes {
 		if e.Emote != nil {
 			result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))

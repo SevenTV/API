@@ -44,6 +44,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User
 	if err != nil {
 		return nil, err
 	}
+
 	if _, ok := bans.MemoryHole[id]; ok {
 		return nil, errors.ErrUnknownUser()
 	}
@@ -72,11 +73,12 @@ func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
 	for i, rol := range roles {
 		result[i] = helpers.RoleStructureToModel(rol)
 	}
+
 	return result, nil
 }
 
 func (r *Resolver) Role(ctx context.Context, id primitive.ObjectID) (*model.Role, error) {
-	// return loaders.For(ctx).RoleByID.Load(id)
+	// TODO
 	return nil, nil
 }
 
@@ -86,7 +88,7 @@ func (r *Resolver) Reports(ctx context.Context, status *model.ReportStatus, limi
 }
 
 func (r *Resolver) Report(ctx context.Context, id primitive.ObjectID) (*model.Report, error) {
-	// return loaders.For(ctx).ReportByID.Load(id)
+	// TODO
 	return nil, nil
 }
 

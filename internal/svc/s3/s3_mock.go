@@ -64,9 +64,11 @@ func (a *MockInstance) UploadFile(ctx context.Context, opts *s3manager.UploadInp
 	if err != nil {
 		return err
 	}
+
 	if opts.Bucket == nil {
 		return errors.New(s3.ErrCodeNoSuchBucket)
 	}
+
 	if opts.Key == nil {
 		return errors.New(s3.ErrCodeNoSuchKey)
 	}
@@ -89,6 +91,7 @@ func (a *MockInstance) DownloadFile(ctx context.Context, output io.WriterAt, opt
 	if opts.Bucket == nil {
 		return errors.New(s3.ErrCodeNoSuchBucket)
 	}
+
 	if opts.Key == nil {
 		return errors.New(s3.ErrCodeNoSuchKey)
 	}

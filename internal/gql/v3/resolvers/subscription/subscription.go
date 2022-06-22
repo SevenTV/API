@@ -22,6 +22,7 @@ func New(r types.Resolver) generated.SubscriptionResolver {
 func (r *Resolver) subscribe(ctx context.Context, objectType string, id primitive.ObjectID) <-chan string {
 	chKey := r.Ctx.Inst().Redis.ComposeKey("events", fmt.Sprintf("sub:%s:%s", objectType, id.Hex()))
 	subCh := make(chan string, 1)
+
 	go r.Ctx.Inst().Redis.Subscribe(ctx, subCh, chKey)
 
 	go func() {

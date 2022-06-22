@@ -27,6 +27,7 @@ func (r *Resolver) NamedEmoteSet(ctx context.Context, name model.EmoteSetName) (
 		if err != nil {
 			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
 		}
+
 		setID = sys.EmoteSetID
 	}
 

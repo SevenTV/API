@@ -23,11 +23,13 @@ func New(gCtx global.Context) <-chan struct{} {
 	}
 
 	done := make(chan struct{})
+
 	go func() {
 		defer close(done)
 		zap.S().Infow("Monitoring enabled",
 			"bind", gCtx.Config().Monitoring.Bind,
 		)
+
 		if err := server.ListenAndServe(gCtx.Config().Monitoring.Bind); err != nil {
 			zap.S().Fatalw("failed to start monitoring bind",
 				"error", err,
@@ -37,7 +39,9 @@ func New(gCtx global.Context) <-chan struct{} {
 
 	go func() {
 		<-gCtx.Done()
+
 		_ = server.Shutdown()
 	}()
+
 	return done
 }

@@ -76,10 +76,12 @@ func (me graphqltransportwsMessageExchanger) Send(m *message) error {
 
 func (t *graphqltransportwsMessageType) UnmarshalText(text []byte) (err error) {
 	var found bool
+
 	for _, candidate := range allGraphqltransportwsMessageTypes {
 		if string(candidate) == string(text) {
 			*t = candidate
 			found = true
+
 			break
 		}
 	}
@@ -96,8 +98,11 @@ func (t graphqltransportwsMessageType) MarshalText() ([]byte, error) {
 }
 
 func (m graphqltransportwsMessage) toMessage() (message, error) {
-	var t messageType
-	var err error
+	var (
+		t   messageType
+		err error
+	)
+
 	switch m.Type {
 	default:
 		err = fmt.Errorf("invalid client->server message type %s", m.Type)

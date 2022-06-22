@@ -22,7 +22,9 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	if role := s.GetHighestRole(); !role.ID.IsZero() {
 		tagColor = int(role.Color)
 	}
+
 	roles := make([]*model.Role, len(s.Roles))
+
 	for i, v := range s.Roles {
 		roles[i] = RoleStructureToModel(v)
 	}
@@ -42,8 +44,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
-			switch con.Platform {
-			case structures.UserConnectionPlatformTwitch:
+			if con.Platform == structures.UserConnectionPlatformTwitch {
 				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
 					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
 				}
@@ -116,11 +117,13 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 			displayName = s.Data.Title
 		}
 	}
+
 	if err != nil {
 		zap.S().Errorw("couldn't decode user connection",
 			"error", err,
 			"platform", s.Platform,
 		)
+
 		return nil
 	}
 
@@ -161,6 +164,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	sort.Slice(s.Versions, func(i, j int) bool {
 		return s.Versions[i].CreatedAt.After(s.Versions[j].CreatedAt)
 	})
+
 	for _, ver := range s.Versions {
 		if ver.State.Lifecycle < structures.EmoteLifecycleProcessing || ver.IsUnavailable() {
 			continue // skip if lifecycle isn't past pending
@@ -168,6 +172,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 
 		files := ver.GetFiles("", true)
 		vimages := make([]*model.Image, len(files))
+
 		for i, fi := range files {
 			url := fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), fi.Name)
 			img := EmoteFileStructureToModel(&fi, url)
@@ -179,10 +184,12 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 			listed = ver.State.Listed
 			images = vimages
 		}
+
 		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), ver.ArchiveFile.Name))
 		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages, archive)
 		versionCount++
 	}
+
 	if len(versions) != int(versionCount) {
 		versions = versions[0:versionCount]
 	}
@@ -191,6 +198,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	if s.Owner != nil {
 		owner = *s.Owner
 	}
+
 	return &model.Emote{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -228,10 +236,12 @@ func EmoteStructureToPartialModel(m *model.Emote) *model.EmotePartial {
 
 func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.EmoteSet {
 	emotes := make([]*model.ActiveEmote, len(s.Emotes))
+
 	for i, e := range s.Emotes {
 		if e.Emote == nil {
 			e.Emote = &structures.DeletedEmote
 		}
+
 		emotes[i] = &model.ActiveEmote{
 			ID:        e.ID,
 			Name:      e.Name,
@@ -240,6 +250,7 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 			Emote:     EmoteStructureToModel(*e.Emote, cdnURL),
 		}
 	}
+
 	var owner *model.User
 	if s.Owner != nil {
 		owner = UserStructureToModel(*s.Owner, cdnURL)
@@ -283,6 +294,7 @@ func EmoteFileStructureToArchiveModel(s *structures.EmoteFile, url string) *mode
 func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
 	// Transform image format
 	var format model.ImageFormat
+
 	switch s.ContentType {
 	case "image/avif":
 		format = model.ImageFormatAvif
@@ -319,6 +331,7 @@ func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInb
 	if s.Author != nil {
 		author = *s.Author
 	}
+
 	return &model.InboxMessage{
 		ID:           s.ID,
 		Kind:         model.MessageKind(s.Kind.String()),
@@ -340,6 +353,7 @@ func MessageStructureToModRequestModel(s structures.Message[structures.MessageDa
 	if s.Author != nil {
 		author = *s.Author
 	}
+
 	return &model.ModRequestMessage{
 		ID:         s.ID,
 		Kind:       model.MessageKind(s.Kind.String()),

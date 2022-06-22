@@ -36,10 +36,12 @@ func (r *Route) Config() rest.RouteConfig {
 // @Router /users/{user} [get]
 func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	key, _ := ctx.UserValue("user").String()
+
 	user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(key)
 	if err != nil {
 		return errors.From(err)
 	}
+
 	if user.ID.IsZero() {
 		return errors.ErrUnknownUser()
 	}
