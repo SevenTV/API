@@ -140,16 +140,18 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Create the emote in DB
 	eb := structures.NewEmoteBuilder(structures.Emote{
-		ID:    id,
-		Flags: flags,
+		ID:          id,
+		Flags:       flags,
+		ChildrenIDs: []primitive.ObjectID{},
 	})
 
 	fileType := container.Match(body)
-	filekey := fmt.Sprintf("emotes/%s/raw.%s", id.Hex(), fileType.Extension)
+	filekey := fmt.Sprintf("emote/%s/raw.%s", id.Hex(), fileType.Extension)
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
 		Description: args.Description,
+		ImageFiles:  []structures.EmoteFile{},
 		InputFile: structures.EmoteFile{
 			Name:         "original",
 			ContentType:  fileType.MIME.Value,
@@ -213,7 +215,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 				"error", err,
 			)
 
-			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
+			return errors.ErrInternalServerError().SetDetail("Couldn't define initial record")
 		}
 	} else {
 		if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).UpdateByID(ctx, *args.ParentID, eb.Update); err != nil {
@@ -222,7 +224,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 				"PARENT_EMOTE_ID", args.ParentID.Hex(),
 			)
 
-			return errors.ErrInternalServerError().SetDetail("Internal Server Error")
+			return errors.ErrInternalServerError().SetDetail("Couldn't define initial version")
 		}
 	}
 
@@ -252,7 +254,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			Key:    filekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:       path.Join("emotes", id.Hex()),
+			Prefix:       path.Join("emote", id.Hex()),
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
 			ACL:          *s3.AclPublicRead,
 			CacheControl: *s3.DefaultCacheControl,
