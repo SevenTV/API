@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint
+    name: API Lint, Build, Test, Deploy
     runs-on: aws-runner
     env:
       DEPLOY_PROD: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'production') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') }}
@@ -135,20 +135,20 @@ jobs:
         with:
           context: .
           file: docker/partial.Dockerfile
-          cache-from: |
-            type=registry,ref=gha
-          cache-to: |
-            type=registry,ref=gha,mode=max
+          # cache-from: |
+          #   type=registry,ref=gha
+          # cache-to: |
+          #   type=registry,ref=gha,mode=max
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && 'api') || 'api-stage' }}:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && 'api') || 'api-stage' }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
           push: true
 
       - name: Update deployment template
         uses: danielr1996/envsubst-action@1.1.0
         if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         env:
-          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && 'api') || 'api-stage' }}:${{ github.sha }}
+          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
         with:
           input: k8s/${{ (env.DEPLOY_PROD == 'true' && 'production') || 'staging' }}.template.yaml
           output: k8s/deploy.yaml

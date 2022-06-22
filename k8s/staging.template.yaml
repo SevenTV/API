@@ -19,7 +19,7 @@ spec:
             defaultMode: 420
       containers:
         - name: api
-          image: harbor.disembark.dev/staging/api:${IMAGE_TAG}
+          image: ${IMAGE}
           ports:
             - name: gql
               containerPort: 3000
@@ -73,8 +73,6 @@ spec:
             successThreshold: 1
             failureThreshold: 6
           imagePullPolicy: Always
-      imagePullSecrets:
-        - name: regcred
 ---
 apiVersion: v1
 kind: Service
