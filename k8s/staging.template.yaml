@@ -199,7 +199,7 @@ spec:
               service:
                 name: api
                 port:
-                  number: rest
+                  name: rest
   tls:
     - hosts:
         - stage.7tv.io
