@@ -153,6 +153,9 @@ jobs:
           input: k8s/${{ (env.DEPLOY_PROD == 'true' && 'production') || 'staging' }}.template.yaml
           output: k8s/deploy.yaml
 
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v2.0
+
       - name: Deploy to k8s
         if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         env:
