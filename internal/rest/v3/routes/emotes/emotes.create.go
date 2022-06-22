@@ -145,7 +145,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	})
 
 	fileType := container.Match(body)
-	filekey := fmt.Sprintf("original/emotes/%s.%s", id.Hex(), fileType.Extension)
+	filekey := fmt.Sprintf("emotes/%s/raw.%s", id.Hex(), fileType.Extension)
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
