@@ -277,20 +277,31 @@ func EmoteFileStructureToArchiveModel(s *structures.EmoteFile, url string) *mode
 		URL:         url,
 		ContentType: s.ContentType,
 		Size:        int(s.Size),
-		Sha3:        s.SHA3,
 	}
 }
 
 func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
+	// Transform image format
+	var format model.ImageFormat
+	switch s.ContentType {
+	case "image/avif":
+		format = model.ImageFormatAvif
+	case "image/webp":
+		format = model.ImageFormatWebp
+	case "image/gif":
+		format = model.ImageFormatGif
+	case "image/png":
+		format = model.ImageFormatPng
+	}
+
 	return &model.Image{
-		Name:        s.Name,
-		URL:         url,
-		Width:       int(s.Width),
-		Height:      int(s.Height),
-		ContentType: s.ContentType,
-		FrameCount:  int(s.FrameCount),
-		Size:        int(s.Size),
-		Sha3:        s.SHA3,
+		Name:       s.Name,
+		URL:        url,
+		Width:      int(s.Width),
+		Height:     int(s.Height),
+		Format:     format,
+		FrameCount: int(s.FrameCount),
+		Size:       int(s.Size),
 	}
 }
 

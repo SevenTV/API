@@ -1,12 +1,11 @@
 type Image {
   name: String!
-  content_type: String!
+  format: ImageFormat!
   url: String!
   width: Int!
   height: Int!
   frame_count: Int!
   size: Int!
-  sha3: String!
 }
 
 enum ImageFormat {
@@ -21,5 +20,4 @@ type Archive {
   content_type: String!
   url: String!
   size: Int!
-  sha3: String!
 }
