@@ -190,27 +190,49 @@ func RoleStructureToModel(s structures.Role) *model.Role {
 
 	if s.Allowed&structures.RolePermissionCreateEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteCreate)
-	} else if s.Allowed&structures.RolePermissionEditEmote == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionEditEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditOwned)
-	} else if s.Allowed&structures.RolePermissionEditAnyEmote == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionEditAnyEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditAll)
-	} else if s.Allowed&structures.RolePermissionReportCreate == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionReportCreate == 0 {
 		p |= int(v2structures.RolePermissionCreateReports)
-	} else if s.Allowed&structures.RolePermissionManageBans == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionManageBans == 0 {
 		p |= int(v2structures.RolePermissionBanUsers)
-	} else if s.Allowed&structures.RolePermissionSuperAdministrator == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionSuperAdministrator == 0 {
 		p |= int(v2structures.RolePermissionAdministrator)
-	} else if s.Allowed&structures.RolePermissionManageRoles == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionManageRoles == 0 {
 		p |= int(v2structures.RolePermissionManageRoles)
-	} else if s.Allowed&structures.RolePermissionManageUsers == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionManageUsers == 0 {
 		p |= int(v2structures.RolePermissionManageUsers)
-	} else if s.Allowed&structures.RolePermissionManageStack == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionManageStack == 0 {
 		p |= int(v2structures.RolePermissionEditApplicationMeta)
-	} else if s.Allowed&structures.RolePermissionManageCosmetics == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionManageCosmetics == 0 {
 		p |= int(v2structures.RolePermissionManageEntitlements)
-	} else if s.Allowed&structures.RolePermissionFeatureZeroWidthEmoteType == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionFeatureZeroWidthEmoteType == 0 {
 		p |= int(v2structures.EmoteVisibilityZeroWidth)
-	} else if s.Allowed&structures.RolePermissionFeatureProfilePictureAnimation == 0 {
+	}
+
+	if s.Allowed&structures.RolePermissionFeatureProfilePictureAnimation == 0 {
 		p |= int(v2structures.RolePermissionUseCustomAvatars)
 	}
 
