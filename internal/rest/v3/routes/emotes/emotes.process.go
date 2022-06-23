@@ -187,8 +187,22 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 				TargetKind: structures.ObjectKindEmote,
 				TargetID:   id,
 			})
-		if err := epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
+		if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
 			zap.S().Errorw("failed to send mod request message for new emote",
+				"error", err,
+				"EMOTE_ID", id,
+				"ACTOR_ID", eb.Emote.OwnerID,
+			)
+		}
+
+		// Create a new audit log
+		ab := structures.NewAuditLogBuilder(structures.AuditLog{Changes: []*structures.AuditLogChange{}}).
+			SetActor(eb.Emote.OwnerID).
+			SetTargetID(id).
+			SetTargetKind(structures.ObjectKindEmote).
+			SetKind(structures.AuditLogKindCreateEmote)
+		if _, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, ab.AuditLog); err != nil {
+			zap.S().Errorw("failed to create an audit log about the creation of an emote",
 				"error", err,
 				"EMOTE_ID", id,
 				"ACTOR_ID", eb.Emote.OwnerID,
