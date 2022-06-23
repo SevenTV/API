@@ -107,7 +107,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 
 	if err := epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).FindOne(ctx, bson.M{
 		"versions.id": id,
-	}).Decode(eb.Emote); err != nil {
+	}).Decode(&eb.Emote); err != nil {
 		return err
 	}
 
