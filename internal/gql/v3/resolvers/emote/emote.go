@@ -22,6 +22,10 @@ func New(r types.Resolver) generated.EmoteResolver {
 	return &Resolver{r}
 }
 
+func (r *Resolver) Images(ctx context.Context, obj *model.Emote, format []model.ImageFormat) ([]*model.Image, error) {
+	return helpers.FilterImages(obj.Images, format), nil
+}
+
 func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, error) {
 	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
 		return obj.Owner, nil

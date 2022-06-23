@@ -61,8 +61,7 @@ github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY
 github.com/andybalholm/brotli v1.0.4/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0 h1:jfIu9sQUG6Ig+0+Ap1h4unLjW6YQJpKZVmUzxsD4E/Q=
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0/go.mod h1:t2tdKJDJF9BV14lnkjHmOQgcvEKgtqs5a1N3LNdJhGE=
-github.com/aws/aws-sdk-go v1.44.37 h1:KvDxCX6dfJeEDC77U5GPGSP0ErecmNnhDHFxw+NIvlI=
-github.com/aws/aws-sdk-go v1.44.37/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
+github.com/aws/aws-sdk-go v1.44.40 h1:MR0qefjBJrZuXE0VoeKMQFtjS2tUeVpbQNfb7NzQNgI=
 github.com/aws/aws-sdk-go v1.44.40/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
 github.com/aws/aws-sdk-go-v2 v1.16.5 h1:Ah9h1TZD9E2S1LzHpViBO3Jz9FPL5+rmflmb8hXirtI=
 github.com/aws/aws-sdk-go-v2 v1.16.5/go.mod h1:Wh7MEsmEApyL5hrWzpDkba4gwAPc5/piwLVLFnCxp48=
@@ -351,10 +350,6 @@ github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d h1:Q+gqLBOPkFGHyCJx
 github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20220620154016-99e0e6eba719 h1:MNjQyvlGztWsRGXidmjRotB91cflCjAeMaotq9L4ot4=
-github.com/seventv/common v0.0.0-20220620154016-99e0e6eba719/go.mod h1:bnzdJye3QyjqIOlzKg+rzt7py2SGCWgsU6V/OVVAfuc=
-github.com/seventv/common v0.0.0-20220623154049-98efdf558694 h1:sgdC1oZWwDTV0DHLxsaxTkJg8/UoHKpopbLbwKgVlEk=
-github.com/seventv/common v0.0.0-20220623154049-98efdf558694/go.mod h1:OkdKTP7KfHIveCqdDkD9CmMVn6pysV0qn6azfY8BiP0=
 github.com/seventv/common v0.0.0-20220623163529-3b5581d0e237 h1:kEcuaNeQJY7C/RNfJAJ2NTqKbuznqegSnBPXJ9ngs84=
 github.com/seventv/common v0.0.0-20220623163529-3b5581d0e237/go.mod h1:OkdKTP7KfHIveCqdDkD9CmMVn6pysV0qn6azfY8BiP0=
 github.com/seventv/image-processor/go v0.0.0-20220619215755-bfd2b5d58a65 h1:NiF5NkEehA3uBRZ+Z5PtxNDN/bObm2Xr64iazVIKko8=

@@ -18,6 +18,10 @@ func NewPartial(r types.Resolver) generated.EmotePartialResolver {
 	return &ResolverPartial{r}
 }
 
+func (r *ResolverPartial) Images(ctx context.Context, obj *model.EmotePartial, format []model.ImageFormat) ([]*model.Image, error) {
+	return helpers.FilterImages(obj.Images, format), nil
+}
+
 func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*model.User, error) {
 	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
 		return obj.Owner, nil
