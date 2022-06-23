@@ -27,7 +27,7 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 		isPrivileged = true
 	}
 
-	b := structures.NewEmoteSetBuilder(structures.EmoteSet{}).
+	b := structures.NewEmoteSetBuilder(structures.EmoteSet{Emotes: []structures.ActiveEmote{}}).
 		SetName(input.Name).
 		SetPrivileged(isPrivileged).
 		SetOwnerID(actor.ID).
