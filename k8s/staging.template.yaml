@@ -129,7 +129,7 @@ data:
       enabled: true
       bind: 0.0.0.0:9200
 
-    metrics:
+    monitoring:
       enabled: true
       bind: 0.0.0.0:9100
 
@@ -145,14 +145,10 @@ data:
         max_bad_queries: 5
 
     message_queue:
-      mode: SQS
-
+      rmq:
+        max_reconnect_attempts: 10
       sqs:
-        max_retry_attempts: 5
-
-    s3:
-      internal_bucket: 7tv-stage-cdn
-      public_bucket: 7tv-stage-cdn
+        max_retry_attempts: 10
 
     platforms:
       twitch:
