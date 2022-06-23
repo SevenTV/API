@@ -145,7 +145,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	})
 
 	fileType := container.Match(body)
-	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), "raw", fileType.Extension)
+	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("raw.%s", fileType.Extension))
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
