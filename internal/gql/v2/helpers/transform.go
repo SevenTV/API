@@ -188,30 +188,40 @@ func UserStructureToPartialModel(s *model.User) *model.UserPartial {
 func RoleStructureToModel(s structures.Role) *model.Role {
 	p := 0
 
-	switch s.Allowed {
-	case structures.RolePermissionCreateEmote:
+	if s.Allowed&structures.RolePermissionCreateEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteCreate)
-	case structures.RolePermissionEditEmote:
+	}
+	if s.Allowed&structures.RolePermissionEditEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditOwned)
-	case structures.RolePermissionEditAnyEmote:
+	}
+	if s.Allowed&structures.RolePermissionEditAnyEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditAll)
-	case structures.RolePermissionReportCreate:
+	}
+	if s.Allowed&structures.RolePermissionReportCreate == 0 {
 		p |= int(v2structures.RolePermissionCreateReports)
-	case structures.RolePermissionManageBans:
+	}
+	if s.Allowed&structures.RolePermissionManageBans == 0 {
 		p |= int(v2structures.RolePermissionBanUsers)
-	case structures.RolePermissionSuperAdministrator:
+	}
+	if s.Allowed&structures.RolePermissionSuperAdministrator == 0 {
 		p |= int(v2structures.RolePermissionAdministrator)
-	case structures.RolePermissionManageRoles:
+	}
+	if s.Allowed&structures.RolePermissionManageRoles == 0 {
 		p |= int(v2structures.RolePermissionManageRoles)
-	case structures.RolePermissionManageUsers:
+	}
+	if s.Allowed&structures.RolePermissionManageUsers == 0 {
 		p |= int(v2structures.RolePermissionManageUsers)
-	case structures.RolePermissionManageStack:
+	}
+	if s.Allowed&structures.RolePermissionManageStack == 0 {
 		p |= int(v2structures.RolePermissionEditApplicationMeta)
-	case structures.RolePermissionManageCosmetics:
+	}
+	if s.Allowed&structures.RolePermissionManageCosmetics == 0 {
 		p |= int(v2structures.RolePermissionManageEntitlements)
-	case structures.RolePermissionFeatureZeroWidthEmoteType:
+	}
+	if s.Allowed&structures.RolePermissionFeatureZeroWidthEmoteType == 0 {
 		p |= int(v2structures.EmoteVisibilityZeroWidth)
-	case structures.RolePermissionFeatureProfilePictureAnimation:
+	}
+	if s.Allowed&structures.RolePermissionFeatureProfilePictureAnimation == 0 {
 		p |= int(v2structures.RolePermissionUseCustomAvatars)
 	}
 
