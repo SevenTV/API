@@ -68,6 +68,7 @@ func (r *Resolver) doSetChannelEditor(
 		target structures.User
 		editor structures.User
 	)
+
 	if targetID == editorID {
 		return target, editor, errors.ErrDontBeSilly().SetDetail("you can't be your own editor")
 	}
