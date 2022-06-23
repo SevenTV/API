@@ -220,6 +220,7 @@ type Config struct {
 		InternalBucket string `mapstructure:"internal_bucket" json:"internal_bucket"`
 		PublicBucket   string `mapstructure:"public_bucket" json:"public_bucket"`
 		Endpoint       string `mapstructure:"endpoint" json:"endpoint"`
+		Namespace      string `mapstructure:"namespace" json:"namespace"`
 	} `mapstructure:"s3" json:"s3"`
 
 	Credentials struct {

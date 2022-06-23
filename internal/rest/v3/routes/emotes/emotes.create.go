@@ -3,7 +3,6 @@ package emotes
 import (
 	"bytes"
 	"fmt"
-	"path"
 	"regexp"
 	"time"
 
@@ -146,7 +145,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	})
 
 	fileType := container.Match(body)
-	filekey := fmt.Sprintf("emote/%s/raw.%s", id.Hex(), fileType.Extension)
+	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), "raw", fileType.Extension)
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
@@ -254,7 +253,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			Key:    filekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:       path.Join("emote", id.Hex()),
+			Prefix:       r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
 			ACL:          *s3.AclPublicRead,
 			CacheControl: *s3.DefaultCacheControl,

@@ -166,7 +166,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	})
 
 	for _, ver := range s.Versions {
-		if ver.State.Lifecycle < structures.EmoteLifecycleProcessing || ver.IsUnavailable() {
+		if ver.State.Lifecycle < structures.EmoteLifecyclePending || ver.IsUnavailable() {
 			continue // skip if lifecycle isn't past pending
 		}
 
@@ -174,7 +174,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		vimages := make([]*model.Image, len(files))
 
 		for i, fi := range files {
-			url := fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), fi.Name)
+			url := fmt.Sprintf("//%s/%s", cdnURL, fi.Key)
 			img := EmoteFileStructureToModel(&fi, url)
 			vimages[i] = img
 		}
@@ -185,7 +185,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 			images = vimages
 		}
 
-		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), ver.ArchiveFile.Name))
+		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/%s", cdnURL, ver.ArchiveFile.Key))
 		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages, archive)
 		versionCount++
 	}

@@ -149,6 +149,7 @@ func main() {
 			Endpoint:    config.S3.Endpoint,
 			AccessToken: config.S3.AccessToken,
 			SecretKey:   config.S3.SecretKey,
+			Namespace:   config.S3.Namespace,
 		})
 		if err != nil {
 			zap.S().Warnw("failed to setup s3 handler",
