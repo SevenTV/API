@@ -174,7 +174,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	}, eb.Update)
 
 	if err == nil {
-		err = epl.Ctx.Inst().Redis.RawClient().Publish(ctx, fmt.Sprintf("7tv-events:sub:emotes:%s", id.Hex()), "1").Err()
+		err = epl.Ctx.Inst().Redis.RawClient().Publish(ctx, fmt.Sprintf("events:sub:emotes:%s", id.Hex()), "1").Err()
 	}
 
 	if err == nil {
