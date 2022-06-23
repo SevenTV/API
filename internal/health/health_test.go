@@ -8,8 +8,8 @@ import (
 
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/svc/s3"
 	"github.com/seventv/api/internal/testutil"
+	"github.com/seventv/common/svc/s3"
 	messagequeue "github.com/seventv/message-queue/go"
 )
 
