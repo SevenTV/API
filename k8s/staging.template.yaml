@@ -200,3 +200,22 @@ spec:
     - hosts:
         - stage.7tv.io
       secretName: 7tv-io-tls
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api
+  namespace: monitoring
+  labels:
+    app: api
+    release: prometheus
+spec:
+  jobLabel: api
+  selector:
+    matchLabels:
+      app: api
+  namespaceSelector:
+    matchNames:
+      - app
+  endpoints:
+    - port: metrics
