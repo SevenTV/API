@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
@@ -145,6 +146,22 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	})
 
 	fileType := container.Match(body)
+	switch fileType {
+	case container.TypeAvif:
+	case matchers.TypeWebp:
+	case matchers.TypeGif:
+	case matchers.TypePng:
+	case matchers.TypeTiff:
+	case matchers.TypeJpeg:
+	case matchers.TypeWebm:
+	case matchers.TypeMp4:
+	case matchers.TypeFlv:
+	case matchers.TypeAvi:
+	case matchers.TypeMov:
+	default:
+		return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad emote upload type '%s'", fileType.MIME.Value))
+	}
+
 	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("raw.%s", fileType.Extension))
 
 	version := structures.EmoteVersion{

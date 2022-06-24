@@ -76,7 +76,7 @@ func (epl *EmoteProcessingListener) Listen() {
 
 				if err := epl.HandleResultEvent(ctx, evt); err != nil {
 					zap.S().Errorw("failed to handle result",
-						"error", multierr.Append(err, msg.Requeue(context.Background())),
+						"error", multierr.Append(err, msg.Nack(context.Background())),
 					)
 				} else {
 					if err = msg.Ack(ctx); err != nil {
