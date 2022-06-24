@@ -42,7 +42,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 	}
 
 	users, count, err := r.Ctx.Inst().Query.EmoteChannels(ctx, obj.ID, page, limit)
-	if err != nil {
+	if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
 		return nil, err
 	}
 
