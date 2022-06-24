@@ -161,6 +161,7 @@ metadata:
   namespace: app
   annotations:
     kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 7m
     external-dns.alpha.kubernetes.io/hostname: stage.7tv.io
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
