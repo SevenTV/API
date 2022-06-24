@@ -34,6 +34,11 @@ func NewOps(r types.Resolver) generated.EmoteOpsResolver {
 }
 
 func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Emote, error) {
+	actor := auth.For(ctx)
+	if actor == nil || !actor.HasPermission(structures.RolePermissionRunJobs) {
+		return nil, errors.ErrInsufficientPrivilege()
+	}
+
 	// Get the emote
 	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(obj.ID)
 	if err != nil {
