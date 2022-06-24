@@ -9,7 +9,7 @@ func FilterImages(images []*model.Image, formats []model.ImageFormat) []*model.I
 	result := []*model.Image{}
 
 	for _, im := range images {
-		if utils.Contains(formats, im.Format) {
+		if !utils.Contains(formats, im.Format) {
 			continue
 		}
 
