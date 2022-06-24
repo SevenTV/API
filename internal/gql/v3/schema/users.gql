@@ -1,5 +1,5 @@
 extend type Query {
-  currentUser: User
+  actor: User
   user(id: ObjectID!): User!
   users(query: String!): [User!]!
 }
@@ -32,7 +32,8 @@ type User {
   editors: [UserEditor!]! @goField(forceResolver: true)
   editor_of: [UserEditor!]! @goField(forceResolver: true)
 
-  roles: [Role!]! @goField(forceResolver: true)
+  roles: [ObjectID!]!
+  permissions: Int!
 
   emote_sets: [EmoteSet!]! @goField(forceResolver: true)
   owned_emotes: [Emote!]! @goField(forceResolver: true)
@@ -55,7 +56,7 @@ type UserPartial {
   avatar_url: String!
   biography: String!
   tag_color: Int!
-  roles: [Role!]! @goField(forceResolver: true)
+  roles: [ObjectID!]!
   connections(type: [ConnectionPlatform!]): [UserConnection]!
 }
 

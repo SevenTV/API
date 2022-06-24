@@ -25,17 +25,6 @@ func New(r types.Resolver) generated.UserResolver {
 	return &Resolver{r}
 }
 
-// Roles resolves the roles of a user
-func (r *Resolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
-	sort.Slice(obj.Roles, func(i, j int) bool {
-		a := obj.Roles[i]
-		b := obj.Roles[j]
-		return a.Position > b.Position
-	})
-
-	return obj.Roles, nil
-}
-
 func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.EmoteSet, error) {
 	sets, err := r.Ctx.Inst().Loaders.EmoteSetByUserID().Load(obj.ID)
 	if err != nil {

@@ -23,7 +23,7 @@ func New(r types.Resolver) generated.QueryResolver {
 	return &Resolver{r}
 }
 
-func (r *Resolver) CurrentUser(ctx context.Context) (*model.User, error) {
+func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {
 	actor := auth.For(ctx)
 	if actor == nil {
 		return nil, nil

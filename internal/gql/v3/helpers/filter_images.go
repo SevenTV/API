@@ -6,6 +6,10 @@ import (
 )
 
 func FilterImages(images []*model.Image, formats []model.ImageFormat) []*model.Image {
+	if len(formats) == 0 { // default to all images
+		return images
+	}
+
 	result := []*model.Image{}
 
 	for _, im := range images {

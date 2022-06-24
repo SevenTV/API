@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -23,10 +24,15 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		tagColor = int(role.Color)
 	}
 
-	roles := make([]*model.Role, len(s.Roles))
+	roles := make([]primitive.ObjectID, len(s.Roles))
+	sort.Slice(s.Roles, func(i, j int) bool {
+		a := s.Roles[i]
+		b := s.Roles[j]
+		return a.Position > b.Position
+	})
 
-	for i, v := range s.Roles {
-		roles[i] = RoleStructureToModel(v)
+	for i, rol := range s.Roles {
+		roles[i] = rol.ID
 	}
 
 	connections := make([]*model.UserConnection, len(s.Connections))
@@ -63,6 +69,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		TagColor:         tagColor,
 		Editors:          editors,
 		Roles:            roles,
+		Permissions:      int(s.FinalPermission()),
 		OwnedEmotes:      []*model.Emote{},
 		Connections:      connections,
 		InboxUnreadCount: 0,
