@@ -4,9 +4,8 @@ type Image {
   url: String!
   width: Int!
   height: Int!
-  animated: Boolean!
-  time: Int!
-  length: Int!
+  frame_count: Int!
+  size: Int!
 }
 
 enum ImageFormat {
@@ -14,4 +13,11 @@ enum ImageFormat {
   WEBP
   GIF
   PNG
+}
+
+type Archive {
+  name: String!
+  content_type: String!
+  url: String!
+  size: Int!
 }

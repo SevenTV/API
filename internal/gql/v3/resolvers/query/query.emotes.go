@@ -17,6 +17,11 @@ import (
 
 const EMOTES_QUERY_LIMIT = 300
 
+var sortFieldMap = map[string]string{
+	"age":        "_id",
+	"popularity": "versions.state.channel_count",
+}
+
 func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emote, error) {
 	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(id)
 	if err != nil {
@@ -38,6 +43,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	if limitArg != nil {
 		limit = *limitArg
 	}
+
 	if limit > EMOTES_QUERY_LIMIT {
 		limit = EMOTES_QUERY_LIMIT
 	}
@@ -61,6 +67,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	if pageArg != nil {
 		page = *pageArg
 	}
+
 	if page < 1 {
 		page = 1
 	}
@@ -79,6 +86,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	order, validOrder := sortOrderMap[string(sortopt.Order)]
 	field, validField := sortFieldMap[sortopt.Value]
 	sortMap := bson.M{}
+
 	if validField && validOrder {
 		sortMap = bson.M{field: order}
 	}
@@ -101,6 +109,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	models := make([]*model.Emote, len(result))
+
 	for i, e := range result {
 		// Bring forward the latest version
 		if len(e.Versions) > 0 {
@@ -108,6 +117,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 				e.ID = ver.ID
 			}
 		}
+
 		models[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 	}
 
@@ -115,9 +125,4 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 		Count: totalCount,
 		Items: models,
 	}, nil
-}
-
-var sortFieldMap = map[string]string{
-	"age":        "_id",
-	"popularity": "versions.state.channel_count",
 }

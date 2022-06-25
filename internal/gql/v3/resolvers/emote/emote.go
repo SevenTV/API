@@ -8,10 +8,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.uber.org/zap"
 )
 
 type Resolver struct {
@@ -20,6 +17,10 @@ type Resolver struct {
 
 func New(r types.Resolver) generated.EmoteResolver {
 	return &Resolver{r}
+}
+
+func (r *Resolver) Images(ctx context.Context, obj *model.Emote, format []model.ImageFormat) ([]*model.Image, error) {
+	return helpers.FilterImages(obj.Images, format), nil
 }
 
 func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, error) {
@@ -35,21 +36,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, er
 	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
 
-func (r *Resolver) ChannelCount(ctx context.Context, obj *model.Emote) (int, error) {
-	count, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, bson.M{
-		"channel_emotes.id": obj.ID,
-	})
-	if err != nil {
-		zap.S().Errorw("failed to count documents for emotes",
-			"err", err,
-		)
-		return 0, err
-	}
-
-	return int(count), nil
-}
-
 func (r *Resolver) Reports(ctx context.Context, obj *model.Emote) ([]*model.Report, error) {
-	// return loaders.For(ctx).ReportsByEmoteID.Load(obj.ID)
+	// TODO
 	return nil, nil
 }

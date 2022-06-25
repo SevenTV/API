@@ -24,6 +24,7 @@ func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg 
 
 	// Parse expiry time
 	var err error
+
 	expireAt := time.Now().AddDate(0, 0, 3)
 	if expireAtArg != nil {
 		expireAt, err = time.Parse(time.RFC3339, *expireAtArg)
@@ -40,10 +41,12 @@ func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg 
 
 	// Fetch the victim user
 	var victim structures.User
+
 	victimID, err := primitive.ObjectIDFromHex(victimIDArg)
 	if err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
+
 	if user, err := r.Ctx.Inst().Query.Users(ctx, bson.M{"_id": victimID}).First(); err == nil {
 		victim = user
 	} else {
@@ -105,6 +108,7 @@ func (r *Resolver) UnbanUser(ctx context.Context, victimIDArg string, reason *st
 		// Change expire date to current date
 		// (equivalent of setting active: false in v2)
 		bb.SetExpireAt(time.Now())
+
 		if err = r.Ctx.Inst().Mutate.EditBan(ctx, bb, mutations.EditBanOptions{
 			Actor: actor,
 		}); err != nil {
@@ -113,6 +117,7 @@ func (r *Resolver) UnbanUser(ctx context.Context, victimIDArg string, reason *st
 			)
 		}
 	}
+
 	return &model.Response{
 		Status:  200,
 		Ok:      true,

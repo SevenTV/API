@@ -2,7 +2,6 @@
 *.gif
 *.webp
 *.avif
-out/
 tmp/
 *.yaml
 !example.config.yaml

@@ -47,6 +47,7 @@ type (
 
 func (t messageType) String() string {
 	var text string
+
 	switch t {
 	default:
 		text = "unknown"
@@ -75,6 +76,7 @@ func (t messageType) String() string {
 	case pongMessageType:
 		text = "pong"
 	}
+
 	return text
 }
 

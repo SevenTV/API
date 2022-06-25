@@ -40,6 +40,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		if errors.Compare(err, errors.ErrNoItems()) {
 			return nil, errors.ErrUnknownEmote()
 		}
+
 		return nil, err
 	}
 
@@ -48,13 +49,16 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	if nameArg != nil {
 		name = *nameArg
 	}
+
 	set, err := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": obj.ID}).First()
 	if err != nil {
 		if errors.Compare(err, errors.ErrNoItems()) {
 			return nil, errors.ErrUnknownEmoteSet()
 		}
+
 		return nil, err
 	}
+
 	b := structures.NewEmoteSetBuilder(set)
 
 	// Mutate the thing
@@ -70,6 +74,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		logF.Errorw("failed to update emotes in set",
 			"error", err,
 		)
+
 		return nil, err
 	}
 
@@ -93,9 +98,11 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 			if err != nil {
 				return
 			}
+
 			if tw.EmoteSetID.IsZero() || tw.EmoteSetID != set.ID {
 				return // skip if target emote set isn't bound to user connection
 			}
+
 			if err := events.PublishLegacyEventAPI(r.Ctx, action, tw.Data.Login, *actor, set, emote); err != nil {
 				zap.S().Errorw("redis",
 					"error", err,
@@ -106,6 +113,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 
 	setModel := helpers.EmoteSetStructureToModel(b.EmoteSet, r.Ctx.Config().CdnURL)
 	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {
 			setModel.Emotes[i].Emote = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)

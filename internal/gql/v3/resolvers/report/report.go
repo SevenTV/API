@@ -35,6 +35,7 @@ func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.U
 	}
 
 	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
+
 	err := multierror.Append(nil, errs...).ErrorOrNil()
 	if err != nil {
 		return nil, err

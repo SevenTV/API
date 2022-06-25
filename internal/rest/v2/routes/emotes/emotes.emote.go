@@ -43,5 +43,9 @@ func (r *emote) Handler(ctx *rest.Ctx) errors.APIError {
 		return errors.From(err)
 	}
 
+	if emote.ID.IsZero() {
+		return errors.ErrUnknownEmote()
+	}
+
 	return ctx.JSON(rest.OK, model.NewEmote(emote, r.Ctx.Config().CdnURL))
 }

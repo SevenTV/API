@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -14,39 +15,29 @@ import (
 
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
+const webpMime = "image/webp"
+
 func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	version, _ := s.GetVersion(s.ID)
+	files := []structures.EmoteFile{}
 
-	width := make([]int, 4)
-	height := make([]int, 4)
-	urls := make([][]string, 4)
-	for _, format := range version.Formats {
-		if format.Name != structures.EmoteFormatNameWEBP {
+	for _, file := range version.ImageFiles {
+		if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
 			continue
 		}
-		pos := 0
-		for _, f := range format.Files {
-			if version.FrameCount > 1 && !f.Animated || pos > 4 {
-				continue
-			}
 
-			width[pos] = int(f.Width)
-			height[pos] = int(f.Height)
-			urls[pos] = []string{
-				fmt.Sprintf("%d", pos+1),
-				fmt.Sprintf("//%s/emote/%s/%s", cdnURL, version.ID.Hex(), f.Name),
-			}
-			pos++
-		}
+		files = append(files, file)
 	}
 
 	vis := 0
 	if !version.State.Listed {
 		vis |= int(v2structures.EmoteVisibilityUnlisted)
 	}
+
 	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsZeroWidth)) {
 		vis |= int(v2structures.EmoteVisibilityZeroWidth)
 	}
+
 	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsPrivate)) {
 		vis |= int(v2structures.EmoteVisibilityPrivate)
 	}
@@ -54,6 +45,23 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	owner := structures.DeletedUser
 	if s.Owner != nil {
 		owner = *s.Owner
+	}
+
+	width := make([]int, len(files))
+	height := make([]int, len(files))
+	urls := make([][]string, len(files))
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Width < files[j].Width
+	})
+
+	for i, file := range files {
+		width[i] = int(file.Width)
+		height[i] = int(file.Height)
+		urls[i] = []string{
+			fmt.Sprintf("%d", i+1),
+			fmt.Sprintf("https://%s/emote/%s", cdnURL, file.Key),
+		}
 	}
 
 	return &model.Emote{
@@ -78,6 +86,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	highestRole := s.GetHighestRole()
 	rank := 0
+
 	if !highestRole.ID.IsZero() {
 		rank = int(highestRole.Position)
 		highestRole.Allowed = s.FinalPermission()
@@ -104,12 +113,14 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 
 	// Editors
 	editorIds := make([]string, len(s.Editors))
+
 	for i, ed := range s.Editors {
 		// ignore if no permission to manage active emotes
 		// (this is the only editor permission in v2)
 		if !ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
 			continue
 		}
+
 		editorIds[i] = ed.ID.Hex()
 	}
 
@@ -176,30 +187,52 @@ func UserStructureToPartialModel(s *model.User) *model.UserPartial {
 
 func RoleStructureToModel(s structures.Role) *model.Role {
 	p := 0
-	switch s.Allowed {
-	case structures.RolePermissionCreateEmote:
+
+	if s.Allowed&structures.RolePermissionCreateEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteCreate)
-	case structures.RolePermissionEditEmote:
+	}
+
+	if s.Allowed&structures.RolePermissionEditEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditOwned)
-	case structures.RolePermissionEditAnyEmote:
+	}
+
+	if s.Allowed&structures.RolePermissionEditAnyEmote == 0 {
 		p |= int(v2structures.RolePermissionEmoteEditAll)
-	case structures.RolePermissionReportCreate:
+	}
+
+	if s.Allowed&structures.RolePermissionReportCreate == 0 {
 		p |= int(v2structures.RolePermissionCreateReports)
-	case structures.RolePermissionManageBans:
+	}
+
+	if s.Allowed&structures.RolePermissionManageBans == 0 {
 		p |= int(v2structures.RolePermissionBanUsers)
-	case structures.RolePermissionSuperAdministrator:
+	}
+
+	if s.Allowed&structures.RolePermissionSuperAdministrator == 0 {
 		p |= int(v2structures.RolePermissionAdministrator)
-	case structures.RolePermissionManageRoles:
+	}
+
+	if s.Allowed&structures.RolePermissionManageRoles == 0 {
 		p |= int(v2structures.RolePermissionManageRoles)
-	case structures.RolePermissionManageUsers:
+	}
+
+	if s.Allowed&structures.RolePermissionManageUsers == 0 {
 		p |= int(v2structures.RolePermissionManageUsers)
-	case structures.RolePermissionManageStack:
+	}
+
+	if s.Allowed&structures.RolePermissionManageStack == 0 {
 		p |= int(v2structures.RolePermissionEditApplicationMeta)
-	case structures.RolePermissionManageCosmetics:
+	}
+
+	if s.Allowed&structures.RolePermissionManageCosmetics == 0 {
 		p |= int(v2structures.RolePermissionManageEntitlements)
-	case structures.RolePermissionFeatureZeroWidthEmoteType:
+	}
+
+	if s.Allowed&structures.RolePermissionFeatureZeroWidthEmoteType == 0 {
 		p |= int(v2structures.EmoteVisibilityZeroWidth)
-	case structures.RolePermissionFeatureProfilePictureAnimation:
+	}
+
+	if s.Allowed&structures.RolePermissionFeatureProfilePictureAnimation == 0 {
 		p |= int(v2structures.RolePermissionUseCustomAvatars)
 	}
 
@@ -216,6 +249,7 @@ func RoleStructureToModel(s structures.Role) *model.Role {
 func BanStructureToModel(s *structures.Ban) *model.Ban {
 	victimID := s.VictimID.Hex()
 	actorID := s.ActorID.Hex()
+
 	return &model.Ban{
 		ID:         s.ID.Hex(),
 		UserID:     &victimID,

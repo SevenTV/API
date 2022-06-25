@@ -4,6 +4,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/resolvers/ban"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emote"
+	emoteversion "github.com/seventv/api/internal/gql/v3/resolvers/emote-version"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emoteset"
 	"github.com/seventv/api/internal/gql/v3/resolvers/mutation"
 	"github.com/seventv/api/internal/gql/v3/resolvers/query"
@@ -43,6 +44,10 @@ func (r *Resolver) EmoteOps() generated.EmoteOpsResolver {
 	return emote.NewOps(r.Resolver)
 }
 
+func (r *Resolver) EmoteVersion() generated.EmoteVersionResolver {
+	return emoteversion.New(r.Resolver)
+}
+
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return mutation.New(r.Resolver)
 }
@@ -65,10 +70,6 @@ func (r *Resolver) Role() generated.RoleResolver {
 
 func (r *Resolver) User() generated.UserResolver {
 	return user.New(r.Resolver)
-}
-
-func (r *Resolver) UserPartial() generated.UserPartialResolver {
-	return user.NewPartial(r.Resolver)
 }
 
 func (r *Resolver) UserOps() generated.UserOpsResolver {

@@ -59,6 +59,7 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 	errorPresenter := func(ctx context.Context, e error) *gqlerror.Error {
 		err := graphql.DefaultErrorPresenter(ctx, e)
+
 		var apiErr errors.APIError
 		if goerrors.As(e, &apiErr) {
 			err.Message = fmt.Sprintf("%d %s", apiErr.Code(), apiErr.Message())
@@ -71,6 +72,7 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 		return err
 	}
+
 	srv.SetErrorPresenter(errorPresenter)
 	exec.SetErrorPresenter(errorPresenter)
 
@@ -117,6 +119,5 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 				srv.ServeHTTP(w, r.WithContext(lCtx))
 			}))(ctx)
 		}
-
 	}
 }

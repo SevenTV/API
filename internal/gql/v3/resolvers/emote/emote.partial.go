@@ -19,22 +19,7 @@ func NewPartial(r types.Resolver) generated.EmotePartialResolver {
 }
 
 func (r *ResolverPartial) Images(ctx context.Context, obj *model.EmotePartial, format []model.ImageFormat) ([]*model.Image, error) {
-	result := []*model.Image{}
-	for _, im := range obj.Images {
-		ok := len(format) == 0
-		if !ok {
-			for _, f := range format {
-				if im.Format == f {
-					result = append(result, im)
-				}
-			}
-			continue
-		}
-
-		result = append(result, im)
-	}
-
-	return result, nil
+	return helpers.FilterImages(obj.Images, format), nil
 }
 
 func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*model.User, error) {

@@ -15,7 +15,8 @@ type Role struct {
 }
 
 func NewRole(s structures.Role) *Role {
-	p := int64(0)
+	var p int64
+
 	switch s.Allowed {
 	case structures.RolePermissionCreateEmote:
 		p |= v2structures.RolePermissionEmoteCreate
@@ -42,6 +43,7 @@ func NewRole(s structures.Role) *Role {
 	case structures.RolePermissionFeatureProfilePictureAnimation:
 		p |= v2structures.RolePermissionUseCustomAvatars
 	}
+
 	return &Role{
 		ID:       s.ID.Hex(),
 		Name:     s.Name,

@@ -2,19 +2,22 @@ package prometheus
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/seventv/api/internal/instance"
 )
+
+type Instance interface {
+	Register(r prometheus.Registerer)
+}
 
 type Options struct {
 	Labels prometheus.Labels
 }
 
-func New(o Options) instance.Prometheus {
-	return &Instance{}
+func New(o Options) Instance {
+	return &promInst{}
 }
 
-type Instance struct {
+type promInst struct {
 }
 
-func (m *Instance) Register(r prometheus.Registerer) {
+func (m *promInst) Register(r prometheus.Registerer) {
 }

@@ -36,6 +36,7 @@ func (r *Resolver) Role(ctx context.Context, obj *model.User) (*model.Role, erro
 			obj.Role = helpers.RoleStructureToModel(structures.NilRole)
 		}
 	}
+
 	return obj.Role, nil
 }
 
@@ -52,6 +53,7 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 	}
 
 	arr := make([]*model.Emote, len(emoteSet.Emotes))
+
 	for i, emote := range emoteSet.Emotes {
 		em := helpers.EmoteStructureToModel(*emote.Emote, r.Ctx.Config().CdnURL)
 
@@ -74,17 +76,20 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 	}
 
 	result := []string{}
+
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		if errors.Compare(err, errors.ErrUnknownEmoteSet()) {
 			return result, nil
 		}
+
 		return result, err
 	}
 
 	for _, e := range emoteSet.Emotes {
 		result = append(result, e.ID.Hex())
 	}
+
 	return result, nil
 }
 
@@ -106,6 +111,7 @@ func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]strin
 		if e.Name == e.Emote.Name {
 			continue // no original name property means no alias set
 		}
+
 		result = append(result, []string{e.ID.Hex(), e.Name})
 	}
 
@@ -114,8 +120,10 @@ func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]strin
 
 func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserPartial, error) {
 	var err error
+
 	result := []*model.UserPartial{}
 	editorIDs := make([]primitive.ObjectID, len(obj.EditorIds))
+
 	for i, v := range obj.EditorIds {
 		editorIDs[i], err = primitive.ObjectIDFromHex(v)
 		if err != nil {
@@ -137,6 +145,7 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserP
 
 func (r *Resolver) EditorIn(ctx context.Context, obj *model.User) ([]*model.UserPartial, error) {
 	result := []*model.UserPartial{}
+
 	userID, err := primitive.ObjectIDFromHex(obj.ID)
 	if err != nil {
 		return result, err

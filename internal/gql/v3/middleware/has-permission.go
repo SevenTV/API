@@ -19,6 +19,7 @@ func hasPermission(gCtx global.Context) func(ctx context.Context, obj interface{
 		}
 
 		var perms structures.RolePermission
+
 		for _, v := range role {
 			switch v {
 			case model.PermissionBypassPrivacy:

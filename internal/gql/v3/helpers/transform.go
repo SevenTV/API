@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -22,9 +23,16 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	if role := s.GetHighestRole(); !role.ID.IsZero() {
 		tagColor = int(role.Color)
 	}
-	roles := make([]*model.Role, len(s.Roles))
-	for i, v := range s.Roles {
-		roles[i] = RoleStructureToModel(v)
+
+	roles := make([]primitive.ObjectID, len(s.Roles))
+	sort.Slice(s.Roles, func(i, j int) bool {
+		a := s.Roles[i]
+		b := s.Roles[j]
+		return a.Position > b.Position
+	})
+
+	for i, rol := range s.Roles {
+		roles[i] = rol.ID
 	}
 
 	connections := make([]*model.UserConnection, len(s.Connections))
@@ -42,8 +50,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
-			switch con.Platform {
-			case structures.UserConnectionPlatformTwitch:
+			if con.Platform == structures.UserConnectionPlatformTwitch {
 				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
 					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
 				}
@@ -62,6 +69,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		TagColor:         tagColor,
 		Editors:          editors,
 		Roles:            roles,
+		Permissions:      int(s.FinalPermission()),
 		OwnedEmotes:      []*model.Emote{},
 		Connections:      connections,
 		InboxUnreadCount: 0,
@@ -116,11 +124,13 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 			displayName = s.Data.Title
 		}
 	}
+
 	if err != nil {
 		zap.S().Errorw("couldn't decode user connection",
 			"error", err,
 			"platform", s.Platform,
 		)
+
 		return nil
 	}
 
@@ -159,29 +169,20 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 
 	// Sort by version timestamp
 	sort.Slice(s.Versions, func(i, j int) bool {
-		return s.Versions[i].Timestamp.After(s.Versions[j].Timestamp)
+		return s.Versions[i].CreatedAt.After(s.Versions[j].CreatedAt)
 	})
+
 	for _, ver := range s.Versions {
-		if ver.State.Lifecycle < structures.EmoteLifecycleProcessing || ver.IsUnavailable() {
+		if ver.State.Lifecycle < structures.EmoteLifecyclePending || ver.IsUnavailable() {
 			continue // skip if lifecycle isn't past pending
 		}
 
 		files := ver.GetFiles("", true)
 		vimages := make([]*model.Image, len(files))
+
 		for i, fi := range files {
-			format := model.ImageFormatWebp
-
-			switch fi.Format() {
-			case structures.EmoteFormatNameAVIF:
-				format = model.ImageFormatAvif
-			case structures.EmoteFormatNameGIF:
-				format = model.ImageFormatGif
-			case structures.EmoteFormatNamePNG:
-				format = model.ImageFormatPng
-			}
-
-			url := fmt.Sprintf("//%s/emote/%s/%s", cdnURL, ver.ID.Hex(), fi.Name)
-			img := EmoteFileStructureToModel(&fi, format, url)
+			url := fmt.Sprintf("//%s/%s", cdnURL, fi.Key)
+			img := EmoteFileStructureToModel(&fi, url)
 			vimages[i] = img
 		}
 
@@ -190,9 +191,12 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 			listed = ver.State.Listed
 			images = vimages
 		}
-		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages)
+
+		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/%s", cdnURL, ver.ArchiveFile.Key))
+		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages, archive)
 		versionCount++
 	}
+
 	if len(versions) != int(versionCount) {
 		versions = versions[0:versionCount]
 	}
@@ -201,6 +205,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	if s.Owner != nil {
 		owner = *s.Owner
 	}
+
 	return &model.Emote{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -238,10 +243,12 @@ func EmoteStructureToPartialModel(m *model.Emote) *model.EmotePartial {
 
 func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.EmoteSet {
 	emotes := make([]*model.ActiveEmote, len(s.Emotes))
+
 	for i, e := range s.Emotes {
 		if e.Emote == nil {
 			e.Emote = &structures.DeletedEmote
 		}
+
 		emotes[i] = &model.ActiveEmote{
 			ID:        e.ID,
 			Name:      e.Name,
@@ -250,6 +257,7 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 			Emote:     EmoteStructureToModel(*e.Emote, cdnURL),
 		}
 	}
+
 	var owner *model.User
 	if s.Owner != nil {
 		owner = UserStructureToModel(*s.Owner, cdnURL)
@@ -266,28 +274,53 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 	}
 }
 
-func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Image) *model.EmoteVersion {
+func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Image, archive *model.Archive) *model.EmoteVersion {
 	return &model.EmoteVersion{
 		ID:          s.ID,
 		Name:        s.Name,
 		Description: s.Description,
-		Timestamp:   s.ID.Timestamp(),
+		CreatedAt:   s.CreatedAt,
+		StartedAt:   s.StartedAt,
+		CompletedAt: s.CompletedAt,
 		Images:      images,
 		Lifecycle:   int(s.State.Lifecycle),
 		Listed:      s.State.Listed,
+		Archive:     archive,
 	}
 }
 
-func EmoteFileStructureToModel(s *structures.EmoteFile, format model.ImageFormat, url string) *model.Image {
+func EmoteFileStructureToArchiveModel(s *structures.EmoteFile, url string) *model.Archive {
+	return &model.Archive{
+		Name:        s.Name,
+		URL:         url,
+		ContentType: s.ContentType,
+		Size:        int(s.Size),
+	}
+}
+
+func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
+	// Transform image format
+	var format model.ImageFormat
+
+	switch s.ContentType {
+	case "image/avif":
+		format = model.ImageFormatAvif
+	case "image/webp":
+		format = model.ImageFormatWebp
+	case "image/gif":
+		format = model.ImageFormatGif
+	case "image/png":
+		format = model.ImageFormatPng
+	}
+
 	return &model.Image{
-		Name:     s.Name,
-		Format:   format,
-		URL:      url,
-		Width:    int(s.Width),
-		Height:   int(s.Height),
-		Animated: s.Animated,
-		Time:     int(s.ProcessingTime),
-		Length:   int(s.Length),
+		Name:       s.Name,
+		URL:        url,
+		Width:      int(s.Width),
+		Height:     int(s.Height),
+		Format:     format,
+		FrameCount: int(s.FrameCount),
+		Size:       int(s.Size),
 	}
 }
 
@@ -305,6 +338,7 @@ func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInb
 	if s.Author != nil {
 		author = *s.Author
 	}
+
 	return &model.InboxMessage{
 		ID:           s.ID,
 		Kind:         model.MessageKind(s.Kind.String()),
@@ -326,6 +360,7 @@ func MessageStructureToModRequestModel(s structures.Message[structures.MessageDa
 	if s.Author != nil {
 		author = *s.Author
 	}
+
 	return &model.ModRequestMessage{
 		ID:         s.ID,
 		Kind:       model.MessageKind(s.Kind.String()),

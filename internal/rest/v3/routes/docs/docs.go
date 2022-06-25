@@ -1,11 +1,9 @@
 package docs
 
 import (
-	"os"
-
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/common/errors"
+	"github.com/seventv/api/internal/rest/v3/docs"
 )
 
 type Route struct {
@@ -24,10 +22,8 @@ func (r *Route) Config() rest.RouteConfig {
 }
 
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	b, err := os.ReadFile("docs/v3/swagger.json")
-	if err != nil {
-		return errors.ErrInternalServerError().SetDetail(err.Error())
-	}
-	ctx.SetBody(b)
+	ctx.SetBodyString(docs.SwaggerInfo.ReadDoc())
+	ctx.SetContentType("application/json")
+
 	return nil
 }

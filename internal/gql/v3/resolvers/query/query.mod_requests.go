@@ -19,6 +19,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 	if actor == nil {
 		return nil, errors.ErrUnauthorized()
 	}
+
 	afterID := primitive.NilObjectID
 	if afterIDArg != nil {
 		afterID = *afterIDArg
@@ -28,6 +29,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 	if !afterID.IsZero() {
 		match["message_id"] = bson.M{"$gt": afterID}
 	}
+
 	messages, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
 		Actor:  actor,
 		Filter: match,
@@ -36,17 +38,21 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		},
 	}).Items()
 	if err != nil {
-		if err.(errors.APIError).Code() == errors.ErrNoItems().Code() {
+		errCode, _ := err.(errors.APIError)
+		if errCode.Code() == errors.ErrNoItems().Code() {
 			return []*model.ModRequestMessage{}, nil
 		}
+
 		return nil, err
 	}
 
 	result := make([]*model.ModRequestMessage, len(messages))
+
 	for i, msg := range messages {
 		if msg, err := structures.ConvertMessage[structures.MessageDataModRequest](msg); err == nil {
 			result[i] = helpers.MessageStructureToModRequestModel(msg, r.Ctx.Config().CdnURL)
 		}
 	}
+
 	return result, nil
 }

@@ -1,0 +1,23 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - asciicheck
+    - bidichk
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - goconst
+    - wsl
+    - whitespace

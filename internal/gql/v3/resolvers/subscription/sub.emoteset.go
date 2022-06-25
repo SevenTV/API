@@ -14,10 +14,12 @@ func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID, init *bo
 		if err != nil {
 			return nil
 		}
+
 		return helpers.EmoteSetStructureToModel(set, r.Ctx.Config().CdnURL)
 	}
 
 	ch := make(chan *model.EmoteSet, 1)
+
 	if init != nil && *init {
 		set := getEmoteSet()
 		if set != nil {
@@ -27,6 +29,7 @@ func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID, init *bo
 
 	go func() {
 		defer close(ch)
+
 		sub := r.subscribe(ctx, "emote_sets", id)
 		for range sub {
 			set := getEmoteSet()

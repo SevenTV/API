@@ -26,5 +26,6 @@ func GetNestedPreloads(ctx *graphql.OperationContext, fields []graphql.Collected
 			Children: GetNestedPreloads(ctx, graphql.CollectFields(ctx, column.Selections, nil)),
 		}
 	}
+
 	return f
 }

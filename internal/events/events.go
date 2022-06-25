@@ -54,6 +54,7 @@ func PublishLegacyEventAPI(
 ) error {
 	ae, _ := set.GetEmote(emote.ID)
 	name := emote.Name
+
 	if !ae.ID.IsZero() {
 		name = ae.Name
 	}
@@ -61,6 +62,7 @@ func PublishLegacyEventAPI(
 	if set.Owner == nil {
 		return nil
 	}
+
 	evt := Event{
 		Channel: set.Owner.Username,
 		EmoteID: emote.ID,
@@ -68,6 +70,7 @@ func PublishLegacyEventAPI(
 		Action:  action,
 		Actor:   actor.DisplayName,
 	}
+
 	if action != model.ListItemActionRemove {
 		e := v2helpers.EmoteStructureToModel(emote, ctx.Config().CdnURL)
 		evt.Emote = EventEmote{
@@ -79,6 +82,7 @@ func PublishLegacyEventAPI(
 			Height:     e.Height,
 			Urls:       e.Urls,
 		}
+
 		if e.Owner != nil {
 			evt.Emote.Owner = EventEmoteOwner{
 				ID:          e.OwnerID,
@@ -90,6 +94,7 @@ func PublishLegacyEventAPI(
 	}
 
 	k := ctx.Inst().Redis.ComposeKey("events-v1", fmt.Sprintf("channel-emotes:%s", channelLogin))
+
 	j, err := json.Marshal(evt)
 	if err != nil {
 		return err

@@ -25,16 +25,6 @@ func New(r types.Resolver) generated.UserResolver {
 	return &Resolver{r}
 }
 
-// Roles resolves the roles of a user
-func (r *Resolver) Roles(ctx context.Context, obj *model.User) ([]*model.Role, error) {
-	sort.Slice(obj.Roles, func(i, j int) bool {
-		a := obj.Roles[i]
-		b := obj.Roles[j]
-		return a.Position > b.Position
-	})
-	return obj.Roles, nil
-}
-
 func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.EmoteSet, error) {
 	sets, err := r.Ctx.Inst().Loaders.EmoteSetByUserID().Load(obj.ID)
 	if err != nil {
@@ -52,8 +42,10 @@ func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.Emo
 // Connections lists the users' connections
 func (r *Resolver) Connections(ctx context.Context, obj *model.User, platforms []model.ConnectionPlatform) ([]*model.UserConnection, error) {
 	result := []*model.UserConnection{}
+
 	for _, conn := range obj.Connections {
 		ok := false
+
 		if len(platforms) > 0 {
 			for _, p := range platforms {
 				if conn.Platform == p {
@@ -64,10 +56,12 @@ func (r *Resolver) Connections(ctx context.Context, obj *model.User, platforms [
 		} else {
 			ok = true
 		}
+
 		if ok {
 			result = append(result, conn)
 		}
 	}
+
 	return result, nil
 }
 
@@ -80,11 +74,13 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 
 	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
 	result := []*model.UserEditor{}
+
 	for _, e := range obj.Editors {
 		for _, u := range users {
 			if e.ID == u.ID {
 				e.User = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
 				result = append(result, e)
+
 				break
 			}
 		}
@@ -96,11 +92,13 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 
 		return a.AddedAt.After(b.AddedAt)
 	})
+
 	return result, multierror.Append(nil, errs...).ErrorOrNil()
 }
 
 func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.UserEditor, error) {
 	result := []*model.UserEditor{}
+
 	editables, err := r.Ctx.Inst().Query.UserEditorOf(ctx, obj.ID)
 	if err == nil {
 		for _, ed := range editables {
@@ -116,6 +114,7 @@ func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.User
 func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
 	emotes := []*structures.Emote{}
 	errs := []error{}
+
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, bson.M{
 		"owner_id": obj.ID,
 	})
@@ -124,16 +123,21 @@ func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.E
 			zap.S().Errorw("mongo, failed to retrieve user's owned emotes",
 				"error", err,
 			)
+
 			errs = append(errs, errors.ErrUnknownEmote())
 		}
 	}
+
 	result := make([]*model.Emote, len(emotes))
+
 	for i, e := range emotes {
 		if e == nil {
 			continue
 		}
+
 		result[i] = helpers.EmoteStructureToModel(*e, r.Ctx.Config().CdnURL)
 	}
+
 	return result, multierror.Append(nil, errs...).ErrorOrNil()
 }
 
@@ -143,6 +147,6 @@ func (r *Resolver) InboxUnreadCount(ctx context.Context, obj *model.User) (int, 
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.User) ([]*model.Report, error) {
-	// return loaders.For(ctx).ReportsByUserID.Load(obj.ID)
+	// TODO
 	return nil, nil
 }

@@ -21,6 +21,11 @@ type avatars struct {
 	Ctx global.Context
 }
 
+type aggregatedAvatarsResult struct {
+	Users           []structures.User                  `bson:"users"`
+	RoleEntilements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
+}
+
 func newAvatars(gCtx global.Context) rest.Route {
 	return &avatars{gCtx}
 }
@@ -82,29 +87,38 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			},
 		}},
 	}
+
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, pipeline)
 	if err != nil {
 		zap.S().Errorw("mongo, failed to spawn aggregation for user avatars",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	v := &aggregatedAvatarsResult{}
+
 	cur.Next(ctx)
+
 	if err = cur.Decode(v); err != nil {
 		zap.S().Errorw("mongo, failed to decode aggregated avatars data",
 			"error", err,
 		)
+
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	// Compose the result
 	qb := r.Ctx.Inst().Query.NewBinder(ctx)
+
 	userMap, err := qb.MapUsers(v.Users, v.RoleEntilements...)
 	if err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
+
 	result := make(map[string]string)
+
 	for _, u := range userMap {
 		if !u.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
 			continue
@@ -116,6 +130,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		}
 
 		key := ""
+
 		switch mapTo {
 		case "hash":
 			key = hashAvatarURL(tw.Data.ProfileImageURL)
@@ -126,6 +141,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		default:
 			continue
 		}
+
 		result[key] = fmt.Sprintf("https://%s/pp/%s/%s", r.Ctx.Config().CdnURL, u.ID.Hex(), u.AvatarID)
 	}
 
@@ -138,10 +154,6 @@ func hashAvatarURL(u string) string {
 	u = avatarSizeRegex.ReplaceAllString(u, "300x300")
 	hasher := sha256.New()
 	hasher.Write(utils.S2B(u))
-	return hex.EncodeToString(hasher.Sum(nil))
-}
 
-type aggregatedAvatarsResult struct {
-	Users           []structures.User                  `bson:"users"`
-	RoleEntilements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
+	return hex.EncodeToString(hasher.Sum(nil))
 }

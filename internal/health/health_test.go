@@ -8,9 +8,9 @@ import (
 
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/svc/rmq"
-	"github.com/seventv/api/internal/svc/s3"
 	"github.com/seventv/api/internal/testutil"
+	"github.com/seventv/common/svc/s3"
+	messagequeue "github.com/seventv/message-queue/go"
 )
 
 func TestHealth(t *testing.T) {
@@ -24,8 +24,11 @@ func TestHealth(t *testing.T) {
 	gCtx.Inst().S3, err = s3.NewMock(gCtx, map[string]map[string][]byte{})
 	testutil.IsNil(t, err, "s3 init successful")
 
-	gCtx.Inst().RMQ, err = rmq.NewMock()
-	testutil.IsNil(t, err, "rmq init successful")
+	gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigMock{})
+	testutil.IsNil(t, err, "mq init successful")
+
+	mq, _ := gCtx.Inst().MessageQueue.(*messagequeue.InstanceMock)
+	s3, _ := gCtx.Inst().S3.(*s3.MockInstance)
 
 	// TODO we need to mock redis :-)
 	// gCtx.Inst().Redis, err = redis.NewMock()
@@ -41,21 +44,24 @@ func TestHealth(t *testing.T) {
 
 	resp, err := http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusOK, resp.StatusCode, "response code all up")
 
-	gCtx.Inst().RMQ.(*rmq.MockInstance).SetConnected(false)
+	mq.SetConnected(false)
 
 	resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code rmq down")
 
-	gCtx.Inst().RMQ.(*rmq.MockInstance).SetConnected(true)
-	gCtx.Inst().S3.(*s3.MockInstance).SetConnected(false)
+	mq.SetConnected(true)
+	s3.SetConnected(false)
 
 	resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
 	testutil.IsNil(t, err, "No error")
+
 	_ = resp.Body.Close()
 	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code s3 down")
 

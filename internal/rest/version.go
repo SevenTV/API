@@ -111,6 +111,7 @@ func (s *HttpServer) getErrorHandler(status rest.HttpStatusCode, err rest.APIErr
 			ErrorCode:  err.Code(),
 			Details:    err.GetFields(),
 		})
+
 		ctx.SetContentType("application/json")
 		ctx.SetBody(b)
 	}

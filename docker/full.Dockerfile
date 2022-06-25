@@ -1,7 +1,7 @@
 # The base image used to build all other images
 ARG BASE_IMG=ubuntu:22.04
 # The tag to use for golang image
-ARG GOLANG_TAG=1.18.2
+ARG GOLANG_TAG=1.18.3
 
 #
 # Download and install all deps required to run tests and build the go application

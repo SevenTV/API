@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -25,8 +26,13 @@ func (r *Resolver) NamedEmoteSet(ctx context.Context, name model.EmoteSetName) (
 	case model.EmoteSetNameGlobal:
 		sys, err := r.Ctx.Inst().Mongo.System(ctx)
 		if err != nil {
-			return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+			if err == mongo.ErrNoDocuments {
+				return nil, errors.ErrUnknownEmoteSet()
+			}
+
+			return nil, errors.ErrInternalServerError()
 		}
+
 		setID = sys.EmoteSetID
 	}
 

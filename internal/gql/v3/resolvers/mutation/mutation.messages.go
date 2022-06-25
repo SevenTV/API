@@ -33,6 +33,7 @@ func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.Obje
 		if err == mongo.ErrNoDocuments {
 			return 0, errors.ErrUnknownMessage().SetDetail("No messages found")
 		}
+
 		return 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
@@ -43,6 +44,7 @@ func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.Obje
 	}
 
 	updated := 0
+
 	for _, msg := range messages {
 		result, err := r.Ctx.Inst().Mutate.SetMessageReadStates(ctx, structures.NewMessageBuilder(msg), read, mutations.MessageReadStateOptions{
 			Actor:               actor,
@@ -53,11 +55,14 @@ func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.Obje
 				graphql.AddError(ctx, er)
 			}
 		}
+
 		if err != nil {
 			return 0, err
 		}
+
 		updated += int(result.Updated)
 	}
+
 	return updated, nil
 }
 
@@ -79,23 +84,27 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 
 	// Actor is allowed to be annonymous
 	anonymous := false
+
 	if anonArg != nil && *anonArg {
 		if !actor.HasPermission(structures.RolePermissionBypassPrivacy) {
 			return nil, errors.ErrInsufficientPrivilege().
 				SetDetail("You are not permitted to send messages anonnymously").
 				SetFields(errors.Fields{"MISSING_PERMISSION": "BYPASS_PRIVACY"})
 		}
+
 		anonymous = true
 	}
 
 	// Mark message as important?
 	important := false
+
 	if importantArg != nil && *importantArg {
 		if !actor.HasPermission(structures.RolePermissionManageUsers) || !actor.HasPermission(structures.RolePermissionManageNews) {
 			return nil, errors.ErrInsufficientPrivilege().
 				SetDetail("You are not permitted to send messages marked as important").
 				SetFields(errors.Fields{"MISSING_PERMISSION_ONE_OF": []string{"MANAGE_USERS", "MANAGE_NEWS"}})
 		}
+
 		important = true
 	}
 
@@ -137,5 +146,6 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 	if err != nil {
 		return nil, err
 	}
+
 	return helpers.MessageStructureToInboxModel(inb, r.Ctx.Config().CdnURL), nil
 }

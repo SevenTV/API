@@ -19,8 +19,6 @@ build:
 	GOOS=linux GOARCH=amd64 go build -v -ldflags "-X 'main.Version=${VERSION}' -X 'main.Unix=$(shell date +%s)' -X 'main.User=${BUILDER}'" -o out/api cmd/*.go
 
 lint:
-	staticcheck ./...
-	go vet ./...
 	golangci-lint run --go=1.18
 	yarn prettier --check .
 
@@ -34,7 +32,6 @@ deps:
 	go mod download
 
 dev_deps:
-	go install honnef.co/go/tools/cmd/staticcheck@2022.1
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	yarn
 
@@ -57,7 +54,7 @@ clean:
 		node_modules
 
 work:
-	echo -e "go 1.18\n\nuse (\n\t.\n\t../Common\n)" > go.work
+	echo "go 1.18\n\nuse (\n\t.\n\t../Common\n\t../message-queue/go\n\t../image-processor/go\n)" > go.work
 	go mod tidy
 
 dev:

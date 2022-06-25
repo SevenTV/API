@@ -18,6 +18,7 @@ func (c *Ctx) JSON(status HttpStatusCode, v interface{}) APIError {
 	b, err := json.Marshal(v)
 	if err != nil {
 		c.SetStatusCode(InternalServerError)
+
 		return errors.ErrInternalServerError().
 			SetDetail("JSON Parsing Failed").
 			SetFields(errors.Fields{"JSON_ERROR": err.Error()})
@@ -26,6 +27,7 @@ func (c *Ctx) JSON(status HttpStatusCode, v interface{}) APIError {
 	c.SetStatusCode(status)
 	c.SetContentType("application/json")
 	c.SetBody(b)
+
 	return nil
 }
 
@@ -45,5 +47,6 @@ func (c *Ctx) SetActor(u *structures.User) {
 // Get the current authenticated user
 func (c *Ctx) GetActor() (*structures.User, bool) {
 	v := c.UserValue(AuthUserKey).User()
+
 	return v, v != nil
 }

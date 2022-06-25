@@ -20,10 +20,12 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 		if err != nil {
 			return nil
 		}
+
 		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
 	}
 
 	ch := make(chan *model.UserPartial, 1)
+
 	if init != nil && *init {
 		user := getUser()
 		if user != nil {
@@ -33,6 +35,7 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 
 	go func() {
 		defer close(ch)
+
 		sub := r.subscribe(ctx, "users", actor.ID)
 		for range sub {
 			user := getUser()
@@ -51,10 +54,12 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) 
 		if err != nil {
 			return nil
 		}
+
 		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
 	}
 
 	ch := make(chan *model.UserPartial, 1)
+
 	if init != nil && *init {
 		user := getUser()
 		if user != nil {
@@ -64,6 +69,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) 
 
 	go func() {
 		defer close(ch)
+
 		sub := r.subscribe(ctx, "users", id)
 		for range sub {
 			user := getUser()

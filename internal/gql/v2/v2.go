@@ -77,6 +77,5 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			srv.ServeHTTP(w, r.WithContext(lCtx))
 		}))(ctx)
-
 	}
 }
