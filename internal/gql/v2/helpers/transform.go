@@ -52,7 +52,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	urls := make([][]string, len(files))
 
 	sort.Slice(files, func(i, j int) bool {
-		return files[i].Width > files[j].Width
+		return files[i].Width < files[j].Width
 	})
 
 	for i, file := range files {

@@ -75,7 +75,7 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	urls := make([][2]string, len(files))
 
 	sort.Slice(files, func(i, j int) bool {
-		return files[i].Width > files[j].Width
+		return files[i].Width < files[j].Width
 	})
 
 	for i, file := range files {
