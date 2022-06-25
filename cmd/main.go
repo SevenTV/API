@@ -170,7 +170,11 @@ func main() {
 
 	{
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
-		gCtx.Inst().Mutate = mutations.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
+		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
+			Mongo: gCtx.Inst().Mongo,
+			Redis: gCtx.Inst().Redis,
+			S3:    gCtx.Inst().S3,
+		})
 	}
 
 	wg := sync.WaitGroup{}

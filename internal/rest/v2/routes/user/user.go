@@ -1,10 +1,15 @@
 package user
 
 import (
+	"strings"
+
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Route struct {
@@ -37,7 +42,19 @@ func (r *Route) Config() rest.RouteConfig {
 func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	key, _ := ctx.UserValue("user").String()
 
-	user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(key)
+	var id primitive.ObjectID
+	if primitive.IsValidObjectID(key) {
+		id, _ = primitive.ObjectIDFromHex(key)
+	}
+
+	filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
+		bson.M{"connections.id": strings.ToLower(key)},
+		bson.M{"username": strings.ToLower(key)},
+	}}, bson.M{
+		"_id": id,
+	})
+
+	user, err := r.Ctx.Inst().Query.Users(ctx, filter).First()
 	if err != nil {
 		return errors.From(err)
 	}

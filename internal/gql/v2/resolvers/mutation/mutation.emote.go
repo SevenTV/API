@@ -186,8 +186,10 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	version.State.Lifecycle = structures.EmoteLifecycleDeleted
 	eb.UpdateVersion(version.ID, version)
 
-	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
-		Actor: actor,
+	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
+		Actor:     actor,
+		VersionID: version.ID,
+		Reason:    reason,
 	}); err != nil {
 		return nil, err
 	}
@@ -197,4 +199,9 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	}()
 
 	return utils.PointerOf(true), nil
+}
+
+// MergeEmote implements generated.MutationResolver
+func (*Resolver) MergeEmote(ctx context.Context, oldID string, newID string, reason string) (*model.Emote, error) {
+	panic("unimplemented")
 }

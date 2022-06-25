@@ -19,8 +19,6 @@ extend type Query {
   #
   #  Get a role by id
   #role(id: String!): Role
-  # Search for users.
-  # search_users(query: String!, page: Int, limit: Int): [UserPartial]!
   # Get featured stream
   # featured_broadcast(): String!
   # Get meta
@@ -32,6 +30,8 @@ extend type Mutation {
   editEmote(emote: EmoteInput!, reason: String): Emote
   # Delete an emote. Requires permission.
   deleteEmote(id: String!, reason: String!): Boolean
+  # Merge an emote into another emote, transferring all its channels and swapping aliases
+  mergeEmote(old_id: String!, new_id: String!, reason: String!): Emote
 }
 
 type Emote {

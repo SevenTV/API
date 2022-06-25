@@ -1,10 +1,15 @@
 package user
 
 import (
+	"strings"
+
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type emotes struct {
@@ -35,7 +40,19 @@ func (*emotes) Config() rest.RouteConfig {
 func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	key, _ := ctx.UserValue("user").String()
 
-	user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(key)
+	var id primitive.ObjectID
+	if primitive.IsValidObjectID(key) {
+		id, _ = primitive.ObjectIDFromHex(key)
+	}
+
+	filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
+		bson.M{"connections.id": strings.ToLower(key)},
+		bson.M{"username": strings.ToLower(key)},
+	}}, bson.M{
+		"_id": id,
+	})
+
+	user, err := r.Ctx.Inst().Query.Users(ctx, filter).First()
 	if err != nil {
 		return errors.From(err)
 	}
@@ -58,9 +75,16 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	result := []*model.Emote{}
 
 	for _, e := range emoteSet.Emotes {
-		if e.Emote != nil {
-			result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))
+		if e.Emote == nil {
+			continue
 		}
+
+		v := e.Emote.GetLatestVersion(false)
+		if v.ID.IsZero() || v.IsUnavailable() || v.IsProcessing() {
+			continue
+		}
+
+		result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))
 	}
 
 	return ctx.JSON(rest.OK, result)
