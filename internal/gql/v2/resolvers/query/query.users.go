@@ -11,18 +11,19 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
+	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
+func (r *Resolver) User(ctx context.Context, identifier string) (*model.User, error) {
 	var (
 		err  error
 		user structures.User
 	)
 
-	switch id {
+	switch identifier {
 	case "@me":
 		// Handle @me (fetch actor)
 		// this sets the queried user ID to that of the actor user
@@ -33,13 +34,19 @@ func (r *Resolver) User(ctx context.Context, id string) (*model.User, error) {
 
 		user, err = r.Ctx.Inst().Loaders.UserByID().Load(actor.ID)
 	default:
-		uid, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			user, err = r.Ctx.Inst().Loaders.UserByUsername().Load(strings.ToLower(id))
-		} else {
-			user, err = r.Ctx.Inst().Loaders.UserByID().Load(uid)
+		var id primitive.ObjectID
+		if primitive.IsValidObjectID(identifier) {
+			id, _ = primitive.ObjectIDFromHex(identifier)
 		}
 
+		filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
+			bson.M{"connections.id": strings.ToLower(identifier)},
+			bson.M{"username": strings.ToLower(identifier)},
+		}}, bson.M{
+			"_id": id,
+		})
+
+		user, err = r.Ctx.Inst().Query.Users(ctx, filter).First()
 		if err != nil {
 			return nil, err
 		}
