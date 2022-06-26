@@ -105,15 +105,19 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		bson.M{},
 		options.Find().SetSort(bson.M{"priority": -1}),
 	)
+
 	if err != nil {
 		zap.S().Errorw("mongo, failed to fetch cosmetics data", "error", err)
 		return errors.ErrInternalServerError()
 	}
+
 	if err = cur.All(ctx, &cosmetics); err != nil {
 		zap.S().Errorw("mongo, failed to decode cosmetics data", "error", err)
 		return errors.ErrInternalServerError()
 	}
+
 	cosMap := make(map[primitive.ObjectID]*structures.Cosmetic[bson.Raw])
+
 	for _, cos := range cosmetics {
 		cosMap[cos.ID] = cos
 	}
@@ -132,12 +136,14 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 	// Map user IDs by roles
 	roleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
+
 	for _, ent := range ents[structures.EntitlementKindRole] {
 		r, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
 		if err != nil {
 			zap.S().Errorw("cosmetics, failed to convert entitlement", "error", err)
 			return errors.ErrInternalServerError()
 		}
+
 		if a := roleMap[ent.UserID]; a != nil {
 			roleMap[ent.UserID] = append(roleMap[ent.UserID], r.Data.ObjectReference)
 		} else {
@@ -154,6 +160,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		if ok, d := readEntitled(roleMap[ent.UserID], ent); ok {
 			uc := userCosmetics[ent.UserID]
 			cos := cosMap[d.ObjectReference]
+
 			if !uc[0].IsZero() {
 				oldCos := cosMap[uc[0]]
 				if oldCos.ID.IsZero() || oldCos.Priority >= cos.Priority {
@@ -164,10 +171,12 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 					if id == ent.UserID {
 						oldCos.UserIDs[i] = oldCos.UserIDs[len(oldCos.UserIDs)-1]
 						oldCos.UserIDs = oldCos.UserIDs[:len(oldCos.UserIDs)-1]
+
 						break
 					}
 				}
 			}
+
 			uc[0] = cos.ID
 			cos.UserIDs = append(cos.UserIDs, ent.UserID)
 
@@ -227,7 +236,9 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		if len(cos.UserIDs) == 0 {
 			continue // skip if cosmetic has no users
 		}
+
 		cos.Users = make([]structures.User, len(cos.UserIDs))
+
 		for i, uid := range cos.UserIDs {
 			cos.Users[i] = userMap[uid]
 		}
@@ -236,24 +247,28 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		case structures.CosmeticKindBadge:
 			badge, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](*cos)
 			urls := make([][2]string, 3)
+
 			for i := 1; i <= 3; i++ {
 				a := [2]string{}
 				a[0] = strconv.Itoa(i)
 				a[1] = fmt.Sprintf("https://%s/badge/%s/%dx", r.Ctx.Config().CdnURL, badge.ID.Hex(), i)
 				urls[i-1] = a
 			}
+
 			b := createBadgeResponse(r.Ctx, *cos, cos.Users, idType)
 			result.Badges = append(result.Badges, b)
 		case structures.CosmeticKindNametagPaint:
 			paint, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](*cos)
 			stops := make([]structures.CosmeticPaintGradientStop, len(paint.Data.Stops))
 			dropShadows := make([]structures.CosmeticPaintDropShadow, len(paint.Data.DropShadows))
+
 			for i, stop := range paint.Data.Stops {
 				stops[i] = structures.CosmeticPaintGradientStop{
 					At:    stop.At,
 					Color: stop.Color,
 				}
 			}
+
 			for i, shadow := range paint.Data.DropShadows {
 				dropShadows[i] = structures.CosmeticPaintDropShadow{
 					OffsetX: shadow.OffsetX,
@@ -262,6 +277,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 					Color:   shadow.Color,
 				}
 			}
+
 			b := createPaintResponse(*cos, cos.Users, idType)
 			result.Paints = append(result.Paints, b)
 		}
@@ -331,6 +347,7 @@ func createBadgeResponse(gctx global.Context, badge structures.Cosmetic[bson.Raw
 
 	// Generate URLs
 	urls := make([][]string, 3)
+
 	for i := 1; i <= 3; i++ {
 		a := make([]string, 2)
 		a[0] = fmt.Sprintf("%d", i)
@@ -376,10 +393,12 @@ func createPaintResponse(paint structures.Cosmetic[bson.Raw], users []structures
 
 func selectUserIDType(users []structures.User, t string) []string {
 	userIDs := make([]string, len(users))
+
 	for i, u := range users {
 		if u.ID.IsZero() {
 			continue
 		}
+
 		switch t {
 		case "object_id":
 			userIDs[i] = u.ID.Hex()
