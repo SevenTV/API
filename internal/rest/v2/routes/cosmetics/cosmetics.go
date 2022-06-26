@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
@@ -13,6 +15,7 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,10 +24,11 @@ import (
 
 type Route struct {
 	Ctx global.Context
+	mx  *sync.Mutex
 }
 
 func New(gCtx global.Context) rest.Route {
-	return &Route{gCtx}
+	return &Route{gCtx, &sync.Mutex{}}
 }
 
 // Config implements rest.Route
@@ -36,7 +40,7 @@ func (r *Route) Config() rest.RouteConfig {
 			newAvatars(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 150, []string{"s-maxage=300"}),
+			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=300"}),
 		},
 	}
 }
@@ -50,6 +54,9 @@ func (r *Route) Config() rest.RouteConfig {
 // @Success 200 {object} model.CosmeticsMap
 // @Router /cosmetics [get]
 func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
 	// identifier type argument
 	idType := utils.B2S(ctx.QueryArgs().Peek("user_identifier"))
 
@@ -281,6 +288,11 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			b := createPaintResponse(*cos, cos.Users, idType)
 			result.Paints = append(result.Paints, b)
 		}
+	}
+
+	b, _ := json.Marshal(result)
+	if err := r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, utils.B2S(b), 10*time.Minute); err != nil {
+		logrus.WithField("id_type", idType).WithError(err).Error("couldn't save cosmetics response to redis cache")
 	}
 
 	return ctx.JSON(rest.OK, result)
