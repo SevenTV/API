@@ -16,7 +16,6 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -297,7 +296,9 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 	b, _ := json.Marshal(result)
 	if err := r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, utils.B2S(b), 10*time.Minute); err != nil {
-		logrus.WithField("id_type", idType).WithError(err).Error("couldn't save cosmetics response to redis cache")
+		zap.S().Errorw("couldn't save cosmetics response to redis cache",
+			"id_type", idType,
+		)
 	}
 
 	return ctx.JSON(rest.OK, result)
