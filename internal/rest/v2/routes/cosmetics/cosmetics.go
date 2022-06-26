@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -262,7 +263,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				urls[i-1] = a
 			}
 
-			b := createBadgeResponse(r.Ctx, *cos, cos.Users, idType)
+			b := createBadgeResponse(r.Ctx, badge.ToRaw(), cos.Users, idType)
 			result.Badges = append(result.Badges, b)
 		case structures.CosmeticKindNametagPaint:
 			paint, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](*cos)
@@ -285,7 +286,11 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				}
 			}
 
-			b := createPaintResponse(*cos, cos.Users, idType)
+			f := strings.Replace(string(paint.Data.Function), "_", "-", 1)
+			f = strings.ToLower(f)
+			paint.Data.Function = structures.CosmeticPaintFunction(f)
+
+			b := createPaintResponse(paint.ToRaw(), cos.Users, idType)
 			result.Paints = append(result.Paints, b)
 		}
 	}
