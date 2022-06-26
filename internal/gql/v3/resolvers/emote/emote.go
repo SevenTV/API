@@ -110,11 +110,19 @@ func (r *Resolver) CommonNames(ctx context.Context, obj *model.Emote) ([]*model.
 		m[ae.Name]++
 	}
 
+	i := 0
+
 	for n, c := range m {
 		result = append(result, &model.EmoteCommonName{
 			Name:  n,
 			Count: c,
 		})
+
+		i++
+
+		if i+1 > 10 {
+			break
+		}
 	}
 
 	sort.Slice(result, func(i, j int) bool {
