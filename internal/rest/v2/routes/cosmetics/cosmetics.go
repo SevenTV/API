@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
@@ -23,11 +21,6 @@ import (
 
 type Route struct {
 	Ctx global.Context
-}
-
-type aggregatedCosmeticsResult struct {
-	Entitlements []*structures.Entitlement[bson.Raw] `bson:"entitlements"`
-	Users        []*structures.User                  `bson:"users"`
 }
 
 func New(gCtx global.Context) rest.Route {
@@ -80,16 +73,9 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		return ctx.JSON(rest.OK, result)
 	}
 
-	// Fetch roles
-	roles, _ := r.Ctx.Inst().Query.Roles(ctx, bson.M{})
-	roleMap := make(map[primitive.ObjectID]structures.Role)
-
-	for _, r := range roles {
-		roleMap[r.ID] = r
-	}
-
-	// Let's make a pipeline
-	pipeline := mongo.Pipeline{
+	// Retrieve all users of badges
+	// Find entitlements
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, mongo.Pipeline{
 		{{Key: "$sort", Value: bson.M{"priority": -1}}},
 		{{Key: "$match", Value: bson.M{
 			"disabled": bson.M{"$not": bson.M{"$eq": true}},
@@ -99,65 +85,18 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				structures.EntitlementKindPaint,
 			}},
 		}}},
-		// Lookup cosmetics
-		{{
-			Key: "$group",
-			Value: bson.M{
-				"_id": nil,
-				"entitlements": bson.M{
-					"$push": "$$ROOT",
-				},
-			},
-		}},
-		// Lookup: Users
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameUsers,
-				LocalField:   "entitlements.user_id",
-				ForeignField: "_id",
-				As:           "users",
-			},
-		}},
-		{{Key: "$project", Value: bson.M{
-			"cosmetics":                  1,
-			"entitlements._id":           1,
-			"entitlements.kind":          1,
-			"entitlements.data":          1,
-			"entitlements.user_id":       1,
-			"users.connections.id":       1,
-			"users.connections.platform": 1,
-			"users.username":             1,
-			"users._id":                  1,
-			"users.role_ids":             1,
-		}}},
-	}
-
-	// Run the aggregation
-	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, pipeline)
+	})
 	if err != nil {
-		zap.S().Errorw("mongo, failed to spawn cosmetic entitlements aggregation",
-			"error", err,
-		)
-
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		zap.S().Errorw("mongo, failed to spawn cosmetic entitlements aggregation", "error", err)
+		return errors.ErrInternalServerError()
 	}
 
 	// Decode data
-	data := &aggregatedCosmeticsResult{}
-
-	cur.Next(ctx)
-
-	if err = multierror.Append(cur.Decode(data), cur.Close(ctx)).ErrorOrNil(); err != nil {
-		zap.S().Errorw("mongo, failed to decode aggregated cosmetic entitlements",
-			"error", err,
-		)
-
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+	entitlements := []structures.Entitlement[bson.Raw]{}
+	if err = cur.All(ctx, &entitlements); err != nil {
+		zap.S().Errorw("mongo, failed to decode aggregated cosmetic entitlements", "error", err)
+		return errors.ErrInternalServerError()
 	}
-
-	// We will now recompose the data into
-	// an API v2 /cosmetics response
 
 	// Map cosmetics
 	cosmetics := []*structures.Cosmetic[bson.Raw]{}
@@ -166,227 +105,295 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		bson.M{},
 		options.Find().SetSort(bson.M{"priority": -1}),
 	)
-
 	if err != nil {
-		zap.S().Errorw("mongo, failed to fetch cosmetics data",
-			"error", err,
-		)
-
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		zap.S().Errorw("mongo, failed to fetch cosmetics data", "error", err)
+		return errors.ErrInternalServerError()
 	}
-
 	if err = cur.All(ctx, &cosmetics); err != nil {
-		zap.S().Errorw("mongo, failed to decode cosmetics data",
-			"error", err,
-		)
-
-		return errors.ErrInternalServerError().SetDetail(err.Error())
+		zap.S().Errorw("mongo, failed to decode cosmetics data", "error", err)
+		return errors.ErrInternalServerError()
 	}
-
 	cosMap := make(map[primitive.ObjectID]*structures.Cosmetic[bson.Raw])
-
 	for _, cos := range cosmetics {
 		cosMap[cos.ID] = cos
 	}
 
 	// Structure entitlements by kind
 	// kind:ent_id:[]ent
-	ents := make(map[structures.EntitlementKind]map[primitive.ObjectID]structures.Entitlement[bson.Raw])
-	for _, ent := range data.Entitlements {
-		m := ents[ent.Kind]
-		if m == nil {
-			ents[ent.Kind] = map[primitive.ObjectID]structures.Entitlement[bson.Raw]{}
-			m = ents[ent.Kind]
+	ents := make(map[structures.EntitlementKind][]structures.Entitlement[bson.Raw])
+	for _, ent := range entitlements {
+		a := ents[ent.Kind]
+		if a == nil {
+			ents[ent.Kind] = []structures.Entitlement[bson.Raw]{ent}
+		} else {
+			ents[ent.Kind] = append(a, ent)
 		}
-
-		m[ent.ID] = *ent
 	}
 
-	// Map users with their roles
-	userMap := make(map[primitive.ObjectID]structures.User)
-	userCosmetics := make(map[primitive.ObjectID][2]bool) // [0]: badge, [1] paint
-
-	for _, u := range data.Users {
-		if u == nil {
-			continue
-		}
-
-		userMap[u.ID] = *u
-		userCosmetics[u.ID] = [2]bool{false, false}
-	}
-
+	// Map user IDs by roles
+	roleMap := make(map[primitive.ObjectID][]primitive.ObjectID)
 	for _, ent := range ents[structures.EntitlementKindRole] {
-		u := userMap[ent.UserID]
-
-		ent, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
+		r, err := structures.ConvertEntitlement[structures.EntitlementDataRole](ent)
 		if err != nil {
-			continue
+			zap.S().Errorw("cosmetics, failed to convert entitlement", "error", err)
+			return errors.ErrInternalServerError()
 		}
-
-		if !u.ID.IsZero() && utils.Contains(u.RoleIDs, ent.Data.ObjectReference) {
-			continue
+		if a := roleMap[ent.UserID]; a != nil {
+			roleMap[ent.UserID] = append(roleMap[ent.UserID], r.Data.ObjectReference)
+		} else {
+			roleMap[ent.UserID] = []primitive.ObjectID{r.Data.ObjectReference}
 		}
-
-		u.RoleIDs = append(u.RoleIDs, ent.Data.ObjectReference)
 	}
 
-	usersToIdentifiers := func(ul []structures.User) []string {
-		s := make([]string, len(ul))
+	// Check entitled paints / badges for users we need to fetch
+	entitledUserCount := 0
+	entitledUserIDs := make([]primitive.ObjectID, len(ents[structures.EntitlementKindBadge])+len(ents[structures.EntitlementKindPaint]))
+	userCosmetics := make(map[primitive.ObjectID][2]primitive.ObjectID) // [0] has badge, [1] has paint
 
-		switch idType {
-		case "object_id":
-			for i, u := range ul {
-				s[i] = u.ID.Hex()
-			}
-		case "login":
-			for i, u := range ul {
-				s[i] = u.Username
-			}
-		case "twitch_id":
-			for i, u := range ul {
-				for _, con := range u.Connections {
-					if con.Platform == structures.UserConnectionPlatformTwitch {
-						s[i] = con.ID
+	for _, ent := range ents[structures.EntitlementKindBadge] {
+		if ok, d := readEntitled(roleMap[ent.UserID], ent); ok {
+			uc := userCosmetics[ent.UserID]
+			cos := cosMap[d.ObjectReference]
+			if !uc[0].IsZero() {
+				oldCos := cosMap[uc[0]]
+				if oldCos.ID.IsZero() || oldCos.Priority >= cos.Priority {
+					continue // skip if priority is lower
+				}
+				// Find index of old
+				for i, id := range oldCos.UserIDs {
+					if id == ent.UserID {
+						oldCos.UserIDs[i] = oldCos.UserIDs[len(oldCos.UserIDs)-1]
+						oldCos.UserIDs = oldCos.UserIDs[:len(oldCos.UserIDs)-1]
 						break
 					}
 				}
 			}
-		}
+			uc[0] = cos.ID
+			cos.UserIDs = append(cos.UserIDs, ent.UserID)
 
-		return s
-	}
-
-	// Create the final result
-	result := &model.CosmeticsMap{
-		Badges: []*model.CosmeticBadge{},
-		Paints: []*model.CosmeticPaint{},
-	}
-
-	for _, ent := range ents[structures.EntitlementKindBadge] {
-		ent, err := structures.ConvertEntitlement[structures.EntitlementDataBadge](ent)
-		if err != nil {
-			continue
-		}
-
-		cos := cosMap[ent.Data.ObjectReference]
-		u := userMap[ent.UserID]
-
-		uc := userCosmetics[u.ID]
-		if uc[0] || !ent.Data.Selected {
-			continue // user already has a badge
-		}
-
-		if ent.Data.RoleBinding == nil || utils.Contains(u.RoleIDs, *ent.Data.RoleBinding) {
-			cos.Users = append(cos.Users, u)
-			uc[0] = true
-			userCosmetics[u.ID] = uc
+			userCosmetics[ent.UserID] = uc
+			entitledUserIDs[entitledUserCount] = ent.UserID
+			entitledUserCount++
 		}
 	}
 
 	for _, ent := range ents[structures.EntitlementKindPaint] {
-		ent, err := structures.ConvertEntitlement[structures.EntitlementDataPaint](ent)
-		if err != nil {
-			continue
-		}
+		if ok, d := readEntitled(roleMap[ent.UserID], ent); ok {
+			uc := userCosmetics[ent.UserID]
+			if uc[1].IsZero() {
+				cos := cosMap[d.ObjectReference]
+				cos.UserIDs = append(cos.UserIDs, ent.UserID)
+				uc[1] = cos.ID
+			}
 
-		cos := cosMap[ent.Data.ObjectReference]
-		u := userMap[ent.UserID]
-
-		uc := userCosmetics[u.ID]
-		if uc[1] || !ent.Data.Selected {
-			continue // user already has a paint
+			userCosmetics[ent.UserID] = uc
+			entitledUserIDs[entitledUserCount] = ent.UserID
+			entitledUserCount++
 		}
+	}
+	// At this point we can fetch our users
+	cur, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
+		"_id": bson.M{"$in": entitledUserIDs[:entitledUserCount]},
+	}, options.Find().SetProjection(bson.M{
+		"_id":                  1,
+		"connections.id":       1,
+		"connections.platform": 1,
+		"username":             1,
+	}))
+	if err != nil {
+		zap.S().Errorw("mongo, failed to spawn cosmetic users cursor", "error", err)
+		return errors.ErrInternalServerError()
+	}
 
-		if ent.Data.RoleBinding == nil || utils.Contains(u.RoleIDs, *ent.Data.RoleBinding) {
-			cos.Users = append(cos.Users, u)
-			uc[1] = true
-			userCosmetics[u.ID] = uc
-		}
+	// Decode data
+	users := []structures.User{}
+	if err = cur.All(ctx, &users); err != nil {
+		zap.S().Errorw("mongo, failed to decode cosmetic users", "error", err)
+		return errors.ErrInternalServerError()
+	}
+
+	userMap := make(map[primitive.ObjectID]structures.User, len(users))
+	for _, u := range users {
+		userMap[u.ID] = u
+	}
+
+	// Find directly assigned users
+	result := GetCosmeticsResult{
+		Badges: []badgeCosmeticResponse{},
+		Paints: []paintCosmeticResponse{},
 	}
 
 	for _, cos := range cosmetics {
-		if len(cos.Users) == 0 {
+		if len(cos.UserIDs) == 0 {
 			continue // skip if cosmetic has no users
+		}
+		cos.Users = make([]structures.User, len(cos.UserIDs))
+		for i, uid := range cos.UserIDs {
+			cos.Users[i] = userMap[uid]
 		}
 
 		switch cos.Kind {
 		case structures.CosmeticKindBadge:
-			badge, err := structures.ConvertCosmetic[structures.CosmeticDataBadge](*cos)
-			if err != nil {
-				continue
-			}
-
+			badge, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](*cos)
 			urls := make([][2]string, 3)
-
 			for i := 1; i <= 3; i++ {
 				a := [2]string{}
 				a[0] = strconv.Itoa(i)
 				a[1] = fmt.Sprintf("https://%s/badge/%s/%dx", r.Ctx.Config().CdnURL, badge.ID.Hex(), i)
 				urls[i-1] = a
 			}
-
-			result.Badges = append(result.Badges, &model.CosmeticBadge{
-				ID:      cos.ID.Hex(),
-				Name:    cos.Name,
-				Tooltip: badge.Data.Tooltip,
-				URLs:    urls,
-				Users:   usersToIdentifiers(cos.Users),
-				Misc:    false,
-			})
+			b := createBadgeResponse(r.Ctx, *cos, cos.Users, idType)
+			result.Badges = append(result.Badges, b)
 		case structures.CosmeticKindNametagPaint:
-			paint, err := structures.ConvertCosmetic[structures.CosmeticDataPaint](*cos)
-			if err != nil {
-				continue
-			}
-
-			stops := make([]model.CosmeticPaintGradientStop, len(paint.Data.Stops))
-			dropShadows := make([]model.CosmeticPaintDropShadow, len(paint.Data.DropShadows))
-
+			paint, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](*cos)
+			stops := make([]structures.CosmeticPaintGradientStop, len(paint.Data.Stops))
+			dropShadows := make([]structures.CosmeticPaintDropShadow, len(paint.Data.DropShadows))
 			for i, stop := range paint.Data.Stops {
-				stops[i] = model.CosmeticPaintGradientStop{
+				stops[i] = structures.CosmeticPaintGradientStop{
 					At:    stop.At,
 					Color: stop.Color,
 				}
 			}
-
 			for i, shadow := range paint.Data.DropShadows {
-				dropShadows[i] = model.CosmeticPaintDropShadow{
+				dropShadows[i] = structures.CosmeticPaintDropShadow{
 					OffsetX: shadow.OffsetX,
 					OffsetY: shadow.OffsetY,
 					Radius:  shadow.Radius,
 					Color:   shadow.Color,
 				}
 			}
-
-			result.Paints = append(result.Paints, &model.CosmeticPaint{
-				ID:          paint.ID.Hex(),
-				Name:        cos.Name,
-				Users:       usersToIdentifiers(cos.Users),
-				Function:    string(paint.Data.Function),
-				Color:       paint.Data.Color,
-				Stops:       stops,
-				Repeat:      paint.Data.Repeat,
-				Angle:       paint.Data.Angle,
-				Shape:       paint.Data.Shape,
-				ImageURL:    paint.Data.ImageURL,
-				DropShadows: dropShadows,
-			})
-		}
-	}
-
-	// Set Cache
-	{
-		j, err := json.Marshal(result)
-		if err != nil {
-			zap.S().Errorw("failed to encode cache data for /v2/cosmetics",
-				"error", err,
-			)
-		} else if err = r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, j, time.Minute*10); err != nil {
-			zap.S().Errorw("failed to save cache of /v2/cosmetics",
-				"error", err,
-			)
+			b := createPaintResponse(*cos, cos.Users, idType)
+			result.Paints = append(result.Paints, b)
 		}
 	}
 
 	return ctx.JSON(rest.OK, result)
+}
+
+func readEntitled(roleList []primitive.ObjectID, ent structures.Entitlement[bson.Raw]) (bool, structures.EntitlementDataBaseSelectable) {
+	d, _ := structures.ConvertEntitlement[structures.EntitlementDataBaseSelectable](ent)
+
+	if !d.Data.Selected {
+		return false, d.Data
+	}
+
+	if len(d.Condition.AllRoles) > 0 {
+		for _, rol := range d.Condition.AllRoles {
+			if !utils.Contains(roleList, rol) {
+				return false, d.Data
+			}
+		}
+	}
+
+	if len(d.Condition.AnyRoles) > 0 {
+		for _, rol := range d.Condition.AnyRoles {
+			if utils.Contains(roleList, rol) {
+				continue
+			}
+		}
+	}
+
+	return true, d.Data
+}
+
+type GetCosmeticsResult struct {
+	Badges []badgeCosmeticResponse `json:"badges"`
+	Paints []paintCosmeticResponse `json:"paints"`
+}
+type badgeCosmeticResponse struct {
+	ID      string     `json:"id"`
+	Name    string     `json:"name"`
+	Tooltip string     `json:"tooltip"`
+	URLs    [][]string `json:"urls"`
+	Users   []string   `json:"users"`
+	Misc    bool       `json:"misc,omitempty"`
+}
+
+type paintCosmeticResponse struct {
+	ID          string                                 `json:"id"`
+	Name        string                                 `json:"name"`
+	Users       []string                               `json:"users"`
+	Function    string                                 `json:"function"`
+	Color       *int32                                 `json:"color"`
+	Stops       []structures.CosmeticPaintGradientStop `json:"stops"`
+	Repeat      bool                                   `json:"repeat"`
+	Angle       int32                                  `json:"angle"`
+	Shape       string                                 `json:"shape,omitempty"`
+	ImageURL    string                                 `json:"image_url,omitempty"`
+	DropShadow  structures.CosmeticPaintDropShadow     `json:"drop_shadow,omitempty"`
+	DropShadows []structures.CosmeticPaintDropShadow   `json:"drop_shadows,omitempty"`
+	Animation   structures.CosmeticPaintAnimation      `json:"animation,omitempty"`
+}
+
+func createBadgeResponse(gctx global.Context, badge structures.Cosmetic[bson.Raw], users []structures.User, idType string) badgeCosmeticResponse {
+	// Get user list
+	userIDs := selectUserIDType(users, idType)
+
+	// Generate URLs
+	urls := make([][]string, 3)
+	for i := 1; i <= 3; i++ {
+		a := make([]string, 2)
+		a[0] = fmt.Sprintf("%d", i)
+		a[1] = fmt.Sprintf("https://%s/badge/%s/%d", gctx.Config().CdnURL, badge.ID.Hex(), i)
+
+		urls[i-1] = a
+	}
+
+	data, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](badge)
+
+	response := badgeCosmeticResponse{
+		ID:      badge.ID.Hex(),
+		Name:    badge.Name,
+		Tooltip: data.Data.Tooltip,
+		Users:   userIDs,
+		URLs:    urls,
+		Misc:    data.Data.Misc,
+	}
+
+	return response
+}
+
+func createPaintResponse(paint structures.Cosmetic[bson.Raw], users []structures.User, idType string) paintCosmeticResponse {
+	// Get user list
+	userIDs := selectUserIDType(users, idType)
+
+	data, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](paint)
+
+	return paintCosmeticResponse{
+		ID:          paint.ID.Hex(),
+		Name:        paint.Name,
+		Users:       userIDs,
+		Color:       data.Data.Color,
+		Function:    string(data.Data.Function),
+		Stops:       data.Data.Stops,
+		Repeat:      data.Data.Repeat,
+		Angle:       data.Data.Angle,
+		Shape:       data.Data.Shape,
+		ImageURL:    data.Data.ImageURL,
+		DropShadows: data.Data.DropShadows,
+	}
+}
+
+func selectUserIDType(users []structures.User, t string) []string {
+	userIDs := make([]string, len(users))
+	for i, u := range users {
+		if u.ID.IsZero() {
+			continue
+		}
+		switch t {
+		case "object_id":
+			userIDs[i] = u.ID.Hex()
+		case "twitch_id":
+			tw, _, _ := u.Connections.Twitch()
+			if tw.ID == "" {
+				continue
+			}
+
+			userIDs[i] = tw.ID
+		case "login":
+			userIDs[i] = u.Username
+		}
+	}
+
+	return userIDs
 }
