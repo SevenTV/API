@@ -24,7 +24,7 @@ type EmoteSet {
   name: String!
   tags: [String!]!
   emotes: [ActiveEmote!]!
-  emote_slots: Int!
+  capacity: Int!
   owner_id: ObjectID
   owner: User @goField(forceResolver: true)
 }

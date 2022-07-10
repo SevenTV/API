@@ -264,13 +264,13 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 	}
 
 	return &model.EmoteSet{
-		ID:         s.ID,
-		Name:       s.Name,
-		Tags:       s.Tags,
-		Emotes:     emotes,
-		EmoteSlots: int(s.EmoteSlots),
-		OwnerID:    &s.OwnerID,
-		Owner:      owner,
+		ID:       s.ID,
+		Name:     s.Name,
+		Tags:     s.Tags,
+		Emotes:   emotes,
+		Capacity: int(s.Capacity),
+		OwnerID:  &s.OwnerID,
+		Owner:    owner,
 	}
 }
 
