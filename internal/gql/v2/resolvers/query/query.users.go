@@ -48,6 +48,10 @@ func (r *Resolver) User(ctx context.Context, identifier string) (*model.User, er
 
 		user, err = r.Ctx.Inst().Query.Users(ctx, filter).First()
 		if err != nil {
+			if errors.Compare(err, errors.ErrNoItems()) {
+				return nil, errors.ErrUnknownUser()
+			}
+
 			return nil, err
 		}
 
