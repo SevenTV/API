@@ -84,6 +84,7 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 			continue
 		}
 
+		e.Emote.Name = e.Name
 		result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))
 	}
 

@@ -21,11 +21,13 @@ import (
 	"github.com/seventv/api/internal/monitoring"
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
+	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
+	"github.com/seventv/common/svc"
 	"github.com/seventv/common/svc/s3"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.uber.org/zap"
@@ -166,14 +168,21 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx)
+		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
 	}
 
 	{
+		id := svc.AppIdentity{
+			Name: "API",
+			CDN:  config.CdnURL,
+		}
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
-			Mongo: gCtx.Inst().Mongo,
-			Redis: gCtx.Inst().Redis,
-			S3:    gCtx.Inst().S3,
+			ID:     id,
+			Mongo:  gCtx.Inst().Mongo,
+			Redis:  gCtx.Inst().Redis,
+			S3:     gCtx.Inst().S3,
+			Events: gCtx.Inst().Events,
 		})
 	}
 
