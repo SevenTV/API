@@ -169,27 +169,16 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	}
 
 	// Fetch the emote
-	emotes, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": emoteID}).Items()
+	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": emoteID}).First()
 	if err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
-	}
-
-	if len(emotes) == 0 {
 		return nil, errors.ErrUnknownEmote()
 	}
 
-	emote := emotes[0]
-	version, _ := emote.GetVersion(emoteID)
 	eb := structures.NewEmoteBuilder(emote)
 
-	// Delete the emote
-	version.State.Lifecycle = structures.EmoteLifecycleDeleted
-	eb.UpdateVersion(version.ID, version)
-
 	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
-		Actor:     actor,
-		VersionID: version.ID,
-		Reason:    reason,
+		Actor:  actor,
+		Reason: reason,
 	}); err != nil {
 		return nil, err
 	}
@@ -202,6 +191,54 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 }
 
 // MergeEmote implements generated.MutationResolver
-func (*Resolver) MergeEmote(ctx context.Context, oldID string, newID string, reason string) (*model.Emote, error) {
-	panic("unimplemented")
+func (r *Resolver) MergeEmote(ctx context.Context, oldIDArg string, newIDArg string, reason string) (*model.Emote, error) {
+	actor := auth.For(ctx)
+	if actor == nil {
+		return nil, errors.ErrUnauthorized()
+	}
+
+	// Parse emote ID
+	oldID, err := primitive.ObjectIDFromHex(oldIDArg)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
+	newID, err := primitive.ObjectIDFromHex(newIDArg)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
+	// Fetch the emote
+	emotes, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": bson.M{"$in": bson.A{oldID, newID}}}).Items()
+	if err != nil {
+		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	if len(emotes) != 2 {
+		return nil, errors.ErrUnknownEmote()
+	}
+
+	var oldEmote structures.Emote
+
+	var newEmote structures.Emote
+
+	for _, e := range emotes {
+		switch e.ID {
+		case oldID:
+			oldEmote = e
+		case newID:
+			newEmote = e
+		}
+	}
+
+	if err := r.Ctx.Inst().Mutate.MergeEmote(ctx, structures.NewEmoteBuilder(oldEmote), mutations.MergeEmoteOptions{
+		Actor:          actor,
+		NewEmote:       newEmote,
+		Reason:         reason,
+		SkipValidation: false,
+	}); err != nil {
+		return nil, err
+	}
+
+	return helpers.EmoteStructureToModel(newEmote, r.Ctx.Config().CdnURL), nil
 }

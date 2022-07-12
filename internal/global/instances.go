@@ -3,6 +3,7 @@ package global
 import (
 	"github.com/seventv/api/internal/instance"
 	"github.com/seventv/api/internal/svc/prometheus"
+	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3/mutations"
@@ -17,6 +18,7 @@ type Instances struct {
 	S3           s3.Instance
 	MessageQueue messagequeue.Instance
 	Prometheus   prometheus.Instance
+	Events       events.Instance
 	Loaders      instance.Loaders
 
 	Query  *query.Query

@@ -188,52 +188,24 @@ func UserStructureToPartialModel(s *model.User) *model.UserPartial {
 func RoleStructureToModel(s structures.Role) *model.Role {
 	p := 0
 
-	if s.Allowed&structures.RolePermissionCreateEmote == 0 {
-		p |= int(v2structures.RolePermissionEmoteCreate)
+	bits := map[structures.RolePermission]int64{
+		structures.RolePermissionCreateEmote:                    v2structures.RolePermissionEmoteCreate,
+		structures.RolePermissionEditEmote:                      v2structures.RolePermissionEmoteEditOwned,
+		structures.RolePermissionEditAnyEmote:                   v2structures.RolePermissionEmoteEditAll,
+		structures.RolePermissionReportCreate:                   v2structures.RolePermissionCreateReports,
+		structures.RolePermissionManageBans:                     v2structures.RolePermissionBanUsers,
+		structures.RolePermissionManageUsers:                    v2structures.RolePermissionManageUsers,
+		structures.RolePermissionManageStack:                    v2structures.RolePermissionEditApplicationMeta,
+		structures.RolePermissionManageCosmetics:                v2structures.RolePermissionManageEntitlements,
+		structures.RolePermissionFeatureZeroWidthEmoteType:      v2structures.RolePermissionUseZeroWidthEmote,
+		structures.RolePermissionFeatureProfilePictureAnimation: v2structures.RolePermissionUseCustomAvatars,
+		structures.RolePermissionSuperAdministrator:             v2structures.RolePermissionAdministrator,
 	}
 
-	if s.Allowed&structures.RolePermissionEditEmote == 0 {
-		p |= int(v2structures.RolePermissionEmoteEditOwned)
-	}
-
-	if s.Allowed&structures.RolePermissionEditAnyEmote == 0 {
-		p |= int(v2structures.RolePermissionEmoteEditAll)
-	}
-
-	if s.Allowed&structures.RolePermissionReportCreate == 0 {
-		p |= int(v2structures.RolePermissionCreateReports)
-	}
-
-	if s.Allowed&structures.RolePermissionManageBans == 0 {
-		p |= int(v2structures.RolePermissionBanUsers)
-	}
-
-	if s.Allowed&structures.RolePermissionSuperAdministrator == 0 {
-		p |= int(v2structures.RolePermissionAdministrator)
-	}
-
-	if s.Allowed&structures.RolePermissionManageRoles == 0 {
-		p |= int(v2structures.RolePermissionManageRoles)
-	}
-
-	if s.Allowed&structures.RolePermissionManageUsers == 0 {
-		p |= int(v2structures.RolePermissionManageUsers)
-	}
-
-	if s.Allowed&structures.RolePermissionManageStack == 0 {
-		p |= int(v2structures.RolePermissionEditApplicationMeta)
-	}
-
-	if s.Allowed&structures.RolePermissionManageCosmetics == 0 {
-		p |= int(v2structures.RolePermissionManageEntitlements)
-	}
-
-	if s.Allowed&structures.RolePermissionFeatureZeroWidthEmoteType == 0 {
-		p |= int(v2structures.EmoteVisibilityZeroWidth)
-	}
-
-	if s.Allowed&structures.RolePermissionFeatureProfilePictureAnimation == 0 {
-		p |= int(v2structures.RolePermissionUseCustomAvatars)
+	for a, b := range bits {
+		if s.HasPermissionBit(a) {
+			p |= int(b)
+		}
 	}
 
 	return &model.Role{

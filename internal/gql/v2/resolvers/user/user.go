@@ -43,7 +43,7 @@ func (r *Resolver) Role(ctx context.Context, obj *model.User) (*model.Role, erro
 func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
 	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
 	if err != nil {
-		return nil, errors.ErrBadObjectID()
+		return []*model.Emote{}, nil
 	}
 
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
@@ -72,7 +72,7 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, error) {
 	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
 	if err != nil {
-		return nil, errors.ErrBadObjectID()
+		return []string{}, nil
 	}
 
 	result := []string{}
@@ -96,7 +96,7 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]string, error) {
 	setID, err := primitive.ObjectIDFromHex(obj.EmoteSetID)
 	if err != nil {
-		return nil, errors.ErrBadObjectID()
+		return [][]string{}, nil
 	}
 
 	result := [][]string{}
