@@ -141,7 +141,7 @@ data:
       bind: 0.0.0.0:9100
 
     pprof:
-      enabled: true
+      enabled: false
       bind: 0.0.0.0:9300
 
     limits:
