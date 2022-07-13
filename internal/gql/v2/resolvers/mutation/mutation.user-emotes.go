@@ -15,7 +15,6 @@ import (
 	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
 )
 
 func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg string, reasonArg *string) (*model.User, error) {
@@ -163,10 +162,6 @@ func (r *Resolver) doSetChannelEmote(
 			Name:   name,
 		}},
 	}); err != nil {
-		zap.S().Errorw("failed to update emotes in set",
-			"error", err,
-		)
-
 		return err
 	}
 
