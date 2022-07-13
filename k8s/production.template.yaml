@@ -48,10 +48,10 @@ spec:
           resources:
             limits:
               cpu: "4"
-              memory: 2Gi
+              memory: 3Gi
             requests:
               cpu: 500m
-              memory: 128Mi
+              memory: 1Gi
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
