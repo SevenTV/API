@@ -13,12 +13,6 @@ directive @goField(
 
 directive @internal on FIELD_DEFINITION
 
-type Meta {
-  announcement: String!
-  featured_broadcast: String!
-  roles: [String!]!
-}
-
 type Broadcast {
   id: String!
   title: String!

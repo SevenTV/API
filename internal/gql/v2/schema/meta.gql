@@ -1,0 +1,10 @@
+extend type Query {
+  # Get meta
+  meta: Meta @goField(forceResolver: true)
+}
+
+type Meta {
+  announcement: String!
+  featured_broadcast: String!
+  roles: [String!]!
+}
