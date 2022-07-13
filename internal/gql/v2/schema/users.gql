@@ -34,6 +34,8 @@ extend type Mutation {
     editor_id: String!
     reason: String
   ): User
+  # Edit a user
+  editUser(user: UserInput!, reason: String): User
 }
 
 type User {
@@ -163,4 +165,17 @@ type NotificationMessagePart {
 
 input ChannelEmoteInput {
   alias: String
+}
+
+input UserInput {
+  # ID of the user
+  id: String!
+  # User's Role ID
+  role_id: String
+  # User's allowed channel emote slots (0 = use default)
+  emote_slots: Int
+  # Edit the selected Paint
+  cosmetic_paint: String
+  # Edit the selected Badge
+  cosmetic_badge: String
 }
