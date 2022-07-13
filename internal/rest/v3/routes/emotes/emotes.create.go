@@ -263,8 +263,14 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	taskData, err := json.Marshal(task.Task{
-		ID:    id.Hex(),
-		Flags: task.TaskFlagALL,
+		ID: id.Hex(),
+		Flags: task.TaskFlagAVIF |
+			task.TaskFlagAVIF_STATIC |
+			task.TaskFlagGIF |
+			task.TaskFlagPNG |
+			task.TaskFlagPNG_STATIC |
+			task.TaskFlagWEBP |
+			task.TaskFlagWEBP_STATIC,
 		Input: task.TaskInput{
 			Bucket: r.Ctx.Config().S3.InternalBucket,
 			Key:    filekey,
