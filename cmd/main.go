@@ -171,6 +171,7 @@ func main() {
 			Name: "API",
 			CDN:  config.CdnURL,
 		}
+		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
 			ID:     id,
@@ -183,7 +184,6 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
-		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
 	}
 
 	wg := sync.WaitGroup{}
