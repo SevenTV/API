@@ -369,7 +369,7 @@ func createBadgeResponse(gctx global.Context, badge structures.Cosmetic[bson.Raw
 	for i := 1; i <= 3; i++ {
 		a := make([]string, 2)
 		a[0] = fmt.Sprintf("%d", i)
-		a[1] = fmt.Sprintf("https://%s/badge/%s/%d", gctx.Config().CdnURL, badge.ID.Hex(), i)
+		a[1] = fmt.Sprintf("https://%s/badge/%s/%dx", gctx.Config().CdnURL, badge.ID.Hex(), i)
 
 		urls[i-1] = a
 	}
