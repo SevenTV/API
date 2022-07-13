@@ -26,8 +26,8 @@ func (r *Route) Config() rest.RouteConfig {
 // @Summary Auto update for chatterino
 // @Description Allows chatterino clients to auto update
 // @Tags chatterino
-// @Param platform eg. linux, win, macos
-// @Param branch eg. beta or stable
+// @Param platform path string true "The platform such as win, linux, macos"
+// @Param branch path string true "The branch such as stable or beta"
 // @Produce json
 // @Success 200 {object} VersionResult
 // @Router /chatterino/version/{platform}/{branch} [get]
