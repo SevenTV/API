@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
+	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,12 +21,14 @@ func newEmotes(gCtx global.Context) rest.Route {
 	return &emotes{gCtx}
 }
 
-func (*emotes) Config() rest.RouteConfig {
+func (r *emotes) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:        "/emotes",
-		Method:     rest.GET,
-		Children:   []rest.Route{},
-		Middleware: []rest.Middleware{},
+		URI:      "/emotes",
+		Method:   rest.GET,
+		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 60, []string{"s-maxage=60"}),
+		},
 	}
 }
 

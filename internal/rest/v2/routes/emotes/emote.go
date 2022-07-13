@@ -3,6 +3,7 @@ package emotes
 import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 )
 
@@ -22,7 +23,9 @@ func (r *Route) Config() rest.RouteConfig {
 			newEmote(r.Ctx),
 			newGlobals(r.Ctx),
 		},
-		Middleware: []func(ctx *rest.Ctx) errors.APIError{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 86400, nil),
+		},
 	}
 }
 

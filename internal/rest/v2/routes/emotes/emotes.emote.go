@@ -4,6 +4,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
+	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 )
 
@@ -15,12 +16,14 @@ func newEmote(gCtx global.Context) rest.Route {
 	return &emote{gCtx}
 }
 
-func (*emote) Config() rest.RouteConfig {
+func (r *emote) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:        "/{emote}",
-		Method:     rest.GET,
-		Children:   []rest.Route{},
-		Middleware: []rest.Middleware{},
+		URI:      "/{emote}",
+		Method:   rest.GET,
+		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
+		},
 	}
 }
 

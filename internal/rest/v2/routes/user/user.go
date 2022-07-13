@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
+	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +28,9 @@ func (r *Route) Config() rest.RouteConfig {
 		Children: []rest.Route{
 			newEmotes(r.Ctx),
 		},
-		Middleware: []rest.Middleware{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
+		},
 	}
 }
 
