@@ -64,8 +64,9 @@ func New(gCtx global.Context) error {
 				} else {
 					mills := time.Since(start) / time.Millisecond
 					status := ctx.Response.StatusCode()
+
 					logFn := zap.S().Debugw
-					if mills > 500 {
+					if mills >= 500 {
 						logFn = zap.S().Infow
 					}
 					if status >= 500 {
