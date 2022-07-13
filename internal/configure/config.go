@@ -151,6 +151,11 @@ type Config struct {
 		Bind    string `mapstructure:"bind" json:"bind"`
 	} `mapstructure:"health" json:"health"`
 
+	PProf struct {
+		Enabled bool   `mapstructure:"enabled" json:"enabled"`
+		Bind    string `mapstructure:"bind" json:"bind"`
+	} `mapstructure:"pprof" json:"pprof"`
+
 	Monitoring struct {
 		Enabled bool   `mapstructure:"enabled" json:"enabled"`
 		Bind    string `mapstructure:"bind" json:"bind"`

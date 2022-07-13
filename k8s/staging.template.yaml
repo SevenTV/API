@@ -33,6 +33,9 @@ spec:
             - name: health
               containerPort: 9200
               protocol: TCP
+            - name: pprof
+              containerPort: 9300
+              protocol: TCP
           envFrom:
             - secretRef:
                 name: api-secret
@@ -99,6 +102,10 @@ spec:
       protocol: TCP
       port: 9200
       targetPort: health
+    - name: pprof
+      protocol: TCP
+      port: 9300
+      targetPort: pprof
   selector:
     app: api
 ---
@@ -153,6 +160,10 @@ data:
     platforms:
       twitch:
         enabled: true
+
+    pprof:
+      enabled: false
+      bind: 0.0.0.0:9300
 
     chatterino:
       version: 7.3.5

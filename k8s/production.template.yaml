@@ -33,6 +33,9 @@ spec:
             - name: health
               containerPort: 9200
               protocol: TCP
+            - name: pprof
+              containerPort: 9300
+              protocol: TCP
           envFrom:
             - secretRef:
                 name: api-secret
@@ -99,6 +102,10 @@ spec:
       protocol: TCP
       port: 9200
       targetPort: health
+    - name: pprof
+      protocol: TCP
+      port: 9300
+      targetPort: pprof
   selector:
     app: api
 ---
@@ -132,6 +139,10 @@ data:
     monitoring:
       enabled: true
       bind: 0.0.0.0:9100
+
+    pprof:
+      enabled: true
+      bind: 0.0.0.0:9300
 
     limits:
       emotes:

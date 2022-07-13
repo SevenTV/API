@@ -19,6 +19,7 @@ import (
 	"github.com/seventv/api/internal/health"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/monitoring"
+	"github.com/seventv/api/internal/pprof"
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/common/events"
@@ -203,6 +204,15 @@ func main() {
 		go func() {
 			defer wg.Done()
 			<-monitoring.New(gCtx)
+		}()
+	}
+
+	if gCtx.Config().PProf.Enabled {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			<-pprof.New(gCtx)
 		}()
 	}
 
