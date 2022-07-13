@@ -29,10 +29,6 @@ func NewOps(r types.Resolver) generated.EmoteSetOpsResolver {
 
 func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id primitive.ObjectID, action model.ListItemAction, nameArg *string) ([]*model.ActiveEmote, error) {
 	actor := auth.For(ctx)
-	logF := zap.S().With(
-		"emote_set_id", obj.ID,
-		"emote_id", id,
-	)
 
 	// Get the emote
 	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"_id": id}).First()
@@ -71,10 +67,6 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 			Flags:  0,
 		}},
 	}); err != nil {
-		logF.Errorw("failed to update emotes in set",
-			"error", err,
-		)
-
 		return nil, err
 	}
 
