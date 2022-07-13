@@ -9,12 +9,12 @@ import (
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v3/auth"
+	model3 "github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/mutations"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg string, reasonArg *string) (*model.User, error) {
@@ -26,6 +26,11 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	// Parse passed arguments
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
+
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(emoteID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
@@ -43,17 +48,25 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 		return nil, errors.ErrUnknownEmoteSet()
 	}
 
-	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
-	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": twConn.EmoteSetID,
-	}).Decode(&b.EmoteSet); err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(twConn.EmoteSetID)
+	if err != nil {
+		return nil, err
 	}
 
+	esb := structures.NewEmoteSetBuilder(es)
+
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionAdd, b); err != nil {
+	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionAdd, esb); err != nil {
 		graphql.AddError(ctx, err)
 	}
+
+	go func() {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionUpdate, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+			zap.S().Errorw("redis",
+				"error", err,
+			)
+		}
+	}()
 
 	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
@@ -68,6 +81,11 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
 
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(emoteID)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -84,17 +102,25 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 		return nil, errors.ErrUnknownEmoteSet()
 	}
 
-	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
-	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": twConn.EmoteSetID,
-	}).Decode(&b.EmoteSet); err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(twConn.EmoteSetID)
+	if err != nil {
+		return nil, err
 	}
 
+	esb := structures.NewEmoteSetBuilder(es)
+
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionRemove, b); err != nil {
+	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionRemove, esb); err != nil {
 		graphql.AddError(ctx, err)
 	}
+
+	go func() {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionRemove, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+			zap.S().Errorw("redis",
+				"error", err,
+			)
+		}
+	}()
 
 	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
@@ -115,6 +141,11 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	channelID, er1 := primitive.ObjectIDFromHex(channelIDArg)
 	emoteID, er2 := primitive.ObjectIDFromHex(emoteIDArg)
 
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(emoteID)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := multierror.Append(er1, er2).ErrorOrNil(); err != nil {
 		return nil, errors.ErrBadObjectID()
 	}
@@ -131,17 +162,25 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 		return nil, errors.ErrUnknownEmoteSet()
 	}
 
-	b := structures.NewEmoteSetBuilder(structures.EmoteSet{})
-	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmoteSets).FindOne(ctx, bson.M{
-		"_id": twConn.EmoteSetID,
-	}).Decode(&b.EmoteSet); err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail(err.Error())
+	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(twConn.EmoteSetID)
+	if err != nil {
+		return nil, err
 	}
 
+	esb := structures.NewEmoteSetBuilder(es)
+
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, alias, structures.ListItemActionUpdate, b); err != nil {
+	if err = r.doSetChannelEmote(ctx, actor, emoteID, alias, structures.ListItemActionUpdate, esb); err != nil {
 		graphql.AddError(ctx, err)
 	}
+
+	go func() {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionUpdate, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+			zap.S().Errorw("redis",
+				"error", err,
+			)
+		}
+	}()
 
 	return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 }
