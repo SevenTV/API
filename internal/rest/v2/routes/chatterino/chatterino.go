@@ -17,11 +17,20 @@ func New(gCtx global.Context) rest.Route {
 // Config implements rest.Route
 func (r *Route) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:    "/chatterino/{platform}/{branch}",
+		URI:    "/chatterino/version/{platform}/{branch}",
 		Method: rest.GET,
 	}
 }
 
+// Get Chatterino Update
+// @Summary Auto update for chatterino
+// @Description Allows chatterino clients to auto update
+// @Tags chatterino
+// @Param platform eg. linux, win, macos
+// @Param branch eg. beta or stable
+// @Produce json
+// @Success 200 {object} VersionResult
+// @Router /chatterino/version/{platform}/{branch} [get]
 func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	platform, _ := ctx.UserValue("platform").String()
 	branch, _ := ctx.UserValue("branch").String()
