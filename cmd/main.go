@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/debug"
 	"strconv"
 	"sync"
 	"syscall"
@@ -42,8 +41,6 @@ var (
 )
 
 func init() {
-	debug.SetGCPercent(2000)
-
 	if i, err := strconv.Atoi(Unix); err == nil {
 		Time = time.Unix(int64(i), 0).Format(time.RFC3339)
 	}
