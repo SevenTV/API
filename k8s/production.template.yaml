@@ -153,6 +153,29 @@ data:
     platforms:
       twitch:
         enabled: true
+
+    chatterino:
+      version: 7.3.5
+      stable:
+        win:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Installer.exe
+          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Portable.zip
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Installer.exe
+        linux:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7-x86_64.AppImage
+        macos:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.dmg
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.dmg
+      beta:
+        win:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Installer.exe
+          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Portable.zip
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.Installer.exe
+        linux:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7-x86_64.AppImage
+        macos:
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.dmg
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.3.5/Chatterino7.dmg
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

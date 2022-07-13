@@ -157,6 +157,44 @@ type Config struct {
 		Labels  Labels `mapstructure:"labels" json:"labels"`
 	} `mapstructure:"monitoring" json:"monitoring"`
 
+	Chatterino struct {
+		Version string `mapstructure:"version" json:"version"`
+		Stable  struct {
+			Win struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"win" json:"win"`
+			Linux struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"linux" json:"linux"`
+			Macos struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"macos" json:"macos"`
+		} `mapstructure:"stable" json:"stable"`
+		Beta struct {
+			Win struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"win" json:"win"`
+			Linux struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"linux" json:"linux"`
+			Macos struct {
+				Download         string `mapstructure:"download" json:"download"`
+				PortableDownload string `mapstructure:"portable_download" json:"portable_download"`
+				UpdateExe        string `mapstructure:"update_exe" json:"update_exe"`
+			} `mapstructure:"macos" json:"macos"`
+		} `mapstructure:"beta" json:"beta"`
+	} `mapstructure:"chatterino" json:"chatterino"`
+
 	Http struct {
 		Addr          string `mapstructure:"addr" json:"addr"`
 		VersionSuffix string `mapstructure:"version_suffix" json:"version_suffix"`

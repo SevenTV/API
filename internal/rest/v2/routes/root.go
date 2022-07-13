@@ -4,6 +4,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/routes/auth"
+	"github.com/seventv/api/internal/rest/v2/routes/chatterino"
 	"github.com/seventv/api/internal/rest/v2/routes/cosmetics"
 	"github.com/seventv/api/internal/rest/v2/routes/emotes"
 	"github.com/seventv/api/internal/rest/v2/routes/user"
@@ -27,6 +28,7 @@ func (r *Route) Config() rest.RouteConfig {
 			user.New(r.Ctx),
 			emotes.New(r.Ctx),
 			cosmetics.New(r.Ctx),
+			chatterino.New(r.Ctx),
 		},
 	}
 }
