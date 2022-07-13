@@ -1,16 +1,19 @@
 package helpers
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	v2structures "github.com/seventv/common/structures/v2"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
@@ -229,4 +232,39 @@ func BanStructureToModel(s *structures.Ban) *model.Ban {
 		Active:     s.ExpireAt.After(time.Now()),
 		IssuedByID: &actorID,
 	}
+}
+
+func CosmeticStructureToModel(s structures.Cosmetic[bson.Raw]) *model.UserCosmetic {
+	switch s.Kind {
+	case structures.CosmeticKindNametagPaint:
+		v, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](s)
+
+		f := strings.Replace(string(v.Data.Function), "_", "-", 1)
+		f = strings.ToLower(f)
+		v.Data.Function = structures.CosmeticPaintFunction(f)
+
+		j, _ := json.Marshal(v.Data)
+
+		return &model.UserCosmetic{
+			ID:       v.ID.Hex(),
+			Kind:     string(v.Kind),
+			Name:     v.Name,
+			Selected: v.Selected,
+			Data:     utils.B2S(j),
+		}
+	case structures.CosmeticKindBadge:
+		v, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](s)
+
+		j, _ := json.Marshal(v.Data)
+
+		return &model.UserCosmetic{
+			ID:       v.ID.Hex(),
+			Kind:     string(v.Kind),
+			Name:     v.Name,
+			Selected: v.Selected,
+			Data:     utils.B2S(j),
+		}
+	}
+
+	return &model.UserCosmetic{}
 }

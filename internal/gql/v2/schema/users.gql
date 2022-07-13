@@ -97,7 +97,7 @@ type User {
   # Get amount of unread notifications this user has
   notification_count: Int!
   # Cosmetics
-  cosmetics: [UserCosmetic]!
+  cosmetics: [UserCosmetic]! @goField(forceResolver: true)
 }
 
 type UserCosmetic {

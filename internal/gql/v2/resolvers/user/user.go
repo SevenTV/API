@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v2/types"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -187,4 +188,58 @@ func (r *Resolver) Notifications(ctx context.Context, obj *model.User) ([]*model
 		Read:   false,
 		ReadAt: new(string),
 	}}, nil
+}
+
+func (r *Resolver) Cosmetics(ctx context.Context, obj *model.User) ([]*model.UserCosmetic, error) {
+	cosmetics := []structures.Cosmetic[bson.Raw]{}
+
+	oid, err := primitive.ObjectIDFromHex(obj.ID)
+	if err != nil {
+		return nil, errors.ErrBadObjectID()
+	}
+
+	pipeline := mongo.Pipeline{
+		{{
+			Key: "$match",
+			Value: bson.M{
+				"user_id": oid,
+			},
+		}},
+		{{
+			Key: "$lookup",
+			Value: bson.M{
+				"from":         "cosmetics",
+				"localField":   "data.ref",
+				"foreignField": "_id",
+				"as":           "cosmetic",
+			},
+		}},
+		{{Key: "$set", Value: bson.M{"cosmetic": bson.M{"$first": "$cosmetic"}}}},
+		{{
+			Key: "$project",
+			Value: bson.M{
+				"_id":      "$cosmetic._id",
+				"kind":     "$cosmetic.kind",
+				"name":     "$cosmetic.name",
+				"data":     "$cosmetic.data",
+				"selected": "$data.selected",
+			},
+		}},
+	}
+
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, pipeline)
+	if err != nil {
+		return []*model.UserCosmetic{}, errors.ErrInternalServerError()
+	}
+
+	if err := cur.All(ctx, &cosmetics); err != nil {
+		return []*model.UserCosmetic{}, errors.ErrInternalServerError()
+	}
+
+	result := make([]*model.UserCosmetic, len(cosmetics))
+	for i, cos := range cosmetics {
+		result[i] = helpers.CosmeticStructureToModel(cos)
+	}
+
+	return result, nil
 }
