@@ -83,11 +83,13 @@ func New(gCtx global.Context) error {
 		},
 		ReadTimeout:                  time.Second * 600,
 		IdleTimeout:                  time.Second * 10,
+		ReadBufferSize:               int(32 * 1024),       // 32KB
 		MaxRequestBodySize:           int(6 * 1024 * 1024), // 6MB
 		DisablePreParseMultipartForm: true,
 		LogAllErrors:                 true,
 		StreamRequestBody:            true,
 		CloseOnShutdown:              true,
+		Logger:                       zap.NewStdLog(zap.L()),
 	}
 
 	// Gracefully exit when the global context is canceled

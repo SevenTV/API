@@ -88,10 +88,14 @@ func New(gCtx global.Context) error {
 
 			router.Handler(ctx)
 		},
-		ReadTimeout:     time.Second * 10,
-		WriteTimeout:    time.Second * 10,
-		CloseOnShutdown: true,
-		Name:            "7TV - GQL",
+		ReadTimeout:        time.Second * 10,
+		WriteTimeout:       time.Second * 10,
+		CloseOnShutdown:    true,
+		LogAllErrors:       true,
+		Logger:             zap.NewStdLog(zap.L()),
+		Name:               "7TV - GQL",
+		ReadBufferSize:     int(32 * 1024),       // 32KB
+		MaxRequestBodySize: int(6 * 1024 * 1024), // 6MB
 	}
 
 	go func() {
