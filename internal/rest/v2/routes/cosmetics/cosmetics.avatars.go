@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
@@ -127,6 +128,10 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		tw, _, err := u.Connections.Twitch()
 		if err != nil {
 			continue // skip if no twitch connection
+		}
+
+		if strings.HasPrefix(tw.Data.ProfileImageURL, "https://static-cdn.jtvnw.net/user-default-pictures-uv") {
+			continue
 		}
 
 		key := ""
