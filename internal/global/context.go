@@ -5,25 +5,26 @@ import (
 	"time"
 
 	"github.com/seventv/api/internal/configure"
+	"github.com/seventv/api/internal/instance"
 )
 
 type Context interface {
 	context.Context
 	Config() *configure.Config
-	Inst() *Instances
+	Inst() *instance.Instances
 }
 
 type gCtx struct {
 	context.Context
 	config *configure.Config
-	inst   *Instances
+	inst   *instance.Instances
 }
 
 func (g *gCtx) Config() *configure.Config {
 	return g.config
 }
 
-func (g *gCtx) Inst() *Instances {
+func (g *gCtx) Inst() *instance.Instances {
 	return g.inst
 }
 
@@ -31,7 +32,7 @@ func New(ctx context.Context, config *configure.Config) Context {
 	return &gCtx{
 		Context: ctx,
 		config:  config,
-		inst:    &Instances{},
+		inst:    &instance.Instances{},
 	}
 }
 

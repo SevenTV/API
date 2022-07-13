@@ -73,7 +73,7 @@ type User {
   emotes: [Emote!]! @goField(forceResolver: true)
   emote_set_id: String! @internal
   # Get the emotes this user has uploaded.
-  owned_emotes: [Emote!]!
+  owned_emotes: [Emote!]! @goField(forceResolver: true)
   # Get the third party emotes of this users channel. (BTTV/FFZ)
   third_party_emotes: [Emote!]!
   # Get the editors of this user.

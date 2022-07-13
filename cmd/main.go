@@ -167,11 +167,6 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().Loaders = loaders.New(gCtx)
-		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
-	}
-
-	{
 		id := svc.AppIdentity{
 			Name: "API",
 			CDN:  config.CdnURL,
@@ -184,6 +179,11 @@ func main() {
 			S3:     gCtx.Inst().S3,
 			Events: gCtx.Inst().Events,
 		})
+	}
+
+	{
+		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
 	}
 
 	wg := sync.WaitGroup{}

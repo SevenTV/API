@@ -243,3 +243,27 @@ func (r *Resolver) Cosmetics(ctx context.Context, obj *model.User) ([]*model.Use
 
 	return result, nil
 }
+
+// OwnedEmotes implements generated.UserResolver
+func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
+	oid, err := primitive.ObjectIDFromHex(obj.ID)
+	if err != nil {
+		return []*model.Emote{}, errors.ErrBadObjectID()
+	}
+
+	emotes, err := r.Ctx.Inst().Loaders.EmoteByOwnerID().Load(oid)
+	if err != nil {
+		if errors.Compare(err, errors.ErrNoItems()) {
+			return []*model.Emote{}, nil
+		}
+
+		return []*model.Emote{}, err
+	}
+
+	result := make([]*model.Emote, len(emotes))
+	for i, e := range emotes {
+		result[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
+	}
+
+	return result, nil
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -12,11 +11,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.DataLoader[T, structures.User] {
+func userLoader[T comparable](ctx context.Context, x inst, keyName string) *dataloader.DataLoader[T, structures.User] {
 	return dataloader.New(dataloader.Config[T, structures.User]{
 		Wait: time.Millisecond * 25,
 		Fetch: func(keys []T) ([]structures.User, []error) {
-			ctx, cancel := context.WithTimeout(gCtx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
 
 			items := make([]structures.User, len(keys))
@@ -28,7 +27,7 @@ func userLoader[T comparable](gCtx global.Context, keyName string) *dataloader.D
 			}
 
 			// Fetch users
-			result := gCtx.Inst().Query.Users(ctx, bson.M{
+			result := x.query.Users(ctx, bson.M{
 				keyName: bson.M{"$in": keys},
 			})
 			if result.Empty() {
