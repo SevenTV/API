@@ -54,9 +54,19 @@ func New(gCtx global.Context) error {
 						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				} else {
-					zap.S().Infow("rest request",
-						"status", ctx.Response.StatusCode(),
-						"duration", time.Since(start)/time.Millisecond,
+					mills := time.Since(start) / time.Millisecond
+					status := ctx.Response.StatusCode()
+					logFn := zap.S().Debugw
+					if mills > 500 {
+						logFn = zap.S().Infow
+					}
+					if status >= 500 {
+						logFn = zap.S().Errorw
+					}
+
+					logFn("rest request",
+						"status", status,
+						"duration", mills,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
 						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),

@@ -62,9 +62,19 @@ func New(gCtx global.Context) error {
 					)
 					ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
 				} else {
-					zap.S().Infow("gql request",
-						"status", ctx.Response.StatusCode(),
-						"duration", time.Since(start)/time.Millisecond,
+					mills := time.Since(start) / time.Millisecond
+					status := ctx.Response.StatusCode()
+					logFn := zap.S().Debugw
+					if mills > 500 {
+						logFn = zap.S().Infow
+					}
+					if status >= 500 {
+						logFn = zap.S().Errorw
+					}
+
+					logFn("gql request",
+						"status", status,
+						"duration", mills,
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
 						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
