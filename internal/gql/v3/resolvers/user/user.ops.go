@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"time"
 
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v3/auth"
@@ -51,9 +50,9 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			return nil, errors.ErrUnknownUserConnection()
 		}
 
-		oldSetID := conn.EmoteSetID
+		// oldSetID := conn.EmoteSetID
 
-		setID := *d.EmoteSetID
+		// setID := *d.EmoteSetID
 
 		if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutations.SetUserActiveEmoteSet{
 			EmoteSetID:   *d.EmoteSetID,
@@ -68,8 +67,10 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 
 			return nil, err
 		}
+	}
 
-		// Send legacy events
+	// Send legacy events
+	/*
 		if conn.Platform == structures.UserConnectionPlatformTwitch {
 			sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{setID, oldSetID}}})
 			if !sets.Empty() {
@@ -124,7 +125,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				}()
 			}
 		}
-	}
+	*/
 
 	if err != nil {
 		return nil, err
