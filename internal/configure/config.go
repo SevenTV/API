@@ -220,6 +220,9 @@ type Config struct {
 			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
 			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
 		} `mapstructure:"twitch" json:"twitch"`
+		YouTube struct {
+			APIKey string `mapstructure:"api_key" json:"api_key"`
+		} `mapstructure:"youtube" json:"youtube"`
 	} `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {

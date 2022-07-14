@@ -49,7 +49,7 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
-		bson.M{"connections.id": strings.ToLower(key)},
+		bson.M{"connections.id": key},
 		bson.M{"username": strings.ToLower(key)},
 	}}, bson.M{
 		"_id": id,
