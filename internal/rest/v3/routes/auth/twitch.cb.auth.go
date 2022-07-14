@@ -269,12 +269,18 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 			)
 
 			return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
-		} else if len(ub.Update) > 0 {
+		} else {
+			_, pos, _ := ub.User.Connections.Twitch(usr.ID)
+			if pos >= 0 {
+				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), usr)
+				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), grant)
+			}
+
 			// User exists; update
 			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 				"_id":            ub.User.ID,
-				"connections.id": twUser.ID,
-			}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(1)).Decode(ub.User); err != nil {
+				"connections.id": usr.ID,
+			}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(1)).Decode(&ub.User); err != nil {
 				zap.S().Errorw("mongo",
 					"error", err,
 				)
@@ -282,22 +288,6 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 				return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 			}
 
-			userID = ub.User.ID
-		} else {
-			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
-				"_id":            ub.User.ID,
-				"connections.id": twUser.ID,
-			}).Decode(&ub.User); err != nil {
-				if err == mongo.ErrNoDocuments {
-					return errors.ErrUnknownUser()
-				}
-
-				zap.S().Errorw("mongo",
-					"error", err,
-				)
-
-				return errors.ErrInternalServerError().SetDetail(err.Error())
-			}
 			userID = ub.User.ID
 		}
 	}
