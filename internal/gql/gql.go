@@ -54,7 +54,7 @@ func New(gCtx global.Context) error {
 					zap.S().Errorw("panic in gql request handler",
 						"panic", err,
 						"status", ctx.Response.StatusCode(),
-						"duration", time.Since(start)/time.Millisecond,
+						"duration", int(time.Since(start)/time.Millisecond),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
 						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
@@ -75,7 +75,7 @@ func New(gCtx global.Context) error {
 
 					logFn("gql request",
 						"status", status,
-						"duration", mills,
+						"duration", int(mills),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
 						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
@@ -102,8 +102,6 @@ func New(gCtx global.Context) error {
 		ReadTimeout:        time.Second * 10,
 		WriteTimeout:       time.Second * 10,
 		CloseOnShutdown:    true,
-		LogAllErrors:       true,
-		Logger:             zap.NewStdLog(zap.L()),
 		Name:               "7TV - GQL",
 		ReadBufferSize:     int(32 * 1024),       // 32KB
 		MaxRequestBodySize: int(6 * 1024 * 1024), // 6MB

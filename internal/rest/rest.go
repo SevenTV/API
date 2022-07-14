@@ -47,7 +47,7 @@ func New(gCtx global.Context) error {
 					zap.S().Errorw("panic in rest request handler",
 						"panic", err,
 						"status", ctx.Response.StatusCode(),
-						"duration", time.Since(start)/time.Millisecond,
+						"duration", int(time.Since(start)/time.Millisecond),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
 						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
@@ -97,10 +97,8 @@ func New(gCtx global.Context) error {
 		ReadBufferSize:               int(32 * 1024),       // 32KB
 		MaxRequestBodySize:           int(6 * 1024 * 1024), // 6MB
 		DisablePreParseMultipartForm: true,
-		LogAllErrors:                 true,
 		StreamRequestBody:            true,
 		CloseOnShutdown:              true,
-		Logger:                       zap.NewStdLog(zap.L()),
 	}
 
 	// Gracefully exit when the global context is canceled
