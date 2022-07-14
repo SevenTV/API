@@ -61,7 +61,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	}
 
 	go func() {
-		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionUpdate, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionAdd, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
 			zap.S().Errorw("redis",
 				"error", err,
 			)
