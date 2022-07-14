@@ -2,6 +2,8 @@ package mutation
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/hashicorp/go-multierror"
@@ -51,6 +53,40 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(twConn.EmoteSetID)
 	if err != nil {
 		return nil, err
+	}
+
+	if es.ID.IsZero() {
+		esb := structures.NewEmoteSetBuilder(es)
+		esb.EmoteSet.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		esb.EmoteSet.Emotes = []structures.ActiveEmote{}
+		esb.SetOwnerID(target.ID).
+			SetName(fmt.Sprintf("%s's Emotes", target.DisplayName)).
+			SetCapacity(250)
+
+		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutations.EmoteSetMutationOptions{
+			Actor: actor,
+		}); err != nil {
+			return nil, err
+		}
+
+		// Assign the new set to each of the user's connections
+		for _, conn := range target.Connections {
+			if conn.EmoteSlots == 0 {
+				continue // skip if connection doesn't support emotes
+			}
+
+			ub := structures.NewUserBuilder(target)
+			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, ub, mutations.SetUserActiveEmoteSet{
+				EmoteSetID:   esb.EmoteSet.ID,
+				Platform:     structures.UserConnectionPlatformTwitch,
+				Actor:        actor,
+				ConnectionID: conn.ID,
+			}); err != nil {
+				return nil, err
+			}
+		}
+
+		es = esb.EmoteSet
 	}
 
 	esb := structures.NewEmoteSetBuilder(es)

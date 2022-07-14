@@ -107,7 +107,7 @@ func (r *Resolver) doSetChannelEditor(
 	if err := r.Ctx.Inst().Mutate.ModifyUserEditors(ctx, ub, mutations.UserEditorsOptions{
 		Actor:             actor,
 		Editor:            &editor,
-		EditorPermissions: structures.UserEditorPermissionModifyEmotes,
+		EditorPermissions: structures.UserEditorPermissionModifyEmotes | structures.UserEditorPermissionManageEmoteSets,
 		EditorVisible:     true,
 		Action:            action,
 	}); err != nil {
