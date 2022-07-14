@@ -21,6 +21,7 @@ import (
 	"github.com/seventv/api/internal/pprof"
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
+	"github.com/seventv/api/internal/svc/youtube"
 	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
@@ -182,6 +183,14 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
+			APIKey: config.Platforms.YouTube.APIKey,
+		})
+		if err != nil {
+			zap.S().Errorw("failed to setup youtube instance",
+				"error", err,
+			)
+		}
 	}
 
 	wg := sync.WaitGroup{}

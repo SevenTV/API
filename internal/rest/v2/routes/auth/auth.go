@@ -19,6 +19,9 @@ func (r *Route) Config() rest.RouteConfig {
 	return rest.RouteConfig{
 		URI:    "/auth",
 		Method: rest.GET,
+		Children: []rest.Route{
+			newYouTube(r.Ctx),
+		},
 	}
 }
 
