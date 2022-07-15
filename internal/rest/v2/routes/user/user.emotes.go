@@ -50,6 +50,7 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 
 	filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
 		bson.M{"connections.id": key},
+		bson.M{"connections.data.login": strings.ToLower(key)},
 		bson.M{"username": strings.ToLower(key)},
 	}}, bson.M{
 		"_id": id,
