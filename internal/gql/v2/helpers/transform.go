@@ -62,7 +62,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		width[i] = int(file.Width)
 		height[i] = int(file.Height)
 		urls[i] = []string{
-			fmt.Sprintf("%d", i+1),
+			file.Name,
 			fmt.Sprintf("https://%s/%s", cdnURL, file.Key),
 		}
 	}
