@@ -82,7 +82,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		Owner:        UserStructureToModel(owner, cdnURL),
 		Urls:         urls,
 		Width:        width,
-		Height:       width,
+		Height:       height,
 	}
 }
 
