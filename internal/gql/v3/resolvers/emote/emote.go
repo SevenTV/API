@@ -4,12 +4,16 @@ import (
 	"context"
 	"sync"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Resolver struct {
@@ -139,3 +143,84 @@ type emoteCommonName struct {
 	Emotes [1]structures.ActiveEmote `json:"-" bson:"emotes"`
 }
 */
+
+func (r *Resolver) Activity(ctx context.Context, obj *model.Emote) ([]*model.AuditLog, error) {
+	result := []*model.AuditLog{}
+
+	logs := []structures.AuditLog{}
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).Find(ctx, bson.M{
+		"kind":        bson.M{"$gte": 1, "$lte": 19},
+		"target_id":   obj.ID,
+		"target_kind": structures.ObjectKindEmote,
+	})
+
+	if err != nil {
+		return result, errors.ErrInternalServerError()
+	}
+
+	if err := cur.All(ctx, &logs); err != nil {
+		return result, errors.ErrInternalServerError()
+	}
+
+	actorMap := make(map[primitive.ObjectID]structures.User)
+	for _, l := range logs {
+		a := model.AuditLog{
+			ID:         l.ID,
+			Kind:       int(l.Kind),
+			ActorID:    l.ActorID,
+			TargetID:   l.TargetID,
+			TargetKind: int(l.TargetKind),
+			CreatedAt:  l.ID.Timestamp(),
+			Changes:    make([]*model.AuditLogChange, len(l.Changes)),
+		}
+
+		actorMap[l.ActorID] = structures.DeletedUser
+
+		// Append changes
+		for i, c := range l.Changes {
+			val := map[string]any{}
+			aryval := model.AuditLogChangeArray{}
+
+			switch c.Format {
+			case structures.AuditLogChangeFormatSingleValue:
+				_ = bson.Unmarshal(c.Value, &val)
+			case structures.AuditLogChangeFormatArrayChange:
+				_ = bson.Unmarshal(c.Value, &aryval)
+			}
+
+			a.Changes[i] = &model.AuditLogChange{
+				Format:     int(c.Format),
+				Key:        c.Key,
+				Value:      val,
+				ArrayValue: &aryval,
+			}
+		}
+
+		result = append(result, &a)
+	}
+
+	// Fetch and add actors to the result
+
+	i := 0
+	actorIDs := make([]primitive.ObjectID, len(actorMap))
+	for oid := range actorMap {
+		actorIDs[i] = oid
+		i++
+	}
+
+	actors, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(actorIDs)
+	if multierror.Append(nil, errs...).ErrorOrNil() != nil {
+		return result, errors.ErrInternalServerError()
+	}
+
+	for _, u := range actors {
+		actorMap[u.ID] = u
+	}
+
+	// Add actors to result
+	for i, l := range result {
+		result[i].Actor = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(actorMap[l.ActorID], r.Ctx.Config().CdnURL))
+	}
+
+	return result, nil
+}

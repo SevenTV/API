@@ -1,0 +1,23 @@
+type AuditLog {
+  id: ObjectID!
+  actor: UserPartial!
+  actor_id: ObjectID!
+  kind: Int!
+  target_id: ObjectID!
+  target_kind: Int!
+  created_at: Time!
+  changes: [AuditLogChange!]!
+}
+
+type AuditLogChange {
+    format: Int!
+    key: String!
+    value: ArbitraryMap
+    array_value: AuditLogChangeArray
+}
+
+type AuditLogChangeArray {
+    added: [ArbitraryMap]!
+    removed: [ArbitraryMap]!
+    updated: [ArbitraryMap]!
+}

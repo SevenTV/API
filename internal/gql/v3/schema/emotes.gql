@@ -41,6 +41,7 @@ type Emote {
 
   images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
   versions: [EmoteVersion!]!
+  activity: [AuditLog!]! @goField(forceResolver: true)
   listed: Boolean!
 
   reports: [Report!]!
