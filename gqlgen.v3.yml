@@ -60,3 +60,6 @@ models:
 
   StringMap:
     model: github.com/seventv/api/internal/gql/scalar.StringMap
+
+  ArbitraryMap:
+    model: github.com/seventv/api/internal/gql/scalar.ArbitraryMap

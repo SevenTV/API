@@ -1,6 +1,7 @@
 scalar Time
 scalar ObjectID
 scalar StringMap
+scalar ArbitraryMap
 
 schema {
   query: Query
