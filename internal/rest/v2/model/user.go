@@ -6,22 +6,24 @@ import (
 )
 
 type User struct {
-	ID          string `json:"id"`
-	TwitchID    string `json:"twitch_id"`
-	Login       string `json:"login"`
-	DisplayName string `json:"display_name"`
-	Role        *Role  `json:"role"`
+	ID               string `json:"id"`
+	TwitchID         string `json:"twitch_id"`
+	Login            string `json:"login"`
+	DisplayName      string `json:"display_name"`
+	Role             *Role  `json:"role"`
+	ProfilePictureID string `json:"profile_picture_id,omitempty"`
 }
 
 func NewUser(s structures.User) *User {
 	tw, _, _ := s.Connections.Twitch()
 
 	u := User{
-		ID:          s.ID.Hex(),
-		Login:       s.Username,
-		DisplayName: utils.Ternary(s.DisplayName != "", s.DisplayName, s.Username),
-		Role:        NewRole(s.GetHighestRole()),
-		TwitchID:    tw.ID,
+		ID:               s.ID.Hex(),
+		Login:            s.Username,
+		DisplayName:      utils.Ternary(s.DisplayName != "", s.DisplayName, s.Username),
+		Role:             NewRole(s.GetHighestRole()),
+		TwitchID:         tw.ID,
+		ProfilePictureID: utils.Ternary(s.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation), s.AvatarID, ""),
 	}
 
 	return &u
