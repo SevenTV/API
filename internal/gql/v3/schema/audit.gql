@@ -10,14 +10,14 @@ type AuditLog {
 }
 
 type AuditLogChange {
-    format: Int!
-    key: String!
-    value: ArbitraryMap
-    array_value: AuditLogChangeArray
+  format: Int!
+  key: String!
+  value: ArbitraryMap
+  array_value: AuditLogChangeArray
 }
 
 type AuditLogChangeArray {
-    added: [ArbitraryMap]!
-    removed: [ArbitraryMap]!
-    updated: [ArbitraryMap]!
+  added: [ArbitraryMap]!
+  removed: [ArbitraryMap]!
+  updated: [ArbitraryMap]!
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Resolver struct {
@@ -144,15 +145,26 @@ type emoteCommonName struct {
 }
 */
 
-func (r *Resolver) Activity(ctx context.Context, obj *model.Emote) ([]*model.AuditLog, error) {
+func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int) ([]*model.AuditLog, error) {
 	result := []*model.AuditLog{}
+
+	limit := 50
+	if limitArg != nil {
+		limit = *limitArg
+
+		if limit > 300 {
+			return result, errors.ErrInvalidRequest().SetDetail("limit must be less than 300")
+		} else if limit < 1 {
+			return result, errors.ErrInvalidRequest().SetDetail("limit must be greater than 0")
+		}
+	}
 
 	logs := []structures.AuditLog{}
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).Find(ctx, bson.M{
 		"kind":        bson.M{"$gte": 1, "$lte": 19},
 		"target_id":   obj.ID,
 		"target_kind": structures.ObjectKindEmote,
-	})
+	}, options.Find().SetSort(bson.M{"_id": -1}).SetLimit(int64(limit)))
 
 	if err != nil {
 		return result, errors.ErrInternalServerError()
@@ -163,6 +175,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote) ([]*model.Aud
 	}
 
 	actorMap := make(map[primitive.ObjectID]structures.User)
+
 	for _, l := range logs {
 		a := model.AuditLog{
 			ID:         l.ID,
@@ -203,6 +216,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote) ([]*model.Aud
 
 	i := 0
 	actorIDs := make([]primitive.ObjectID, len(actorMap))
+
 	for oid := range actorMap {
 		actorIDs[i] = oid
 		i++

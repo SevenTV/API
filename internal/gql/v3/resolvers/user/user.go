@@ -152,11 +152,23 @@ func (r *Resolver) Reports(ctx context.Context, obj *model.User) ([]*model.Repor
 	return nil, nil
 }
 
-func (r *Resolver) Activity(ctx context.Context, obj *model.User) ([]*model.AuditLog, error) {
+func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int) ([]*model.AuditLog, error) {
 	result := []*model.AuditLog{}
+
+	limit := 50
+	if limitArg != nil {
+		limit = *limitArg
+
+		if limit > 300 {
+			return result, errors.ErrInvalidRequest().SetDetail("limit must be less than 300")
+		} else if limit < 1 {
+			return result, errors.ErrInvalidRequest().SetDetail("limit must be greater than 0")
+		}
+	}
 
 	// Fetch user's active emote sets
 	sets := []primitive.ObjectID{}
+
 	for _, con := range obj.Connections {
 		if con.EmoteSetID.IsZero() {
 			continue
@@ -171,7 +183,8 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User) ([]*model.Audi
 			bson.M{"target_id": obj.ID, "target_kind": structures.ObjectKindUser},
 			bson.M{"target_id": bson.M{"$in": sets}, "target_kind": structures.ObjectKindEmoteSet},
 		},
-	}, options.Find().SetSort(bson.M{"_id": -1}).SetLimit(50))
+	}, options.Find().SetSort(bson.M{"_id": -1}).SetLimit(int64(limit)))
+
 	if err != nil {
 		zap.S().Errorw("mongo, failed to query user audit logs", "error", err)
 		return result, errors.ErrInternalServerError()
@@ -182,6 +195,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User) ([]*model.Audi
 	}
 
 	actorMap := make(map[primitive.ObjectID]structures.User)
+
 	for _, l := range logs {
 		a := &model.AuditLog{
 			ID:         l.ID,
@@ -222,6 +236,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User) ([]*model.Audi
 
 	i := 0
 	actorIDs := make([]primitive.ObjectID, len(actorMap))
+
 	for oid := range actorMap {
 		actorIDs[i] = oid
 		i++

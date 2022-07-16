@@ -79,7 +79,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 				},
 				TargetIDs: targetIDs,
 			}).Items()
-			if err != nil {
+			if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
 				return err
 			}
 
