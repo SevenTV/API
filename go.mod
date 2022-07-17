@@ -15,7 +15,7 @@ require (
 	github.com/nicklaw5/helix v1.25.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/seventv/common v0.0.0-20220717080931-d0a5974fbcd3
-	github.com/seventv/image-processor/go v0.0.0-20220712225504-0d39b09d2a87
+	github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2
 	github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
