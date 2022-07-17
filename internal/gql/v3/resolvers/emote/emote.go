@@ -185,6 +185,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int
 			TargetKind: int(l.TargetKind),
 			CreatedAt:  l.ID.Timestamp(),
 			Changes:    make([]*model.AuditLogChange, len(l.Changes)),
+			Reason:     l.Reason,
 		}
 
 		actorMap[l.ActorID] = structures.DeletedUser
