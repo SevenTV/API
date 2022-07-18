@@ -61,16 +61,16 @@ func (r *Resolver) EditUser(ctx context.Context, inp model.UserInput, reason *st
 			} else if err != nil {
 				zap.S().Errorw("mongo, failed to select entitlement", "error", err)
 			}
+		}
 
-			// Disable other paints
-			if _, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).UpdateMany(ctx, bson.M{
-				"kind":     "PAINT",
-				"data.ref": bson.M{"$not": bson.M{"$eq": paintID}},
-				"user_id":  targetID,
-			}, bson.M{"$set": bson.M{"data.selected": false}}); err != nil {
-				zap.S().Errorw("mongo, failed to update other entitlements", "error", err)
-				return nil, err
-			}
+		// Disable other paints
+		if _, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).UpdateMany(ctx, bson.M{
+			"kind":     "PAINT",
+			"data.ref": bson.M{"$not": bson.M{"$eq": paintID}},
+			"user_id":  targetID,
+		}, bson.M{"$set": bson.M{"data.selected": false}}); err != nil {
+			zap.S().Errorw("mongo, failed to update other entitlements", "error", err)
+			return nil, err
 		}
 	}
 
