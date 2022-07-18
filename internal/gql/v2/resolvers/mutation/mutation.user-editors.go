@@ -114,5 +114,5 @@ func (r *Resolver) doSetChannelEditor(
 		return target, editor, err
 	}
 
-	return target, editor, nil
+	return ub.User, editor, nil
 }
