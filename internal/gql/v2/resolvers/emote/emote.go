@@ -3,22 +3,27 @@ package emote
 import (
 	"context"
 	"strconv"
+	"sync"
 
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v2/types"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Resolver struct {
 	types.Resolver
+
+	mx *sync.Mutex
 }
 
 func New(r types.Resolver) generated.EmoteResolver {
 	return &Resolver{
 		Resolver: r,
+		mx:       &sync.Mutex{},
 	}
 }
 
@@ -61,7 +66,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 		return nil, err
 	}
 
-	users, _, err := r.Ctx.Inst().Query.EmoteChannels(ctx, emoteID, page, limit)
+	users, _, err := r.getChannels(ctx, emoteID, page, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -72,4 +77,25 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 	}
 
 	return result, nil
+}
+
+func (r *Resolver) ChannelCount(ctx context.Context, obj *model.Emote) (int, error) {
+	emoteID, err := primitive.ObjectIDFromHex(obj.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	_, count, err := r.getChannels(ctx, emoteID, 1, 1)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+func (r *Resolver) getChannels(ctx context.Context, emoteID primitive.ObjectID, page, limit int) ([]structures.User, int64, error) {
+	r.mx.Lock()
+	defer r.mx.Unlock()
+
+	return r.Ctx.Inst().Query.EmoteChannels(ctx, emoteID, page, limit)
 }

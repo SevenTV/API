@@ -58,7 +58,7 @@ type Emote {
   # Get the channels the emote is added to
   channels(page: Int, limit: Int): [UserPartial] @goField(forceResolver: true)
   # Get the amount of channels the emote is added to
-  channel_count: Int!
+  channel_count: Int! @goField(forceResolver: true)
   # Get the owner of this emote.
   owner: User
   # Get the reports on emote. Requries Permission.
