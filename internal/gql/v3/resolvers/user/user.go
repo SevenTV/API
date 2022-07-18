@@ -113,30 +113,22 @@ func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.User
 }
 
 func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.Emote, error) {
-	emotes := []*structures.Emote{}
+	result := []*model.Emote{}
 	errs := []error{}
 
-	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, bson.M{
-		"owner_id": obj.ID,
-	})
-	if err == nil {
-		if err = cur.All(ctx, &emotes); err != nil {
-			zap.S().Errorw("mongo, failed to retrieve user's owned emotes",
-				"error", err,
-			)
-
-			errs = append(errs, errors.ErrUnknownEmote())
+	emotes, err := r.Ctx.Inst().Loaders.EmoteByOwnerID().Load(obj.ID)
+	if err != nil {
+		if errors.Compare(err, errors.ErrNoItems()) {
+			return result, nil
 		}
+
+		return result, err
 	}
 
-	result := make([]*model.Emote, len(emotes))
+	result = make([]*model.Emote, len(emotes))
 
 	for i, e := range emotes {
-		if e == nil {
-			continue
-		}
-
-		result[i] = helpers.EmoteStructureToModel(*e, r.Ctx.Config().CdnURL)
+		result[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
 	}
 
 	return result, multierror.Append(nil, errs...).ErrorOrNil()

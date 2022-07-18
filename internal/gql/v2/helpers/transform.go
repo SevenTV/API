@@ -25,7 +25,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	files := []structures.EmoteFile{}
 
 	for _, file := range version.ImageFiles {
-		if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
+		if file.ContentType != webpMime || file.IsStatic() {
 			continue
 		}
 
