@@ -7,6 +7,7 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/common/redis"
+	"go.uber.org/zap"
 )
 
 type Instance interface {
@@ -73,9 +74,13 @@ func (inst *limiterInst) AwaitMutation(ctx context.Context) func() {
 
 	mx := inst.redis.Mutex(k, time.Second*20)
 
-	mx.Lock()
+	if err := mx.Lock(); err != nil {
+		zap.S().Errorw("limiter, failed to acquire mutex", "key", k, "error", err)
+	}
 
 	return func() {
-		mx.Unlock()
+		if _, err := mx.Unlock(); err != nil {
+			zap.S().Errorw("limiter, failed to release mutex", "key", k, "error", err)
+		}
 	}
 }
