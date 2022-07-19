@@ -77,7 +77,7 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return errors.ErrInternalServerError()
 	})
 
-	rateLimitFunc := middleware.RateLimit(gCtx, "gql-v3", gCtx.Config().Limits.Buckets.GQL2[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL2[1]))
+	rateLimitFunc := middleware.RateLimit(gCtx, "gql-v2", gCtx.Config().Limits.Buckets.GQL2[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL2[1]))
 
 	checkLimit := func(ctx *fasthttp.RequestCtx) bool {
 		if err := rateLimitFunc(ctx); err != nil {
