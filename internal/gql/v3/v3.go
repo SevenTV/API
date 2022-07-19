@@ -96,6 +96,7 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 			return false
 		}
+
 		return true
 	}
 

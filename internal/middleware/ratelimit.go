@@ -65,7 +65,6 @@ type RateLimitFunc = func(ctx context.Context) error
 
 func RateLimitWS(gctx global.Context, bucket string, limit int64, ex time.Duration) RateLimitFunc {
 	return func(ctx context.Context) error {
-
 		var identifier string
 		switch t := ctx.Value(helpers.ClientIP).(type) {
 		case string:
@@ -112,7 +111,6 @@ func DoRateLimit(
 	identifier string,
 	ex time.Duration,
 ) (int64, int64, int64, error) {
-
 	h := sha256.New()
 	h.Write(utils.S2B(identifier))
 	h.Write(utils.S2B(bucket))

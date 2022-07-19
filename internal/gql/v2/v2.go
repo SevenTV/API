@@ -48,7 +48,9 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 	errorPresenter := func(ctx context.Context, e error) *gqlerror.Error {
 		err := graphql.DefaultErrorPresenter(ctx, e)
+
 		var apiErr errors.APIError
+
 		if goerrors.As(e, &apiErr) {
 			err.Message = fmt.Sprintf("%d %s", apiErr.Code(), apiErr.Message())
 			err.Extensions = map[string]interface{}{
@@ -86,6 +88,7 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 			return false
 		}
+
 		return true
 	}
 
