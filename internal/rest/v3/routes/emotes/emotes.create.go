@@ -88,8 +88,19 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError().SetDetail("Unable to evaluate active mod requests")
 	}
 
-	reqLimit := int(r.Ctx.Config().Limits.Quota.MaxActiveModRequests)
-	if reqLimit > 0 && len(reqs) >= reqLimit {
+	emoteIDs := []primitive.ObjectID{}
+	for _, re := range reqs {
+		msg, err := structures.ConvertMessage[structures.MessageDataModRequest](re)
+		if err == nil {
+			emoteIDs = append(emoteIDs, msg.Data.TargetID)
+		}
+	}
+
+	reqLimit := r.Ctx.Config().Limits.Quota.MaxActiveModRequests
+	if count, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, bson.M{
+		"versions.id":              bson.M{"$in": emoteIDs},
+		"versions.state.lifecycle": structures.EmoteLifecycleLive,
+	}); count >= reqLimit {
 		return errors.ErrRateLimited().SetDetail("You have too many emotes pending approval!")
 	}
 
