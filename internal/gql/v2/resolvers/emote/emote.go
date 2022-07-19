@@ -67,7 +67,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 	}
 
 	users, _, err := r.getChannels(ctx, emoteID, page, limit)
-	if err != nil {
+	if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (r *Resolver) ChannelCount(ctx context.Context, obj *model.Emote) (int, err
 	}
 
 	_, count, err := r.getChannels(ctx, emoteID, 1, 1)
-	if err != nil {
+	if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
 		return 0, err
 	}
 

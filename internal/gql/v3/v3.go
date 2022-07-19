@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+	"encoding/json"
 	goerrors "errors"
 	"fmt"
 	"net/http"
@@ -83,6 +84,22 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return helpers.ErrInternalServerError
 	})
 
+	rateLimitFunc := middleware.RateLimit(gCtx, "gql-v3", gCtx.Config().Limits.Buckets.GQL3[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL3[1]))
+	rateLimitFuncWS := middleware.RateLimitWS(gCtx, "gql-v3", gCtx.Config().Limits.Buckets.GQL3[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL3[1]))
+
+	checkLimit := func(ctx *fasthttp.RequestCtx) bool {
+		if err := rateLimitFunc(ctx); err != nil {
+			j, _ := json.Marshal(errorPresenter(ctx, err))
+
+			ctx.SetContentType("application/json")
+			ctx.SetBody(j)
+
+			return false
+		}
+
+		return true
+	}
+
 	wsTransport := wsTransport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		InitFunc: func(ctx context.Context, initPayload wsTransport.InitPayload) (context.Context, error) {
@@ -112,7 +129,14 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 	return func(ctx *fasthttp.RequestCtx) {
 		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 
+		if ok := checkLimit(ctx); !ok {
+			return
+		}
+
 		if wsTransport.Supports(ctx) {
+			lCtx = context.WithValue(lCtx, helpers.RateLimitFunc, rateLimitFuncWS)
+			lCtx = context.WithValue(lCtx, helpers.ClientIP, ctx.UserValue(string(helpers.ClientIP)))
+
 			wsTransport.Do(ctx, lCtx, exec)
 		} else {
 			fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

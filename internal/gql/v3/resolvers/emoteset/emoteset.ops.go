@@ -28,7 +28,13 @@ func NewOps(r types.Resolver) generated.EmoteSetOpsResolver {
 }
 
 func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id primitive.ObjectID, action model.ListItemAction, nameArg *string) ([]*model.ActiveEmote, error) {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	actor := auth.For(ctx)
+	if actor == nil {
+		return nil, errors.ErrUnauthorized()
+	}
 
 	// Get the emote
 	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"_id": id}).First()

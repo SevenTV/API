@@ -7,6 +7,7 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -42,6 +43,15 @@ func New(gCtx global.Context) error {
 	srv := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
 			start := time.Now()
+
+			// Add client IP to context
+			ip := utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP"))
+			if ip == "" {
+				ip = ctx.RemoteIP().String()
+			}
+
+			ctx.SetUserValue(string(helpers.ClientIP), ip)
+
 			defer func() {
 				if err := recover(); err != nil {
 					zap.S().Errorw("panic in rest request handler",

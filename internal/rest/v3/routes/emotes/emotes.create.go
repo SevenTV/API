@@ -17,6 +17,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc/s3"
 	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/container"
@@ -41,6 +42,7 @@ func (r *create) Config() rest.RouteConfig {
 		Method: rest.POST,
 		Middleware: []rest.Middleware{
 			middleware.Auth(r.Ctx),
+			middleware.RateLimit(r.Ctx, "CreateEmote", r.Ctx.Config().Limits.Buckets.ImageProcessing),
 		},
 	}
 }
@@ -70,6 +72,37 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if !actor.HasPermission(structures.RolePermissionCreateEmote) {
 		return errors.ErrInsufficientPrivilege()
+	}
+
+	reqs, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
+		Actor: actor,
+		Targets: map[structures.ObjectKind]bool{
+			structures.ObjectKindEmote: true,
+		},
+		Filter: bson.M{
+			"author_id": actor.ID,
+		},
+		SkipPermissionCheck: true,
+	}).Items()
+	if err != nil {
+		return errors.ErrInternalServerError().SetDetail("Unable to evaluate active mod requests")
+	}
+
+	emoteIDs := []primitive.ObjectID{}
+
+	for _, re := range reqs {
+		msg, err := structures.ConvertMessage[structures.MessageDataModRequest](re)
+		if err == nil {
+			emoteIDs = append(emoteIDs, msg.Data.TargetID)
+		}
+	}
+
+	reqLimit := r.Ctx.Config().Limits.Quota.MaxActiveModRequests
+	if count, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, bson.M{
+		"versions.id":              bson.M{"$in": emoteIDs},
+		"versions.state.lifecycle": structures.EmoteLifecycleLive,
+	}); count >= reqLimit {
+		return errors.ErrRateLimited().SetDetail("You have too many emotes pending approval!")
 	}
 
 	req := &ctx.Request

@@ -11,6 +11,7 @@ import (
 
 	v2 "github.com/seventv/api/internal/gql/v2"
 	v3 "github.com/seventv/api/internal/gql/v3"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
 )
@@ -49,6 +50,15 @@ func New(gCtx global.Context) error {
 	server := fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
 			start := time.Now()
+
+			// Add client IP to context
+			ip := utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP"))
+			if ip == "" {
+				ip = ctx.RemoteIP().String()
+			}
+
+			ctx.SetUserValue(string(helpers.ClientIP), ip)
+
 			defer func() {
 				if err := recover(); err != nil {
 					zap.S().Errorw("panic in gql request handler",
@@ -57,7 +67,7 @@ func New(gCtx global.Context) error {
 						"duration", int(time.Since(start)/time.Millisecond),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"ip", ip,
 						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 					ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
@@ -78,7 +88,7 @@ func New(gCtx global.Context) error {
 						"duration", int(mills),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"ip", ip,
 						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				}

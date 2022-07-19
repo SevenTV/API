@@ -15,6 +15,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/fasthttp/websocket"
+	"github.com/seventv/api/internal/gql/v3/helpers"
+	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -293,6 +295,14 @@ func (c *wsConnection) subscribe(start time.Time, msg *message) {
 	params.ReadTime = graphql.TraceTiming{
 		Start: start,
 		End:   graphql.Now(),
+	}
+
+	// Handle rate limiting
+	switch rlFn := c.ctx.Value(helpers.RateLimitFunc).(type) {
+	case middleware.RateLimitFunc:
+		if err := rlFn(ctx); err != nil {
+			return // TODO: send an error about this rate limiting
+		}
 	}
 
 	rc, err := c.exec.CreateOperationContext(ctx, params)

@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"encoding/json"
 	goerrors "errors"
 	"fmt"
 	"net/http"
@@ -15,10 +16,11 @@ import (
 	"github.com/seventv/api/internal/gql/v2/complexity"
 	"github.com/seventv/api/internal/gql/v2/gen/generated"
 	"github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v2/middleware"
+	gql_middleware "github.com/seventv/api/internal/gql/v2/middleware"
 	"github.com/seventv/api/internal/gql/v2/resolvers"
 	"github.com/seventv/api/internal/gql/v2/types"
 	"github.com/seventv/api/internal/gql/v3/cache"
+	"github.com/seventv/api/internal/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
@@ -29,7 +31,7 @@ import (
 func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 	schema := generated.NewExecutableSchema(generated.Config{
 		Resolvers:  resolvers.New(types.Resolver{Ctx: gCtx}),
-		Directives: middleware.New(gCtx),
+		Directives: gql_middleware.New(gCtx),
 		Complexity: complexity.New(gCtx),
 	})
 	srv := handler.New(schema)
@@ -43,9 +45,12 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 			return 100
 		},
 	})
-	srv.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
+
+	errorPresenter := func(ctx context.Context, e error) *gqlerror.Error {
 		err := graphql.DefaultErrorPresenter(ctx, e)
+
 		var apiErr errors.APIError
+
 		if goerrors.As(e, &apiErr) {
 			err.Message = fmt.Sprintf("%d %s", apiErr.Code(), apiErr.Message())
 			err.Extensions = map[string]interface{}{
@@ -56,7 +61,9 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		}
 
 		return err
-	})
+	}
+
+	srv.SetErrorPresenter(errorPresenter)
 
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{
@@ -70,9 +77,28 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return errors.ErrInternalServerError()
 	})
 
+	rateLimitFunc := middleware.RateLimit(gCtx, "gql-v2", gCtx.Config().Limits.Buckets.GQL2[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL2[1]))
+
+	checkLimit := func(ctx *fasthttp.RequestCtx) bool {
+		if err := rateLimitFunc(ctx); err != nil {
+			j, _ := json.Marshal(errorPresenter(ctx, err))
+
+			ctx.SetContentType("application/json")
+			ctx.SetBody(j)
+
+			return false
+		}
+
+		return true
+	}
+
 	return func(ctx *fasthttp.RequestCtx) {
 		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 		lCtx = context.WithValue(lCtx, helpers.RequestCtxKey, ctx)
+
+		if ok := checkLimit(ctx); !ok {
+			return
+		}
 
 		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			srv.ServeHTTP(w, r.WithContext(lCtx))
