@@ -84,7 +84,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		},
 		SkipPermissionCheck: true,
 	}).Items()
-	if err != nil {
+	if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
 		return errors.ErrInternalServerError().SetDetail("Unable to evaluate active mod requests")
 	}
 

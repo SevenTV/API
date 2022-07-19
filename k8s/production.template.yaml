@@ -145,6 +145,10 @@ data:
       bind: 0.0.0.0:9300
 
     limits:
+      buckets:
+        gql_v3: [250, 2]
+        gql_v2: [250, 3]
+        image_processing: [2, 60]
       emotes:
         max_processing_time_seconds: 120
         max_width: 1000
@@ -154,6 +158,7 @@ data:
       quota:
         default_limit: 1000
         max_bad_queries: 5
+        max_active_mod_requests: 3
 
     message_queue:
       rmq:
