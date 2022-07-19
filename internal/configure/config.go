@@ -233,8 +233,9 @@ type Config struct {
 		} `mapstructure:"buckets" json:"buckets"`
 
 		Quota struct {
-			DefaultLimit  int32 `mapstructure:"default_limit" json:"default_limit"`
-			MaxBadQueries int64 `mapstructure:"max_bad_queries" json:"max_bad_queries"`
+			DefaultLimit         int32 `mapstructure:"default_limit" json:"default_limit"`
+			MaxBadQueries        int64 `mapstructure:"max_bad_queries" json:"max_bad_queries"`
+			MaxActiveModRequests int64 `mapstructure:"max_active_mod_requests" json:"max_active_mod_requests"`
 		} `mapstructure:"quota" json:"quota"`
 
 		Emotes struct {
