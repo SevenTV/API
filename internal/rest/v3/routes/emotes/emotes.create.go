@@ -89,6 +89,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	emoteIDs := []primitive.ObjectID{}
+
 	for _, re := range reqs {
 		msg, err := structures.ConvertMessage[structures.MessageDataModRequest](re)
 		if err == nil {
