@@ -2,21 +2,27 @@ package limiter
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/common/redis"
+	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 )
 
 type Instance interface {
 	AwaitMutation(ctx context.Context) func()
+
+	ScriptOk(ctx context.Context) bool
+	LoadScript(ctx context.Context) error
+	GetScript() string
 }
 
 type limiterInst struct {
-	redis redis.Instance
-	// script string
+	redis  redis.Instance
+	script string
 
 	mx *sync.Mutex
 }
@@ -27,16 +33,13 @@ func New(ctx context.Context, rdis redis.Instance) (Instance, error) {
 		mx:    &sync.Mutex{},
 	}
 
-	/*
-		if err := l.LoadScripts(ctx); err != nil {
-			return &l, err
-		}
-	*/
+	if err := l.LoadScript(ctx); err != nil {
+		return &l, err
+	}
 
 	return &l, nil
 }
 
-/*
 func (inst *limiterInst) ScriptOk(ctx context.Context) bool {
 	ok, _ := inst.redis.RawClient().ScriptExists(ctx, inst.script).Result()
 	if len(ok) == 0 || !ok[0] {
@@ -46,7 +49,11 @@ func (inst *limiterInst) ScriptOk(ctx context.Context) bool {
 	return true
 }
 
-func (inst *limiterInst) LoadScripts(ctx context.Context) error {
+func (inst *limiterInst) GetScript() string {
+	return inst.script
+}
+
+func (inst *limiterInst) LoadScript(ctx context.Context) error {
 	inst.mx.Lock()
 	defer inst.mx.Unlock()
 
@@ -62,7 +69,6 @@ func (inst *limiterInst) LoadScripts(ctx context.Context) error {
 
 	return nil
 }
-*/
 
 func (inst *limiterInst) AwaitMutation(ctx context.Context) func() {
 	actor := auth.For(ctx)

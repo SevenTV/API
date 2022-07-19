@@ -226,6 +226,12 @@ type Config struct {
 	} `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {
+		Buckets struct {
+			GQL2            [2]int64 `mapstructure:"gql_v2" json:"gql_v2"`
+			GQL3            [2]int64 `mapstructure:"gql_v3" json:"gql_v3"`
+			ImageProcessing [2]int64 `mapstructure:"image_processing" json:"image_processing"`
+		} `mapstructure:"buckets" json:"buckets"`
+
 		Quota struct {
 			DefaultLimit  int32 `mapstructure:"default_limit" json:"default_limit"`
 			MaxBadQueries int64 `mapstructure:"max_bad_queries" json:"max_bad_queries"`
