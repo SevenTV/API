@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
@@ -20,6 +21,7 @@ type Instances struct {
 	MessageQueue messagequeue.Instance
 	Prometheus   prometheus.Instance
 	Events       events.Instance
+	Limiter      limiter.Instance
 	YouTube      youtube.Instance
 	Loaders      loaders.Instance
 

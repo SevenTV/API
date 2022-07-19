@@ -232,6 +232,9 @@ func (r *Resolver) doSetChannelEmote(
 	action structures.ListItemAction,
 	b *structures.EmoteSetBuilder,
 ) error {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutations.EmoteSetMutationSetEmoteOptions{
 		Actor: actor,
 		Emotes: []mutations.EmoteSetMutationSetEmoteItem{{

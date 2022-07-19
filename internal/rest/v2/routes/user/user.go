@@ -8,6 +8,7 @@ import (
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -61,6 +62,14 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	user, err := r.Ctx.Inst().Query.Users(ctx, filter).First()
 	if err != nil {
 		return errors.From(err)
+	}
+
+	// Check ban
+	bans, err := r.Ctx.Inst().Query.Bans(ctx, query.BanQueryOptions{
+		Filter: bson.M{"victim_id": user.ID},
+	})
+	if err == nil && bans.MemoryHole.Has(user.ID) {
+		return errors.ErrUnknownUser()
 	}
 
 	if user.ID.IsZero() {

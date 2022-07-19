@@ -64,6 +64,9 @@ func (r *Resolver) doSetChannelEditor(
 	targetID primitive.ObjectID,
 	editorID primitive.ObjectID,
 ) (structures.User, structures.User, error) {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	var (
 		target structures.User
 		editor structures.User

@@ -16,6 +16,7 @@ import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql"
 	"github.com/seventv/api/internal/health"
+	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/monitoring"
 	"github.com/seventv/api/internal/pprof"
@@ -88,6 +89,7 @@ func main() {
 			Sentinel:   config.Redis.Sentinel,
 			Addresses:  config.Redis.Addresses,
 			MasterName: config.Redis.MasterName,
+			EnableSync: true,
 		})
 		if err != nil {
 			zap.S().Fatalw("failed to setup redis handler",
@@ -171,6 +173,12 @@ func main() {
 			CDN:  config.CdnURL,
 		}
 		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
+
+		gCtx.Inst().Limiter, err = limiter.New(gCtx, gCtx.Inst().Redis)
+		if err != nil {
+			zap.S().Fatalw("failed to setup rate limiter", "error", err)
+		}
+
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
 			ID:     id,
