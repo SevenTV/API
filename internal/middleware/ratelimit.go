@@ -19,7 +19,7 @@ import (
 func RateLimit(gctx global.Context, bucket string, limit int64, ex time.Duration) Middleware {
 	return func(ctx *fasthttp.RequestCtx) errors.APIError {
 		var identifier string
-		switch t := ctx.UserValue("client_ip").(type) {
+		switch t := ctx.UserValue(string(helpers.ClientIP)).(type) {
 		case string:
 			identifier = t
 		}

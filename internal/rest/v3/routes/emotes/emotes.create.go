@@ -41,6 +41,7 @@ func (r *create) Config() rest.RouteConfig {
 		Method: rest.POST,
 		Middleware: []rest.Middleware{
 			middleware.Auth(r.Ctx),
+			middleware.RateLimit(r.Ctx, "CreateEmote", r.Ctx.Config().Limits.Buckets.ImageProcessing),
 		},
 	}
 }
