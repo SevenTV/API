@@ -190,6 +190,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 			lifecycle = ver.State.Lifecycle
 			listed = ver.State.Listed
 			images = vimages
+			animated = ver.Animated
 		}
 
 		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/%s", cdnURL, ver.ArchiveFile.Key))
