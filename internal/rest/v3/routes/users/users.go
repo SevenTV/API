@@ -2,7 +2,6 @@ package users
 
 import (
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/rest/rest"
 )
 
@@ -31,8 +30,8 @@ func (r *Route) Config() rest.RouteConfig {
 // @Tags users
 // @Produce json
 // @Param query query string false "search by username, user id, channel name or channel id"
-// @Success 200 {array} model.User
+// @Success 200
 // @Router /users [get]
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	return ctx.JSON(rest.OK, []model.User{})
+	return ctx.JSON(rest.OK, struct{}{})
 }

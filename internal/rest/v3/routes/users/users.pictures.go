@@ -50,7 +50,7 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 // @Description Set a new profile picture
 // @Tags users
 // @Accept image/avif, image/webp, image/gif, image/apng, image/png, image/jpeg
-// @Success 200 {object} model.User
+// @Success 200
 // @Router /users/{user}/profile-picture [put]
 func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
@@ -196,5 +196,5 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError()
 	}
 
-	return ctx.JSON(rest.OK, nil)
+	return ctx.JSON(rest.OK, struct{}{})
 }
