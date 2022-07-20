@@ -46,3 +46,10 @@ func (r *Resolver) EditReport(ctx context.Context, reportID primitive.ObjectID, 
 	// primitive.ObjectID
 	return nil, nil
 }
+
+// Cosmetics implements generated.MutationResolver
+func (*Resolver) Cosmetics(ctx context.Context, id primitive.ObjectID) (*model.CosmeticOps, error) {
+	return &model.CosmeticOps{
+		ID: id,
+	}, nil
+}

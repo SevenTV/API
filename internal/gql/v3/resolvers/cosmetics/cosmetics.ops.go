@@ -1,19 +1,30 @@
-package mutation
+package cosmetics
 
 import (
 	"context"
-	"time"
 
+	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/common/errors"
+	"github.com/seventv/api/internal/gql/v3/helpers"
+	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
-func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPaintInput) (primitive.ObjectID, error) {
+type ResolverOps struct {
+	types.Resolver
+}
+
+func NewOps(r types.Resolver) generated.CosmeticOpsResolver {
+	return &ResolverOps{r}
+}
+
+// Paint implements generated.CosmeticOpsResolver
+func (r *ResolverOps) UpdatePaint(ctx context.Context, obj *model.CosmeticOps, def model.CosmeticPaintInput) (*model.CosmeticPaint, error) {
 	mainColor := 0
 	if def.Color != nil {
 		mainColor = *def.Color
@@ -53,7 +64,7 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 	}
 
 	cos := structures.Cosmetic[structures.CosmeticDataPaint]{
-		ID:       primitive.NewObjectIDFromTimestamp(time.Now()),
+		ID:       obj.ID,
 		Kind:     structures.CosmeticKindNametagPaint,
 		Priority: 0,
 		Name:     def.Name,
@@ -69,16 +80,16 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 		},
 	}
 
-	result, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameCosmetics).InsertOne(ctx, cos)
-	if err != nil {
-		zap.S().Errorw("failed to create new paint cosmetic",
-			"error", err,
-		)
-
-		return primitive.NilObjectID, errors.ErrInternalServerError().SetDetail(err.Error())
+	// Update the cosmetic in DB
+	result := structures.Cosmetic[structures.CosmeticDataPaint]{}
+	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameCosmetics).FindOneAndUpdate(ctx, bson.M{
+		"_id": obj.ID,
+	}, bson.M{
+		"$set": cos,
+	}, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&result); err != nil {
+		zap.S().Errorw("failed to update cosmetic", "cosmetic", cos.ID.Hex(), "error", err)
+		return nil, err
 	}
 
-	id, _ := result.InsertedID.(primitive.ObjectID)
-
-	return id, nil
+	return helpers.CosmeticPaintStructureToModel(result), nil
 }
