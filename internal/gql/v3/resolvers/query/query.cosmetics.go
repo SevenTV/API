@@ -40,7 +40,6 @@ func (r *Resolver) Cosmetics(ctx context.Context) (*model.CosmeticsQuery, error)
 			if err == nil {
 				badges = append(badges, helpers.CosmeticBadgeStructureToModel(c))
 			}
-
 		}
 	}
 
