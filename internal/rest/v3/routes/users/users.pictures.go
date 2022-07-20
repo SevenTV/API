@@ -56,21 +56,20 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
 	defer done()
 
+	actor, ok := ctx.GetActor()
+	if !ok {
+		return errors.ErrUnauthorized()
+	}
+
 	victimID, _ := ctx.UserValue("user").String()
 
 	ctx.SetContentType("application/json")
 
-	var (
-		victim structures.User
-		ok     bool
-	)
+	var victim structures.User
 
 	switch victimID {
 	case "@me":
-		victim, ok = ctx.GetActor()
-		if !ok {
-			return errors.ErrUnauthorized()
-		}
+		victim = actor
 	default:
 		oid, err := ctx.UserValue("user").ObjectID()
 		if err != nil {
@@ -80,6 +79,22 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		victim, err = r.Ctx.Inst().Loaders.UserByID().Load(oid)
 		if err != nil {
 			return errors.From(err)
+		}
+	}
+
+	// Permission check
+	if actor.ID != victim.ID && !actor.HasPermission(structures.RolePermissionManageUsers) {
+		noPrivilege := errors.ErrInsufficientPrivilege().SetDetail("You are not allowed to perform this action on this user")
+
+		ed, ok, _ := victim.GetEditor(actor.ID)
+		if !ok {
+			return noPrivilege
+		}
+
+		if !ed.HasPermission(structures.UserEditorPermissionManageProfile) {
+			return noPrivilege.SetFields(errors.Fields{
+				"MISSING_EDITOR_PERMISSION": "MANAGE_PROFILE",
+			})
 		}
 	}
 
