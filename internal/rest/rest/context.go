@@ -40,7 +40,7 @@ func (c *Ctx) StatusCode() HttpStatusCode {
 }
 
 // Set the current authenticated user
-func (c *Ctx) SetActor(u *structures.User) {
+func (c *Ctx) SetActor(u structures.User) {
 	c.SetUserValue(string(AuthUserKey), u)
 }
 

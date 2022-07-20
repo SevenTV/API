@@ -57,6 +57,9 @@ func (r *create) Config() rest.RouteConfig {
 // @Success 201 {object} model.Emote
 // @Router /emotes [post]
 func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	ctx.SetContentType("application/json")
 
 	// Check RMQ status

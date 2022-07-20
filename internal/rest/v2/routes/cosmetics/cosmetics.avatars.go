@@ -147,7 +147,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			continue
 		}
 
-		result[key] = fmt.Sprintf("https://%s/pp/%s/%s", r.Ctx.Config().CdnURL, u.ID.Hex(), u.AvatarID)
+		result[key] = fmt.Sprintf("https://%s/%s", r.Ctx.Config().CdnURL, r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID))
 	}
 
 	return ctx.JSON(rest.OK, result)
