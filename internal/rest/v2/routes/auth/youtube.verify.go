@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
@@ -101,7 +101,7 @@ func (r *youtubeVerify) Handler(ctx *rest.Ctx) rest.APIError {
 			SubCount:    int64(channel.Statistics.SubscriberCount),
 		})
 
-	ub := structures.NewUserBuilder(*actor)
+	ub := structures.NewUserBuilder(actor)
 	ub.AddConnection(ucb.UserConnection.ToRaw())
 
 	// Write to DB

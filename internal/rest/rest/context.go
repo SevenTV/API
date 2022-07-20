@@ -45,8 +45,8 @@ func (c *Ctx) SetActor(u *structures.User) {
 }
 
 // Get the current authenticated user
-func (c *Ctx) GetActor() (*structures.User, bool) {
+func (c *Ctx) GetActor() (structures.User, bool) {
 	v := c.UserValue(AuthUserKey).User()
 
-	return v, v != nil
+	return v, !v.ID.IsZero()
 }

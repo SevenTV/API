@@ -72,13 +72,13 @@ func (p *Param) ObjectID() (primitive.ObjectID, error) {
 	return oid, nil
 }
 
-func (p *Param) User() *structures.User {
-	var u *structures.User
+func (p *Param) User() structures.User {
+	var u structures.User
 	switch t := p.v.(type) {
-	case *structures.User:
+	case structures.User:
 		u = t
 	default:
-		return nil
+		return structures.DeletedUser
 	}
 
 	return u

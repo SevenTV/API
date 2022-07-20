@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/utils"
