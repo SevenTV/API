@@ -18,6 +18,7 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/container"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
@@ -41,7 +42,7 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
 			middleware.Auth(r.Ctx),
-			middleware.RateLimit(r.Ctx, "UpdateUserPicture", [2]int64{3, 120}),
+			middleware.RateLimit(r.Ctx, "UpdateUserPicture", [2]int64{2, 60}),
 		},
 	}
 }
@@ -60,11 +61,6 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	actor, ok := ctx.GetActor()
 	if !ok {
 		return errors.ErrUnauthorized()
-	}
-
-	// Already processing
-	if actor.State.PendingAvatarID != "" {
-		return errors.ErrRateLimited().SetDetail("We are processing your profile picture, please wait")
 	}
 
 	victimID, _ := ctx.UserValue("user").String()
@@ -143,9 +139,11 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrMissingInternalDependency().SetDetail("Failed to establish connection with the CDN Service")
 	}
 
+	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
+
 	taskData, err := json.Marshal(task.Task{
 		ID:    strId,
-		Flags: task.TaskFlagWEBP | task.TaskFlagWEBP_STATIC,
+		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP, 0) | task.TaskFlagWEBP_STATIC,
 		Input: task.TaskInput{
 			Bucket: r.Ctx.Config().S3.InternalBucket,
 			Key:    rawFilekey,
