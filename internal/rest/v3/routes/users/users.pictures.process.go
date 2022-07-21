@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	s3_opts "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -114,22 +115,6 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 		static task.ResultImage
 	)
 
-	for _, im := range evt.ImageOutputs {
-		if im.ContentType != "image/webp" {
-			continue
-		}
-
-		if im.FrameCount > 1 {
-			img = im
-		} else {
-			static = im
-		}
-	}
-
-	if img.Key == "" {
-		img = static
-	}
-
 	// Find the user that triggered this job
 	var actor structures.User
 	err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
@@ -147,6 +132,22 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}
 
 	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
+
+	for _, im := range evt.ImageOutputs {
+		if im.ContentType != "image/webp" {
+			continue
+		}
+
+		if im.FrameCount > 1 {
+			img = im
+		} else {
+			static = im
+		}
+	}
+
+	if img.Key == "" || !allowAnim {
+		img = static
+	}
 
 	inputKey := ppl.Ctx.Config().S3.PublicBucket + "/" + utils.Ternary(allowAnim, img.Key, static.Key)
 	outputKey := strings.TrimSuffix(img.Key, path.Base(inputKey)) + "/" + evt.ID
@@ -174,6 +175,8 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}); err != nil {
 		l.Errorw("failed to update user avatar id", "error", err)
 	}
+
+	events.Publish(ppl.Ctx, "users", actor.ID)
 
 	return nil
 }

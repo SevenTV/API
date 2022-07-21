@@ -41,6 +41,7 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
 			middleware.Auth(r.Ctx),
+			middleware.RateLimit(r.Ctx, "UpdateUserPicture", [2]int64{3, 120}),
 		},
 	}
 }
@@ -59,6 +60,11 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	actor, ok := ctx.GetActor()
 	if !ok {
 		return errors.ErrUnauthorized()
+	}
+
+	// Already processing
+	if actor.State.PendingAvatarID != "" {
+		return errors.ErrRateLimited().SetDetail("We are processing your profile picture, please wait")
 	}
 
 	victimID, _ := ctx.UserValue("user").String()
