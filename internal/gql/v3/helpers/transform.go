@@ -383,3 +383,52 @@ func BanStructureToModel(s structures.Ban) *model.Ban {
 		VictimID:  s.VictimID,
 	}
 }
+
+func CosmeticPaintStructureToModel(s structures.Cosmetic[structures.CosmeticDataPaint]) *model.CosmeticPaint {
+	var color *int
+	if s.Data.Color != nil {
+		color = utils.PointerOf(int(*s.Data.Color))
+	}
+
+	stops := make([]*model.CosmeticPaintStop, len(s.Data.Stops))
+	for i, sto := range s.Data.Stops {
+		stops[i] = &model.CosmeticPaintStop{
+			At:    sto.At,
+			Color: int(sto.Color),
+		}
+	}
+
+	shadows := make([]*model.CosmeticPaintShadow, len(s.Data.DropShadows))
+	for i, sha := range s.Data.DropShadows {
+		shadows[i] = &model.CosmeticPaintShadow{
+			XOffset: sha.OffsetX,
+			YOffset: sha.OffsetY,
+			Radius:  sha.Radius,
+			Color:   int(sha.Color),
+		}
+	}
+
+	return &model.CosmeticPaint{
+		ID:       s.ID,
+		Kind:     model.CosmeticKind(s.Kind),
+		Name:     s.Name,
+		Function: model.CosmeticPaintFunction(s.Data.Function),
+		Color:    color,
+		Angle:    int(s.Data.Angle),
+		Shape:    &s.Data.Shape,
+		ImageURL: &s.Data.ImageURL,
+		Repeat:   s.Data.Repeat,
+		Stops:    stops,
+		Shadows:  shadows,
+	}
+}
+
+func CosmeticBadgeStructureToModel(s structures.Cosmetic[structures.CosmeticDataBadge]) *model.CosmeticBadge {
+	return &model.CosmeticBadge{
+		ID:      s.ID,
+		Kind:    model.CosmeticKind(s.Kind),
+		Name:    s.Name,
+		Tooltip: s.Data.Tooltip,
+		Images:  []*model.Image{},
+	}
+}

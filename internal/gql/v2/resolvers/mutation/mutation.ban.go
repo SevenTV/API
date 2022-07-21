@@ -18,7 +18,7 @@ import (
 // BanUser implements generated.MutationResolver
 func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg *string, reasonArg *string) (*model.Response, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -61,7 +61,7 @@ func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg 
 		SetExpireAt(expireAt).
 		SetEffects(structures.BanEffect(structures.BanEffectMemoryHole | structures.BanEffectNoAuth | structures.BanEffectNoPermissions))
 	if err = r.Ctx.Inst().Mutate.CreateBan(ctx, bb, mutations.CreateBanOptions{
-		Actor:  actor,
+		Actor:  &actor,
 		Victim: &victim,
 	}); err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg 
 // UnbanUser implements generated.MutationResolver
 func (r *Resolver) UnbanUser(ctx context.Context, victimIDArg string, reason *string) (*model.Response, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -110,7 +110,7 @@ func (r *Resolver) UnbanUser(ctx context.Context, victimIDArg string, reason *st
 		bb.SetExpireAt(time.Now())
 
 		if err = r.Ctx.Inst().Mutate.EditBan(ctx, bb, mutations.EditBanOptions{
-			Actor: actor,
+			Actor: &actor,
 		}); err != nil {
 			zap.S().Errorw("failed to perform v2 unban user operation",
 				"error", err,

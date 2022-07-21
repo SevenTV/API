@@ -93,7 +93,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 
 	// Run query
 	result, totalCount, err := r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
-		Actor: actor,
+		Actor: &actor,
 		Query: queryValue,
 		Page:  page,
 		Limit: limit,

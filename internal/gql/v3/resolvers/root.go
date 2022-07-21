@@ -3,6 +3,7 @@ package resolvers
 import (
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/resolvers/ban"
+	"github.com/seventv/api/internal/gql/v3/resolvers/cosmetics"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emote"
 	emoteversion "github.com/seventv/api/internal/gql/v3/resolvers/emote-version"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emoteset"
@@ -38,6 +39,10 @@ func (r *Resolver) Emote() generated.EmoteResolver {
 
 func (r *Resolver) EmotePartial() generated.EmotePartialResolver {
 	return emote.NewPartial(r.Resolver)
+}
+
+func (r *Resolver) CosmeticOps() generated.CosmeticOpsResolver {
+	return cosmetics.NewOps(r.Resolver)
 }
 
 func (r *Resolver) EmoteOps() generated.EmoteOpsResolver {

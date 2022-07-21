@@ -250,8 +250,9 @@ type Config struct {
 	MessageQueue struct {
 		Mode MessageQueueMode `mapstructure:"mode" json:"mode"`
 
-		ImageProcessorJobsQueueName    string `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
-		ImageProcessorResultsQueueName string `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
+		ImageProcessorJobsQueueName                string `mapstructure:"image_processor_jobs_queue_name" json:"image_processor_jobs_queue_name"`
+		ImageProcessorResultsQueueName             string `mapstructure:"image_processor_results_queue_name" json:"image_processor_results_queue_name"`
+		ImageProcessorUserPicturesResultsQueueName string `mapstructure:"image_processor_user_pictures_results_queue_name" json:"image_processor_user_pictures_results_queue_name"`
 
 		RMQ struct {
 			URI                  string `mapstructure:"uri" json:"uri"`

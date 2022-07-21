@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -147,7 +147,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			continue
 		}
 
-		result[key] = fmt.Sprintf("https://%s/pp/%s/%s", r.Ctx.Config().CdnURL, u.ID.Hex(), u.AvatarID)
+		result[key] = fmt.Sprintf("https://%s/%s", r.Ctx.Config().CdnURL, r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID))
 	}
 
 	return ctx.JSON(rest.OK, result)

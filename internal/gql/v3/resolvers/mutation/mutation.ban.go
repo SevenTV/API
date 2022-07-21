@@ -18,7 +18,7 @@ import (
 func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, reason string, effects int, expireAtArg *time.Time, anonymousArg *bool) (*model.Ban, error) {
 	// Get the actor uszer²
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -47,7 +47,7 @@ func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, r
 		SetExpireAt(expireAt).
 		SetEffects(structures.BanEffect(effects))
 	if err := r.Ctx.Inst().Mutate.CreateBan(ctx, bb, mutations.CreateBanOptions{
-		Actor:  actor,
+		Actor:  &actor,
 		Victim: victim,
 	}); err != nil {
 		return nil, err

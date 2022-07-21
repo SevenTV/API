@@ -2,9 +2,9 @@ package emotes
 
 import (
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/common/errors"
 	v2structures "github.com/seventv/common/structures/v2"
 )

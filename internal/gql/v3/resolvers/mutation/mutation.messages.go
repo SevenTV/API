@@ -21,7 +21,7 @@ const MESSAGE_RECIPIENTS_MOST = 20
 
 func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.ObjectID, read bool) (int, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return 0, errors.ErrUnauthorized()
 	}
 
@@ -47,7 +47,7 @@ func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.Obje
 
 	for _, msg := range messages {
 		result, err := r.Ctx.Inst().Mutate.SetMessageReadStates(ctx, structures.NewMessageBuilder(msg), read, mutations.MessageReadStateOptions{
-			Actor:               actor,
+			Actor:               &actor,
 			SkipPermissionCheck: false,
 		})
 		if result != nil {
@@ -68,7 +68,7 @@ func (r *Resolver) ReadMessages(ctx context.Context, messageIds []primitive.Obje
 
 func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primitive.ObjectID, subject string, content string, importantArg *bool, anonArg *bool) (*model.InboxMessage, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -126,7 +126,7 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 			Important: important,
 		})
 	if err := r.Ctx.Inst().Mutate.SendInboxMessage(ctx, mb, mutations.SendInboxMessageOptions{
-		Actor:                actor,
+		Actor:                &actor,
 		Recipients:           recipientsArg,
 		ConsiderBlockedUsers: !actor.HasPermission(structures.RolePermissionBypassPrivacy),
 	}); err != nil {
@@ -134,7 +134,7 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 	}
 
 	msg, err := r.Ctx.Inst().Query.Messages(ctx, bson.M{"_id": mb.Message.ID}, query.MessageQueryOptions{
-		Actor:        actor,
+		Actor:        &actor,
 		Limit:        1,
 		ReturnUnread: true,
 	}).First()

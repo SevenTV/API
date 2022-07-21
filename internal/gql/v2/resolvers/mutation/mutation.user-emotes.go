@@ -21,7 +21,7 @@ import (
 
 func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg string, reasonArg *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -64,7 +64,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			SetCapacity(250)
 
 		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutations.EmoteSetMutationOptions{
-			Actor: actor,
+			Actor: &actor,
 		}); err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, ub, mutations.SetUserActiveEmoteSet{
 				EmoteSetID:   esb.EmoteSet.ID,
 				Platform:     structures.UserConnectionPlatformTwitch,
-				Actor:        actor,
+				Actor:        &actor,
 				ConnectionID: conn.ID,
 			}); err != nil {
 				return nil, err
@@ -92,13 +92,13 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	esb := structures.NewEmoteSetBuilder(es)
 
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionAdd, esb); err != nil {
+	if err = r.doSetChannelEmote(ctx, &actor, emoteID, "", structures.ListItemActionAdd, esb); err != nil {
 		graphql.AddError(ctx, err)
 		return nil, nil
 	}
 
 	go func() {
-		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionAdd, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionAdd, twConn.Data.Login, actor, esb.EmoteSet, emote); err != nil {
 			zap.S().Errorw("redis",
 				"error", err,
 			)
@@ -110,7 +110,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 
 func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteIDArg string, reasonArg *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -147,13 +147,13 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	esb := structures.NewEmoteSetBuilder(es)
 
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, "", structures.ListItemActionRemove, esb); err != nil {
+	if err = r.doSetChannelEmote(ctx, &actor, emoteID, "", structures.ListItemActionRemove, esb); err != nil {
 		graphql.AddError(ctx, err)
 		return nil, nil
 	}
 
 	go func() {
-		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionRemove, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionRemove, twConn.Data.Login, actor, esb.EmoteSet, emote); err != nil {
 			zap.S().Errorw("redis",
 				"error", err,
 			)
@@ -165,7 +165,7 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 
 func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, emoteIDArg string, data model.ChannelEmoteInput, reason *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -208,13 +208,13 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	esb := structures.NewEmoteSetBuilder(es)
 
 	// Run mutation
-	if err = r.doSetChannelEmote(ctx, actor, emoteID, alias, structures.ListItemActionUpdate, esb); err != nil {
+	if err = r.doSetChannelEmote(ctx, &actor, emoteID, alias, structures.ListItemActionUpdate, esb); err != nil {
 		graphql.AddError(ctx, err)
 		return nil, nil
 	}
 
 	go func() {
-		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionUpdate, twConn.Data.Login, *actor, esb.EmoteSet, emote); err != nil {
+		if err := events.PublishLegacyEventAPI(r.Ctx, model3.ListItemActionUpdate, twConn.Data.Login, actor, esb.EmoteSet, emote); err != nil {
 			zap.S().Errorw("redis",
 				"error", err,
 			)

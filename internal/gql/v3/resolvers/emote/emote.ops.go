@@ -35,7 +35,7 @@ func NewOps(r types.Resolver) generated.EmoteOpsResolver {
 
 func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Emote, error) {
 	actor := auth.For(ctx)
-	if actor == nil || !actor.HasPermission(structures.RolePermissionRunJobs) {
+	if actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionRunJobs) {
 		return nil, errors.ErrInsufficientPrivilege()
 	}
 
@@ -122,7 +122,7 @@ func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Em
 
 func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params model.EmoteUpdate) (*model.Emote, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -194,7 +194,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	}
 
 	if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
-		Actor: actor,
+		Actor: &actor,
 	}); err != nil {
 		return nil, err
 	}

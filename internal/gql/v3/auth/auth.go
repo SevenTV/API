@@ -7,7 +7,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 )
 
-func For(ctx context.Context) *structures.User {
-	raw, _ := ctx.Value(helpers.UserKey).(*structures.User)
+func For(ctx context.Context) structures.User {
+	raw, _ := ctx.Value(helpers.UserKey).(structures.User)
 	return raw
 }

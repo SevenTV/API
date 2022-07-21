@@ -25,7 +25,7 @@ func New(r types.Resolver) generated.QueryResolver {
 
 func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, nil
 	}
 

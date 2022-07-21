@@ -11,8 +11,8 @@ import (
 	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/api/internal/rest/v3/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -57,6 +57,9 @@ func (r *create) Config() rest.RouteConfig {
 // @Success 201 {object} model.Emote
 // @Router /emotes [post]
 func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	ctx.SetContentType("application/json")
 
 	// Check RMQ status
@@ -75,7 +78,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	reqs, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
-		Actor: actor,
+		Actor: &actor,
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,
 		},

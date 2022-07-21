@@ -17,7 +17,7 @@ import (
 
 func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, editorIDArg string, reason *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -28,7 +28,7 @@ func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, ed
 		return nil, errors.ErrBadObjectID()
 	}
 
-	target, _, err := r.doSetChannelEditor(ctx, actor, structures.ListItemActionAdd, targetID, editorID)
+	target, _, err := r.doSetChannelEditor(ctx, &actor, structures.ListItemActionAdd, targetID, editorID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (r *Resolver) AddChannelEditor(ctx context.Context, channelIDArg string, ed
 
 func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string, editorIDArg string, reason *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -49,7 +49,7 @@ func (r *Resolver) RemoveChannelEditor(ctx context.Context, channelIDArg string,
 		return nil, errors.ErrBadObjectID()
 	}
 
-	target, _, err := r.doSetChannelEditor(ctx, actor, structures.ListItemActionRemove, targetID, editorID)
+	target, _, err := r.doSetChannelEditor(ctx, &actor, structures.ListItemActionRemove, targetID, editorID)
 	if err != nil {
 		return nil, err
 	}

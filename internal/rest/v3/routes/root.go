@@ -2,11 +2,12 @@ package routes
 
 import (
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/middleware"
 	"github.com/seventv/api/internal/rest/v3/routes/auth"
 	"github.com/seventv/api/internal/rest/v3/routes/docs"
 	"github.com/seventv/api/internal/rest/v3/routes/emotes"
+	"github.com/seventv/api/internal/rest/v3/routes/users"
 )
 
 type Route struct {
@@ -25,6 +26,7 @@ func (r *Route) Config() rest.RouteConfig {
 			docs.New(r.Ctx),
 			auth.New(r.Ctx),
 			emotes.New(r.Ctx),
+			users.New(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
 			middleware.SetCacheControl(r.Ctx, 30, nil),

@@ -14,7 +14,7 @@ import (
 func hasPermission(gCtx global.Context) func(ctx context.Context, obj interface{}, next graphql.Resolver, role []model.Permission) (res interface{}, err error) {
 	return func(ctx context.Context, obj interface{}, next graphql.Resolver, role []model.Permission) (res interface{}, err error) {
 		user := auth.For(ctx)
-		if user == nil {
+		if user.ID.IsZero() {
 			return nil, errors.ErrUnauthorized()
 		}
 

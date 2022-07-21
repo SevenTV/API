@@ -42,9 +42,7 @@ func (epl *EmoteProcessingListener) Listen() {
 
 	evt := task.Result{}
 
-	var msg *messagequeue.IncomingMessage
-
-	for msg = range messages {
+	for msg := range messages {
 		if msg.Headers().ContentType() == "application/json" {
 			if err := json.Unmarshal(msg.Body(), &evt); err != nil {
 				zap.S().Errorw("bad message type from queue",
@@ -54,7 +52,7 @@ func (epl *EmoteProcessingListener) Listen() {
 				continue
 			}
 
-			go func() {
+			go func(msg *messagequeue.IncomingMessage) {
 				tick := time.NewTicker(time.Second * 10)
 				ctx, cancel := context.WithCancel(epl.Ctx)
 
@@ -85,11 +83,16 @@ func (epl *EmoteProcessingListener) Listen() {
 						)
 					}
 				}
-			}()
+			}(msg)
 		} else {
 			zap.S().Warnw("bad message type from queue",
 				"msg", msg,
 			)
+			if err = msg.Nack(context.Background()); err != nil {
+				zap.S().Errorw("failed to nack message",
+					"error", err,
+				)
+			}
 		}
 	}
 
