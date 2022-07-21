@@ -28,7 +28,7 @@ func Auth(gCtx global.Context) rest.Middleware {
 			return err
 		}
 
-		ctx.SetActor(*user)
+		ctx.SetActor(user)
 
 		return nil
 	}

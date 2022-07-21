@@ -119,7 +119,7 @@ func (r *Resolver) SearchEmotes(
 		if vis == v2structures.EmoteVisibilityUnlisted && visc == v2structures.EmoteVisibilityPermanentlyUnlisted {
 			// Fetch mod items
 			result, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
-				Actor: actor,
+				Actor: &actor,
 				Targets: map[structures.ObjectKind]bool{
 					structures.ObjectKindEmote: true,
 				},
@@ -145,7 +145,7 @@ func (r *Resolver) SearchEmotes(
 	}
 
 	result, totalCount, err := r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
-		Actor: actor,
+		Actor: &actor,
 		Query: queryArg,
 		Page:  page,
 		Limit: limit,

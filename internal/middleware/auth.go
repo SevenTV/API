@@ -41,32 +41,34 @@ func Auth(gCtx global.Context) Middleware {
 	}
 }
 
-func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
+func DoAuth(ctx global.Context, t string) (structures.User, errors.APIError) {
 	// Verify the token
 	claims := &auth.JWTClaimUser{}
 
+	user := structures.User{}
+
 	_, err := auth.VerifyJWT(ctx.Config().Credentials.JWTSecret, strings.Split(t, "."), claims)
 	if err != nil {
-		return nil, errors.ErrUnauthorized().SetDetail(err.Error())
+		return user, errors.ErrUnauthorized().SetDetail(err.Error())
 	}
 
 	// User ID from parsed token
 	if claims.UserID == "" {
-		return nil, errors.ErrUnauthorized().SetDetail("Bad Token")
+		return user, errors.ErrUnauthorized().SetDetail("Bad Token")
 	}
 
 	userID, err := primitive.ObjectIDFromHex(claims.UserID)
 	if err != nil {
-		return nil, errors.ErrUnauthorized().SetDetail(err.Error())
+		return user, errors.ErrUnauthorized().SetDetail(err.Error())
 	}
 
-	user, err := ctx.Inst().Query.Users(ctx, bson.M{"_id": userID}).First()
+	user, err = ctx.Inst().Query.Users(ctx, bson.M{"_id": userID}).First()
 	if err != nil {
-		return nil, errors.From(err)
+		return user, errors.From(err)
 	}
 
 	if user.TokenVersion != claims.TokenVersion {
-		return nil, errors.ErrUnauthorized().SetDetail("Token Version Mismatch")
+		return user, errors.ErrUnauthorized().SetDetail("Token Version Mismatch")
 	}
 
 	// Check bans
@@ -74,11 +76,11 @@ func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoAuth | structures.BanEffectNoPermissions}},
 	})
 	if err != nil {
-		return nil, errors.ErrInternalServerError().SetDetail("Failed")
+		return user, errors.ErrInternalServerError().SetDetail("Failed")
 	}
 
 	if ban, noAuth := bans.NoAuth[userID]; noAuth {
-		return nil, errors.ErrInsufficientPrivilege().SetDetail("You are banned!").SetFields(errors.Fields{
+		return user, errors.ErrInsufficientPrivilege().SetDetail("You are banned!").SetFields(errors.Fields{
 			"ban": map[string]string{
 				"reason":    ban.Reason,
 				"expire_at": ban.ExpireAt.Format(time.RFC3339),
@@ -90,5 +92,5 @@ func DoAuth(ctx global.Context, t string) (*structures.User, errors.APIError) {
 		user.Roles = []structures.Role{structures.RevocationRole}
 	}
 
-	return &user, nil
+	return user, nil
 }

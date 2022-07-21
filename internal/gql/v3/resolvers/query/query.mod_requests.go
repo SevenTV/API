@@ -16,7 +16,7 @@ import (
 // ModRequests implements generated.QueryResolver
 func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID) ([]*model.ModRequestMessage, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -31,7 +31,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 	}
 
 	messages, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
-		Actor:  actor,
+		Actor:  &actor,
 		Filter: match,
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,

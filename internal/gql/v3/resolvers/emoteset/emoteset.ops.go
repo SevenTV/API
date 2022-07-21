@@ -32,7 +32,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	defer done()
 
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -65,7 +65,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 
 	// Mutate the thing
 	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutations.EmoteSetMutationSetEmoteOptions{
-		Actor: actor,
+		Actor: &actor,
 		Emotes: []mutations.EmoteSetMutationSetEmoteItem{{
 			Action: structures.ListItemAction(action),
 			ID:     id,
@@ -91,7 +91,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		events.Publish(r.Ctx, "emote_sets", b.EmoteSet.ID)
 
 		// Legacy Event API v1
-		if set.Owner != nil && actor != nil {
+		if set.Owner != nil && actor.ID.IsZero() {
 			tw, _, err := set.Owner.Connections.Twitch()
 			if err != nil {
 				return
@@ -101,7 +101,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 				return // skip if target emote set isn't bound to user connection
 			}
 
-			if err := events.PublishLegacyEventAPI(r.Ctx, action, tw.Data.Login, *actor, set, emote); err != nil {
+			if err := events.PublishLegacyEventAPI(r.Ctx, action, tw.Data.Login, actor, set, emote); err != nil {
 				zap.S().Errorw("redis",
 					"error", err,
 				)

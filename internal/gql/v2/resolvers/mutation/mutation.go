@@ -23,7 +23,7 @@ type Resolver struct {
 // EditUser implements generated.MutationResolver
 func (r *Resolver) EditUser(ctx context.Context, inp model.UserInput, reason *string) (*model.User, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 

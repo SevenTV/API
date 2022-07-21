@@ -27,7 +27,7 @@ func NewOps(r types.Resolver) generated.UserOpsResolver {
 
 func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id string, d model.UserConnectionUpdate) ([]*model.UserConnection, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -57,7 +57,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutations.SetUserActiveEmoteSet{
 			EmoteSetID:   *d.EmoteSetID,
 			Platform:     structures.UserConnectionPlatformTwitch,
-			Actor:        actor,
+			Actor:        &actor,
 			ConnectionID: id,
 		}); err != nil {
 			zap.S().Errorw("failed to update user's active emote set",

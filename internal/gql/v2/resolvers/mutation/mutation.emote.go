@@ -19,7 +19,7 @@ import (
 
 func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *string) (*model.Emote, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -73,7 +73,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 			}
 
 			result, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
-				Actor: actor,
+				Actor: &actor,
 				Targets: map[structures.ObjectKind]bool{
 					structures.ObjectKindEmote: true,
 				},
@@ -87,7 +87,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 				mb := structures.NewMessageBuilder(msg)
 				// Mark the message as read
 				_, err := r.Ctx.Inst().Mutate.SetMessageReadStates(ctx, mb, true, mutations.MessageReadStateOptions{
-					Actor: actor,
+					Actor: &actor,
 				})
 				if err != nil {
 					return err
@@ -144,7 +144,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 	}
 
 	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
-		Actor: actor,
+		Actor: &actor,
 	}); err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 
 func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*bool, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -177,7 +177,7 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	eb := structures.NewEmoteBuilder(emote)
 
 	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
-		Actor:  actor,
+		Actor:  &actor,
 		Reason: reason,
 	}); err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 // MergeEmote implements generated.MutationResolver
 func (r *Resolver) MergeEmote(ctx context.Context, oldIDArg string, newIDArg string, reason string) (*model.Emote, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -232,7 +232,7 @@ func (r *Resolver) MergeEmote(ctx context.Context, oldIDArg string, newIDArg str
 	}
 
 	if err := r.Ctx.Inst().Mutate.MergeEmote(ctx, structures.NewEmoteBuilder(oldEmote), mutations.MergeEmoteOptions{
-		Actor:          actor,
+		Actor:          &actor,
 		NewEmote:       newEmote,
 		Reason:         reason,
 		SkipValidation: false,

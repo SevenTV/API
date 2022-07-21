@@ -90,7 +90,7 @@ func (inst *limiterInst) LoadScript(ctx context.Context) error {
 
 func (inst *limiterInst) AwaitMutation(ctx context.Context) func() {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return func() {}
 	}
 

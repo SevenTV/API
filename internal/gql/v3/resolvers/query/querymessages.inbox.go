@@ -17,7 +17,7 @@ const INBOX_QUERY_LIMIT_MOST = 1000
 
 func (r *Resolver) Inbox(ctx context.Context, userID primitive.ObjectID, afterIDArg *primitive.ObjectID, limitArg *int) ([]*model.InboxMessage, error) {
 	actor := auth.For(ctx)
-	if actor == nil {
+	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
 	}
 
@@ -42,7 +42,7 @@ func (r *Resolver) Inbox(ctx context.Context, userID primitive.ObjectID, afterID
 	}
 
 	messages, err := r.Ctx.Inst().Query.InboxMessages(ctx, query.InboxMessagesQueryOptions{
-		Actor:               actor,
+		Actor:               &actor,
 		User:                &user,
 		Limit:               limit,
 		AfterID:             afterID,

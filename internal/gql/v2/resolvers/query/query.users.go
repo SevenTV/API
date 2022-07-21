@@ -28,7 +28,7 @@ func (r *Resolver) User(ctx context.Context, identifier string) (*model.User, er
 		// Handle @me (fetch actor)
 		// this sets the queried user ID to that of the actor user
 		actor := auth.For(ctx)
-		if actor == nil {
+		if actor.ID.IsZero() {
 			return nil, errors.ErrUnauthorized()
 		}
 
@@ -76,7 +76,7 @@ func (r *Resolver) User(ctx context.Context, identifier string) (*model.User, er
 
 func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, limit *int) ([]*model.UserPartial, error) {
 	actor := auth.For(ctx)
-	if actor == nil || !actor.HasPermission(structures.RolePermissionManageUsers) {
+	if actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionManageUsers) {
 		return nil, errors.ErrInsufficientPrivilege()
 	}
 
