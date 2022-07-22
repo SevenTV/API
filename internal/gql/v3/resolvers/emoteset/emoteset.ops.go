@@ -91,7 +91,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		events.Publish(r.Ctx, "emote_sets", b.EmoteSet.ID)
 
 		// Legacy Event API v1
-		if set.Owner != nil && actor.ID.IsZero() {
+		if set.Owner != nil && !actor.ID.IsZero() {
 			tw, _, err := set.Owner.Connections.Twitch()
 			if err != nil {
 				return

@@ -432,8 +432,6 @@ github.com/seventv/common v0.0.0-20220720073440-87800b448acd h1:mDpCAXTPTRlMjY4n
 github.com/seventv/common v0.0.0-20220720073440-87800b448acd/go.mod h1:tOdDjP4U7Z5jXqCpyWP7oDnyMaH2/Hddlx2OAw+jM/I=
 github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2 h1:yRuIABJ6SQCLYmRSyP20Vq/J9ak3lDxhPE6gYXBh2As=
 github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2/go.mod h1:CM/CucY8KjNSBTJ00/x4xzzbgAvbDgiZcZjM/gxDHRQ=
-github.com/seventv/message-queue v0.0.0-20220721124044-9fd23bda9643 h1:9fEiWYQ0eLBtu+Nuia0qx0WQsXBx67ZUTJglFLOQfuU=
-github.com/seventv/message-queue v0.0.0-20220721124044-9fd23bda9643/go.mod h1:iGzjTPvD36tzY1zqz/xYjG1D1NnmlzbSUZU+7TX8FkI=
 github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d h1:A3LaacuowEN3oKAkQZakz4eK90bafCSurxMSp4zUnHk=
 github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d/go.mod h1:L1iYDSmltUnxlVGX9RayCoVi3e8aNtFrrLJL6Jv+mrM=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
