@@ -54,6 +54,10 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
 		}
 
+		if actor.ID != b.User.ID && !actor.HasPermission(structures.RolePermissionManageUsers) {
+			return nil, errors.ErrInsufficientPrivilege()
+		}
+
 		conn, ind := b.User.Connections.Get(id)
 		if ind == -1 {
 			return nil, errors.ErrUnknownUserConnection()
