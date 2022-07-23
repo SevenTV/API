@@ -31,7 +31,7 @@ func (r *youtubeVerify) Config() rest.RouteConfig {
 		URI:    "/verify",
 		Method: rest.GET,
 		Middleware: []rest.Middleware{
-			middleware.Auth(r.Ctx),
+			middleware.Auth(r.Ctx, true),
 		},
 	}
 }

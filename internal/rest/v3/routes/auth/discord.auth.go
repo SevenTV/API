@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-querystring/query"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/common/auth"
 	"github.com/seventv/common/errors"
@@ -19,6 +20,8 @@ const DISCORD_CSRF_COOKIE_NAME = "csrf_token_di"
 
 var discordScopes = []string{
 	"identify",
+	"email",
+	"guilds.join",
 }
 
 type discord struct {
@@ -31,14 +34,31 @@ func newDiscord(gctx global.Context) rest.Route {
 
 func (r *discord) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:        "/discord",
-		Method:     rest.GET,
-		Children:   []rest.Route{},
-		Middleware: []rest.Middleware{},
+		URI:      "/discord",
+		Method:   rest.GET,
+		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			// Handle binding token
+			// this is for linking the connection to an existing account
+			func(ctx *rest.Ctx) rest.APIError {
+				tok := utils.B2S(ctx.QueryArgs().Peek("token"))
+				if tok == "" {
+					return nil
+				}
+
+				req := &ctx.Request
+				req.Header.Set("Authorization", "Bearer "+tok)
+
+				return nil
+			},
+			middleware.Auth(r.Ctx, false),
+		},
 	}
 }
 
 func (r *discord) Handler(ctx *rest.Ctx) rest.APIError {
+	actor, _ := ctx.GetActor()
+
 	// Generate a randomized value for a CSRF token
 	csrfValue, err := utils.GenerateRandomString(64)
 	if err != nil {
@@ -51,6 +71,7 @@ func (r *discord) Handler(ctx *rest.Ctx) rest.APIError {
 	csrfToken, err := auth.SignJWT(r.Ctx.Config().Credentials.JWTSecret, auth.JWTClaimOAuth2CSRF{
 		State:     csrfValue,
 		CreatedAt: time.Now(),
+		Bind:      actor.ID,
 	})
 	if err != nil {
 		ctx.Log().Errorw("csrf, jwt", "error", err)

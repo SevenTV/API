@@ -10,13 +10,17 @@ import (
 	"github.com/seventv/common/utils"
 )
 
-func Auth(gCtx global.Context) rest.Middleware {
+func Auth(gCtx global.Context, required bool) rest.Middleware {
 	return func(ctx *rest.Ctx) rest.APIError {
 		// Parse token from header
 		h := utils.B2S(ctx.Request.Header.Peek("Authorization"))
 		s := strings.Split(h, "Bearer ")
 
 		if len(s) != 2 {
+			if !required {
+				return nil
+			}
+
 			return errors.ErrUnauthorized().SetFields(errors.Fields{"message": "Bad Authorization Header"})
 		}
 
@@ -25,6 +29,10 @@ func Auth(gCtx global.Context) rest.Middleware {
 		// Verify the token
 		user, err := middleware.DoAuth(gCtx, t)
 		if err != nil {
+			if !required {
+				return nil
+			}
+
 			return err
 		}
 

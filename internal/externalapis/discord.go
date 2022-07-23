@@ -27,6 +27,7 @@ func (discord) GetCurrentUser(gctx global.Context, token string) (structures.Use
 	if err != nil {
 		return result, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		body, err := ioutil.ReadAll(resp.Body)

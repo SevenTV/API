@@ -179,7 +179,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
 	}
 
-	grant := &OAuth2AuthorizedResponse{}
+	grant := &OAuth2AuthorizedResponse[[]string]{}
 	if err = externalapis.ReadRequestResponse(resp, grant); err != nil {
 		zap.S().Errorw("ReadRequestResponse",
 			"error", err,
@@ -216,24 +216,11 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		Connections: []structures.UserConnection[bson.Raw]{},
 	})
 
-	usr := structures.UserConnectionDataTwitch{
-		ID:              twUser.ID,
-		Login:           twUser.Login,
-		DisplayName:     twUser.DisplayName,
-		BroadcasterType: twUser.BroadcasterType,
-		Description:     twUser.Description,
-		ProfileImageURL: twUser.ProfileImageURL,
-		OfflineImageURL: twUser.OfflineImageURL,
-		ViewCount:       twUser.ViewCount,
-		Email:           twUser.Email,
-		CreatedAt:       twUser.CreatedAt,
-	}
-
 	ucb := structures.NewUserConnectionBuilder(structures.UserConnection[structures.UserConnectionDataTwitch]{}).
 		SetID(twUser.ID).
 		SetPlatform(structures.UserConnectionPlatformTwitch).
 		SetLinkedAt(time.Now()).
-		SetData(usr).                                                                 // Set twitch data
+		SetData(twUser).                                                              // Set twitch data
 		SetGrant(grant.AccessToken, grant.RefreshToken, grant.ExpiresIn, grant.Scope) // Update the token grant
 
 	// Write to database
@@ -271,16 +258,21 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 			return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 		} else {
-			_, pos, _ := ub.User.Connections.Twitch(usr.ID)
+			_, pos, _ := ub.User.Connections.Twitch(twUser.ID)
 			if pos >= 0 {
-				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), usr)
-				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), grant)
+				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), twUser)
+				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), structures.UserConnectionGrant{
+					AccessToken:  grant.TokenType,
+					RefreshToken: grant.AccessToken,
+					Scope:        grant.Scope,
+					ExpiresAt:    time.Now().Add(time.Second * time.Duration(grant.ExpiresIn)),
+				})
 			}
 
 			// User exists; update
 			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
 				"_id":            ub.User.ID,
-				"connections.id": usr.ID,
+				"connections.id": twUser.ID,
 			}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(1)).Decode(&ub.User); err != nil {
 				zap.S().Errorw("mongo",
 					"error", err,
