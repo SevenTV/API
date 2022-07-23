@@ -66,7 +66,7 @@ type OAuth2AuthorizedResponse[S []string | string] struct {
 }
 
 // handleOAuthState verifies the csrf token of an oauth2 authorization flow
-func handleOAuthState(gctx global.Context, ctx *rest.Ctx) (*auth.JWTClaimOAuth2CSRF, error) {
+func handleOAuthState(gctx global.Context, ctx *rest.Ctx, cookieName string) (*auth.JWTClaimOAuth2CSRF, error) {
 	// Retrieve state from query
 	state := utils.B2S(ctx.QueryArgs().Peek("state"))
 	if state == "" {
@@ -74,7 +74,7 @@ func handleOAuthState(gctx global.Context, ctx *rest.Ctx) (*auth.JWTClaimOAuth2C
 	}
 
 	// Retrieve the CSRF token from cookies
-	csrfToken := strings.Split(utils.B2S(ctx.Request.Header.Cookie(DISCORD_CSRF_COOKIE_NAME)), ".")
+	csrfToken := strings.Split(utils.B2S(ctx.Request.Header.Cookie(cookieName)), ".")
 	if len(csrfToken) != 3 {
 		return nil, errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Bad State (found %d segments when 3 were expected)", len(csrfToken)))
 	}
@@ -114,7 +114,7 @@ func handleOAuthState(gctx global.Context, ctx *rest.Ctx) (*auth.JWTClaimOAuth2C
 
 	// Remove the CSRF cookie
 	cookie := fasthttp.Cookie{}
-	cookie.SetKey(DISCORD_CSRF_COOKIE_NAME)
+	cookie.SetKey(cookieName)
 	cookie.SetExpire(time.Now())
 	cookie.SetDomain(gctx.Config().Http.Cookie.Domain)
 	cookie.SetSecure(gctx.Config().Http.Cookie.Secure)

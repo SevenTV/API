@@ -170,6 +170,10 @@ data:
       twitch:
         enabled: true
 
+      discord:
+        enabled: true
+        api: http://compactdisc:3000
+
     chatterino:
       version: 7.3.5
       stable:

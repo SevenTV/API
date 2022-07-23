@@ -41,7 +41,7 @@ func (r *discordCallback) Config() rest.RouteConfig {
 }
 
 func (r *discordCallback) Handler(ctx *rest.Ctx) rest.APIError {
-	stateToken, err := handleOAuthState(r.Ctx, ctx)
+	stateToken, err := handleOAuthState(r.Ctx, ctx, DISCORD_CSRF_COOKIE_NAME)
 	if err != nil {
 		return errors.From(err)
 	}
