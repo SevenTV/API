@@ -207,6 +207,9 @@ func (r *discordCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	events.Publish(r.Ctx, "users", ub.User.ID)
 
 	// TODO: Request role sync with discord
+	if _, err := r.Ctx.Inst().CD.SyncUser(ub.User.ID); err != nil {
+		ctx.Log().Errorw("compactdisc", "error", err)
+	}
 
 	return nil
 }

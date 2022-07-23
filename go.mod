@@ -15,6 +15,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.12.2
 	github.com/seventv/common v0.0.0-20220723113936-4f27199129f8
+	github.com/seventv/compactdisc v0.0.0-20220723124103-54cf35b6d79a
 	github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2
 	github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d
 	github.com/spf13/pflag v1.0.5

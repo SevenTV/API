@@ -31,6 +31,7 @@ import (
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc"
 	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/compactdisc"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.uber.org/zap"
 )
@@ -178,6 +179,8 @@ func main() {
 		if err != nil {
 			zap.S().Fatalw("failed to setup rate limiter", "error", err)
 		}
+
+		gCtx.Inst().CD = compactdisc.New(config.Platforms.Discord.API)
 
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
