@@ -115,6 +115,7 @@ func (r *discordCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 		return errors.ErrInternalServerError().SetDetail("Internal Request to External Provider Failed")
 	}
+
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "application/json")
 
@@ -137,6 +138,7 @@ func (r *discordCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		}
 
 		ctx.Log().Errorw("discord, bad resp", "error", string(body), "status", resp.StatusCode, "data", string(body))
+
 		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
 	}
 
