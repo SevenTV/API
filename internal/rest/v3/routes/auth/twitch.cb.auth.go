@@ -1,15 +1,14 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-querystring/query"
+	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/externalapis"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
@@ -44,78 +43,10 @@ func (r *twitchCallback) Config() rest.RouteConfig {
 }
 
 func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
-	// Get state parameter
-	state := utils.B2S(ctx.QueryArgs().Peek("state"))
-	if state == "" {
-		ctx.SetStatusCode(rest.BadRequest)
-
-		return errors.ErrMissingRequiredField().SetFields(errors.Fields{"query": "state"})
-	}
-
-	// Retrieve the CSRF token from cookies
-	csrfToken := strings.Split(utils.B2S(ctx.Request.Header.Cookie(TWITCH_CSRF_COOKIE_NAME)), ".")
-	if len(csrfToken) != 3 {
-		ctx.SetStatusCode(rest.BadRequest)
-
-		return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Bad State (found %d segments when 3 were expected)", len(csrfToken)))
-	}
-
-	// Verify the token
-	csrfClaim := &auth.JWTClaimOAuth2CSRF{}
-
-	token, err := auth.VerifyJWT(r.Ctx.Config().Credentials.JWTSecret, csrfToken, csrfClaim)
+	stateToken, err := handleOAuthState(r.Ctx, ctx, TWITCH_CSRF_COOKIE_NAME)
 	if err != nil {
-		zap.S().Errorw("jwt",
-			"error", err,
-		)
-
-		ctx.SetStatusCode(rest.BadRequest)
-
-		return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
+		return errors.From(err)
 	}
-
-	{
-		b, err := json.Marshal(token.Claims)
-		if err != nil {
-			zap.S().Errorw("json",
-				"error", err,
-			)
-
-			ctx.SetStatusCode(rest.BadRequest)
-
-			return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
-		}
-
-		if err = json.Unmarshal(b, csrfClaim); err != nil {
-			zap.S().Errorw("json",
-				"error", err,
-			)
-
-			ctx.SetStatusCode(rest.BadRequest)
-
-			return errors.ErrUnauthorized().SetDetail(fmt.Sprintf("Invalid State: %s", err.Error()))
-		}
-	}
-
-	// Validate the token
-	// Check date matches
-	if csrfClaim.CreatedAt.Before(time.Now().Add(-time.Minute * 5)) {
-		return errors.ErrUnauthorized().SetDetail("Expired State")
-	}
-
-	// Check token value mismatch
-	if state != csrfClaim.State {
-		return errors.ErrUnauthorized().SetDetail("Mismatching State Value")
-	}
-
-	// Remove the CSRF cookie
-	cookie := fasthttp.Cookie{}
-	cookie.SetKey(TWITCH_CSRF_COOKIE_NAME)
-	cookie.SetExpire(time.Now())
-	cookie.SetDomain(r.Ctx.Config().Http.Cookie.Domain)
-	cookie.SetSecure(r.Ctx.Config().Http.Cookie.Secure)
-	cookie.SetHTTPOnly(true)
-	ctx.Response.Header.Cookie(&cookie) // We have now validated this request is authentic.
 
 	// OAuth2 auhorization code for granting an access token
 	code := utils.B2S(ctx.QueryArgs().Peek("code"))
@@ -179,7 +110,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError().SetDetail("Internal Request Rejected by External Provider")
 	}
 
-	grant := &OAuth2AuthorizedResponse{}
+	grant := &OAuth2AuthorizedResponse[[]string]{}
 	if err = externalapis.ReadRequestResponse(resp, grant); err != nil {
 		zap.S().Errorw("ReadRequestResponse",
 			"error", err,
@@ -216,33 +147,21 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		Connections: []structures.UserConnection[bson.Raw]{},
 	})
 
-	usr := structures.UserConnectionDataTwitch{
-		ID:              twUser.ID,
-		Login:           twUser.Login,
-		DisplayName:     twUser.DisplayName,
-		BroadcasterType: twUser.BroadcasterType,
-		Description:     twUser.Description,
-		ProfileImageURL: twUser.ProfileImageURL,
-		OfflineImageURL: twUser.OfflineImageURL,
-		ViewCount:       twUser.ViewCount,
-		Email:           twUser.Email,
-		CreatedAt:       twUser.CreatedAt.Time,
-	}
-
 	ucb := structures.NewUserConnectionBuilder(structures.UserConnection[structures.UserConnectionDataTwitch]{}).
 		SetID(twUser.ID).
 		SetPlatform(structures.UserConnectionPlatformTwitch).
 		SetLinkedAt(time.Now()).
-		SetData(usr).                                                                 // Set twitch data
+		SetData(twUser).                                                              // Set twitch data
 		SetGrant(grant.AccessToken, grant.RefreshToken, grant.ExpiresIn, grant.Scope) // Update the token grant
 
 	// Write to database
 	var userID primitive.ObjectID
 	{
 		// Find user
-		err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
-			"connections.id": twUser.ID,
-		}).Decode(&ub.User)
+		err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{"$or": bson.A{
+			bson.M{"connections.id": twUser.ID},
+			bson.M{"_id": stateToken.Bind},
+		}}).Decode(&ub.User)
 		if err == mongo.ErrNoDocuments {
 			// User doesn't yet exist: create it
 			ucb.UserConnection.EmoteSlots = 250
@@ -271,16 +190,23 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 			return errors.ErrInternalServerError().SetDetail("Database Write Failed (user, stat)")
 		} else {
-			_, pos, _ := ub.User.Connections.Twitch(usr.ID)
+			_, pos, _ := ub.User.Connections.Twitch(twUser.ID)
 			if pos >= 0 {
-				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), usr)
-				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), grant)
+				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), twUser)
+				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), structures.UserConnectionGrant{
+					AccessToken:  grant.TokenType,
+					RefreshToken: grant.AccessToken,
+					Scope:        grant.Scope,
+					ExpiresAt:    time.Now().Add(time.Second * time.Duration(grant.ExpiresIn)),
+				})
+			} else {
+				ucb.UserConnection.EmoteSlots = 250
+				ub.AddConnection(ucb.UserConnection.ToRaw())
 			}
 
 			// User exists; update
 			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
-				"_id":            ub.User.ID,
-				"connections.id": usr.ID,
+				"_id": ub.User.ID,
 			}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(1)).Decode(&ub.User); err != nil {
 				zap.S().Errorw("mongo",
 					"error", err,
@@ -315,7 +241,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	// Define a cookie
-	cookie = fasthttp.Cookie{}
+	cookie := fasthttp.Cookie{}
 	cookie.SetKey("access_token")
 	cookie.SetValue(userToken)
 	cookie.SetDomain(r.Ctx.Config().Http.Cookie.Domain)
@@ -329,11 +255,14 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	})
 
 	websiteURL := r.Ctx.Config().WebsiteURL
-	if csrfClaim.OldRedirect {
+	if stateToken.OldRedirect {
 		websiteURL = r.Ctx.Config().OldWebsiteURL
 	}
 
 	ctx.Redirect(fmt.Sprintf("%s/oauth2?%s", websiteURL, params.Encode()), int(rest.Found))
+
+	// Publish user update
+	events.Publish(r.Ctx, "users", ub.User.ID)
 
 	return nil
 }

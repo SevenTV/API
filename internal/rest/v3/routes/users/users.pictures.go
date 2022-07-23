@@ -41,7 +41,7 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 		Method:   rest.PUT,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.Auth(r.Ctx),
+			middleware.Auth(r.Ctx, true),
 			middleware.RateLimit(r.Ctx, "UpdateUserPicture", [2]int64{2, 60}),
 		},
 	}

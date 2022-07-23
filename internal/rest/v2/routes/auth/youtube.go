@@ -55,7 +55,7 @@ func (r *youtubeRequest) Config() rest.RouteConfig {
 		URI:    "/request-verification",
 		Method: rest.GET,
 		Middleware: []rest.Middleware{
-			middleware.Auth(r.Ctx),
+			middleware.Auth(r.Ctx, true),
 		},
 	}
 }

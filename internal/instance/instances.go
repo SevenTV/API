@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/compactdisc"
 	messagequeue "github.com/seventv/message-queue/go"
 )
 
@@ -24,6 +25,7 @@ type Instances struct {
 	Limiter      limiter.Instance
 	YouTube      youtube.Instance
 	Loaders      loaders.Instance
+	CD           compactdisc.Instance
 
 	Query  *query.Query
 	Mutate *mutations.Mutate

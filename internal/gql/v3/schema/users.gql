@@ -92,6 +92,7 @@ enum ConnectionPlatform {
 
 input UserConnectionUpdate {
   emote_set_id: ObjectID
+  unlink: Boolean
 }
 
 type UserSearchResult {

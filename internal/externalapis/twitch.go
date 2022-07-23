@@ -5,15 +5,15 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/nicklaw5/helix"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/structures/v3"
 )
 
 type twitch struct{}
 
 var Twitch = twitch{}
 
-func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]helix.User, error) {
+func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]structures.UserConnectionDataTwitch, error) {
 	req, err := Twitch.HelixAPIRequest(gCtx, "GET", "/users", "")
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]helix.User,
 		return nil, fmt.Errorf("bad resp from twitch: %d - %s", resp.StatusCode, body)
 	}
 
-	var res helix.ManyUsers
+	var res getTwitchUsersResp
 	if err = ReadRequestResponse(resp, &res); err != nil {
 		return nil, err
 	}
@@ -48,4 +48,8 @@ func (twitch) GetUserFromToken(gCtx global.Context, token string) ([]helix.User,
 type GetTwitchUsersParams struct {
 	ID    string `url:"id"`
 	Login string `url:"login"`
+}
+
+type getTwitchUsersResp struct {
+	Users []structures.UserConnectionDataTwitch `json:"data"`
 }

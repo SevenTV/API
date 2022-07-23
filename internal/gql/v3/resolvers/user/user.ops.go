@@ -26,6 +26,9 @@ func NewOps(r types.Resolver) generated.UserOpsResolver {
 }
 
 func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id string, d model.UserConnectionUpdate) ([]*model.UserConnection, error) {
+	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
+	defer done()
+
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -44,28 +47,62 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 
 	// Perform a mutation
 	var err error
-	if d.EmoteSetID != nil {
-		conn, _, err := b.User.Connections.Twitch()
-		if err != nil {
+
+	// Unlink is mutually exclusive to all other mutation fields
+	if d.Unlink != nil && *d.Unlink {
+		if len(b.User.Connections) <= 1 {
+			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
+		}
+
+		conn, ind := b.User.Connections.Get(id)
+		if ind == -1 {
 			return nil, errors.ErrUnknownUserConnection()
 		}
 
-		// oldSetID := conn.EmoteSetID
+		// If this is a discord connection, run a uer sync with the revoke param
+		if conn.Platform == structures.UserConnectionPlatformDiscord {
+			_, _ = r.Ctx.Inst().CD.RevokeUser(b.User.ID)
+		}
 
-		// setID := *d.EmoteSetID
+		// Remove the connection and update the user
+		if _, ind := b.RemoveConnection(conn.ID); ind >= 0 {
+			// write to db
+			if _, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
+				"_id": obj.ID,
+			}, b.Update); err != nil {
+				if err == mongo.ErrNoDocuments {
+					return nil, errors.ErrUnknownUser()
+				}
 
-		if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutations.SetUserActiveEmoteSet{
-			EmoteSetID:   *d.EmoteSetID,
-			Platform:     structures.UserConnectionPlatformTwitch,
-			Actor:        &actor,
-			ConnectionID: id,
-		}); err != nil {
-			zap.S().Errorw("failed to update user's active emote set",
-				"error", err,
-				"connection_id", conn.ID,
-			)
+				zap.S().Errorw("failed to update user", "error", err)
 
-			return nil, err
+				return nil, errors.ErrInternalServerError()
+			}
+		}
+	} else {
+		if d.EmoteSetID != nil {
+			conn, ind := b.User.Connections.Get(id)
+			if ind == -1 {
+				return nil, errors.ErrUnknownUserConnection()
+			}
+
+			// oldSetID := conn.EmoteSetID
+
+			// setID := *d.EmoteSetID
+
+			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutations.SetUserActiveEmoteSet{
+				EmoteSetID:   *d.EmoteSetID,
+				Platform:     structures.UserConnectionPlatformTwitch,
+				Actor:        &actor,
+				ConnectionID: id,
+			}); err != nil {
+				zap.S().Errorw("failed to update user's active emote set",
+					"error", err,
+					"connection_id", conn.ID,
+				)
+
+				return nil, err
+			}
 		}
 	}
 
