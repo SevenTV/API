@@ -123,6 +123,10 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](s); err == nil {
 			displayName = s.Data.Title
 		}
+	case structures.UserConnectionPlatformDiscord:
+		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataDiscord](s); err == nil {
+			displayName = s.Data.Username + "#" + s.Data.Discriminator
+		}
 	}
 
 	if err != nil {

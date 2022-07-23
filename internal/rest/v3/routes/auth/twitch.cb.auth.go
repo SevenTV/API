@@ -226,7 +226,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		OfflineImageURL: twUser.OfflineImageURL,
 		ViewCount:       twUser.ViewCount,
 		Email:           twUser.Email,
-		CreatedAt:       twUser.CreatedAt.Time,
+		CreatedAt:       twUser.CreatedAt,
 	}
 
 	ucb := structures.NewUserConnectionBuilder(structures.UserConnection[structures.UserConnectionDataTwitch]{}).

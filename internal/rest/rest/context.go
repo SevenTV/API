@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 )
 
 type Ctx struct {
@@ -49,4 +50,18 @@ func (c *Ctx) GetActor() (structures.User, bool) {
 	v := c.UserValue(AuthUserKey).User()
 
 	return v, !v.ID.IsZero()
+}
+
+func (c *Ctx) Log() *zap.SugaredLogger {
+	z := zap.S().Named("api/rest").With(
+		"request_id", c.ID(),
+		"route", c.Path(),
+	)
+
+	actor, ok := c.GetActor()
+	if ok {
+		z = z.With("actor_id", actor.ID)
+	}
+
+	return z
 }

@@ -223,6 +223,11 @@ type Config struct {
 		YouTube struct {
 			APIKey string `mapstructure:"api_key" json:"api_key"`
 		} `mapstructure:"youtube" json:"youtube"`
+		Discord struct {
+			ClientID     string `mapstructure:"client_id" json:"client_id"`
+			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
+		} `mapstructure:"discord" json:"discord"`
 	} `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {
