@@ -59,6 +59,11 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			return nil, errors.ErrUnknownUserConnection()
 		}
 
+		// If this is a discord connection, run a uer sync with the revoke param
+		if conn.Platform == structures.UserConnectionPlatformDiscord {
+			_, _ = r.Ctx.Inst().CD.RevokeUser(b.User.ID)
+		}
+
 		// Remove the connection and update the user
 		if _, ind := b.RemoveConnection(conn.ID); ind >= 0 {
 			// write to db
