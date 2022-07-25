@@ -15,12 +15,22 @@ type Resolver struct {
 	types.Resolver
 }
 
+// Actor implements generated.ReportResolver
+func (r *Resolver) Actor(ctx context.Context, obj *model.Report) (*model.User, error) {
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.ActorID)
+	if err != nil {
+		return nil, err
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+}
+
 func New(r types.Resolver) generated.ReportResolver {
 	return &Resolver{r}
 }
 
 func (r *Resolver) Reporter(ctx context.Context, obj *model.Report) (*model.User, error) {
-	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.Reporter.ID)
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.Actor.ID)
 	if err != nil {
 		return nil, err
 	}

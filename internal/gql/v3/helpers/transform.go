@@ -182,6 +182,10 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		}
 
 		files := ver.GetFiles("", true)
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Width < files[j].Width
+		})
+
 		vimages := make([]*model.Image, len(files))
 
 		for i, fi := range files {
@@ -373,6 +377,27 @@ func MessageStructureToModRequestModel(s structures.Message[structures.MessageDa
 		Author:     UserStructureToModel(author, cdnURL),
 		TargetKind: int(s.Data.TargetKind),
 		TargetID:   s.Data.TargetID,
+	}
+}
+
+func ReportStructureToModel(s structures.Report) *model.Report {
+	assignees := make([]*model.User, len(s.AssigneeIDs))
+	for i, oid := range s.AssigneeIDs {
+		assignees[i] = &model.User{ID: oid}
+	}
+
+	return &model.Report{
+		ID:         s.ID,
+		TargetKind: int(s.TargetKind),
+		TargetID:   s.TargetID,
+		ActorID:    s.ActorID,
+		Subject:    s.Subject,
+		Body:       s.Body,
+		Priority:   int(s.Priority),
+		Status:     model.ReportStatus(s.Status),
+		CreatedAt:  s.CreatedAt,
+		Notes:      []string{},
+		Assignees:  assignees,
 	}
 }
 

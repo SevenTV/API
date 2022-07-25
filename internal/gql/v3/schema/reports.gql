@@ -2,8 +2,8 @@ extend type Query {
   reports(
     status: ReportStatus
     limit: Int
-    after_id: String
-    before_id: String
+    after_id: ObjectID
+    before_id: ObjectID
   ): [Report]! @hasPermissions(role: [MANAGE_REPORTS])
   report(id: ObjectID!): Report @hasPermissions(role: [MANAGE_REPORTS])
 }
@@ -17,22 +17,17 @@ extend type Mutation {
 
 type Report {
   id: ObjectID!
-  target_kind: TargetKind!
+  target_kind: Int!
   target_id: ObjectID!
+  actor_id: ObjectID!
+  actor: User! @goField(forceResolver: true)
   subject: String!
   body: String!
   priority: Int!
   status: ReportStatus!
   created_at: Time!
   notes: [String!]!
-
-  reporter: User! @goField(forceResolver: true)
   assignees: [User!]! @goField(forceResolver: true)
-}
-
-enum TargetKind {
-  EMOTE
-  USER
 }
 
 enum ReportStatus {
@@ -42,8 +37,8 @@ enum ReportStatus {
 }
 
 input CreateReportInput {
-  target_kind: TargetKind!
-  target_id: String!
+  target_kind: Int!
+  target_id: ObjectID!
   subject: String!
   body: String!
 }
