@@ -82,16 +82,6 @@ func (r *Resolver) Role(ctx context.Context, id primitive.ObjectID) (*model.Role
 	return nil, nil
 }
 
-func (r *Resolver) Reports(ctx context.Context, status *model.ReportStatus, limit *int, afterID *string, beforeID *string) ([]*model.Report, error) {
-	// TODO
-	return nil, nil
-}
-
-func (r *Resolver) Report(ctx context.Context, id primitive.ObjectID) (*model.Report, error) {
-	// TODO
-	return nil, nil
-}
-
 type Sort struct {
 	Value string    `json:"value"`
 	Order SortOrder `json:"order"`

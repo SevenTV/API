@@ -376,6 +376,27 @@ func MessageStructureToModRequestModel(s structures.Message[structures.MessageDa
 	}
 }
 
+func ReportStructureToModel(s structures.Report) *model.Report {
+	assignees := make([]*model.User, len(s.AssigneeIDs))
+	for i, oid := range s.AssigneeIDs {
+		assignees[i] = &model.User{ID: oid}
+	}
+
+	return &model.Report{
+		ID:         s.ID,
+		TargetKind: int(s.TargetKind),
+		TargetID:   s.TargetID,
+		ActorID:    s.ActorID,
+		Subject:    s.Subject,
+		Body:       s.Body,
+		Priority:   int(s.Priority),
+		Status:     model.ReportStatus(s.Status),
+		CreatedAt:  s.CreatedAt,
+		Notes:      []string{},
+		Assignees:  assignees,
+	}
+}
+
 func BanStructureToModel(s structures.Ban) *model.Ban {
 	return &model.Ban{
 		ID:        s.ID,

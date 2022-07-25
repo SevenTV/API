@@ -37,16 +37,6 @@ func (r *Resolver) DeleteRole(ctx context.Context, roleID primitive.ObjectID) (s
 	return "", nil
 }
 
-func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInput) (*model.Report, error) {
-	// TODO
-	return nil, nil
-}
-
-func (r *Resolver) EditReport(ctx context.Context, reportID primitive.ObjectID, data model.EditReportInput) (*model.Report, error) {
-	// primitive.ObjectID
-	return nil, nil
-}
-
 // Cosmetics implements generated.MutationResolver
 func (*Resolver) Cosmetics(ctx context.Context, id primitive.ObjectID) (*model.CosmeticOps, error) {
 	return &model.CosmeticOps{

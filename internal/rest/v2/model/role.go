@@ -24,7 +24,7 @@ func NewRole(s structures.Role) *Role {
 		p |= v2structures.RolePermissionEmoteEditOwned
 	case structures.RolePermissionEditAnyEmote:
 		p |= v2structures.RolePermissionEmoteEditAll
-	case structures.RolePermissionReportCreate:
+	case structures.RolePermissionCreateReport:
 		p |= v2structures.RolePermissionCreateReports
 	case structures.RolePermissionManageBans:
 		p |= v2structures.RolePermissionBanUsers

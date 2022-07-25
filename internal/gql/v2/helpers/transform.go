@@ -195,7 +195,7 @@ func RoleStructureToModel(s structures.Role) *model.Role {
 		structures.RolePermissionCreateEmote:                    v2structures.RolePermissionEmoteCreate,
 		structures.RolePermissionEditEmote:                      v2structures.RolePermissionEmoteEditOwned,
 		structures.RolePermissionEditAnyEmote:                   v2structures.RolePermissionEmoteEditAll,
-		structures.RolePermissionReportCreate:                   v2structures.RolePermissionCreateReports,
+		structures.RolePermissionCreateReport:                   v2structures.RolePermissionCreateReports,
 		structures.RolePermissionManageBans:                     v2structures.RolePermissionBanUsers,
 		structures.RolePermissionManageUsers:                    v2structures.RolePermissionManageUsers,
 		structures.RolePermissionManageStack:                    v2structures.RolePermissionEditApplicationMeta,
