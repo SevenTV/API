@@ -195,7 +195,7 @@ func (r *Resolver) EditReport(ctx context.Context, reportID primitive.ObjectID, 
 
 			_ = r.Ctx.Inst().Mutate.SendInboxMessage(ctx, mb, mutations.SendInboxMessageOptions{
 				Actor:                &actor,
-				Recipients:           []primitive.ObjectID{actor.ID},
+				Recipients:           []primitive.ObjectID{report.ActorID},
 				ConsiderBlockedUsers: false,
 			})
 		} else {
