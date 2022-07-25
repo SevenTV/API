@@ -182,6 +182,10 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		}
 
 		files := ver.GetFiles("", true)
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Width < files[j].Width
+		})
+
 		vimages := make([]*model.Image, len(files))
 
 		for i, fi := range files {
