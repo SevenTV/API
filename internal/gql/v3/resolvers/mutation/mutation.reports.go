@@ -35,22 +35,23 @@ func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInpu
 
 	// Get and verify the target
 	var (
-		errType error
-		kind    = structures.ObjectKind(data.TargetKind)
+		errType      error
+		kind         = structures.ObjectKind(data.TargetKind)
+		targetFilter bson.M
 	)
 
 	switch structures.ObjectKind(data.TargetKind) {
 	case structures.ObjectKindUser:
 		errType = errors.ErrUnknownUser()
+		targetFilter = bson.M{"_id": data.TargetID}
 	case structures.ObjectKindEmote:
 		errType = errors.ErrUnknownEmote()
+		targetFilter = bson.M{"versions.id": data.TargetID}
 	default:
 		return nil, errors.ErrEmoteNameInvalid().SetDetail("You cannot report type %s", kind.String())
 	}
 
-	if c, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName(kind.CollectionName())).CountDocuments(ctx, bson.M{
-		"_id": data.TargetID,
-	}); c == 0 {
+	if c, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName(kind.CollectionName())).CountDocuments(ctx, targetFilter); c == 0 {
 		return nil, errType
 	}
 
