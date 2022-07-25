@@ -72,7 +72,6 @@ func (r *Resolver) Reports(ctx context.Context, statusArg *model.ReportStatus, l
 		result[i] = helpers.ReportStructureToModel(report)
 	}
 
-	// TODO
 	return result, nil
 }
 
