@@ -22,21 +22,6 @@ func (r *Resolver) SetUserRole(ctx context.Context, userID primitive.ObjectID, r
 	return nil, nil
 }
 
-func (r *Resolver) CreateRole(ctx context.Context, data model.CreateRoleInput) (*model.Role, error) {
-	// TODO
-	return nil, nil
-}
-
-func (r *Resolver) EditRole(ctx context.Context, roleID primitive.ObjectID, data model.EditRoleInput) (*model.Role, error) {
-	// TODO
-	return nil, nil
-}
-
-func (r *Resolver) DeleteRole(ctx context.Context, roleID primitive.ObjectID) (string, error) {
-	// TODO
-	return "", nil
-}
-
 // Cosmetics implements generated.MutationResolver
 func (*Resolver) Cosmetics(ctx context.Context, id primitive.ObjectID) (*model.CosmeticOps, error) {
 	return &model.CosmeticOps{

@@ -258,12 +258,18 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 			e.Emote = &structures.DeletedEmote
 		}
 
+		var actor *model.UserPartial
+		if e.Actor != nil {
+			actor = UserStructureToPartialModel(UserStructureToModel(*e.Actor, cdnURL))
+		}
+
 		emotes[i] = &model.ActiveEmote{
 			ID:        e.ID,
 			Name:      e.Name,
 			Flags:     int(e.Flags),
 			Timestamp: e.Timestamp,
 			Emote:     EmoteStructureToModel(*e.Emote, cdnURL),
+			Actor:     actor,
 		}
 	}
 

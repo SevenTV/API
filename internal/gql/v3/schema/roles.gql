@@ -8,11 +8,6 @@ extend type Mutation {
   editRole(role_id: ObjectID!, data: EditRoleInput!): Role
     @hasPermissions(role: [MANAGE_ROLES])
   deleteRole(role_id: ObjectID!): String! @hasPermissions(role: [MANAGE_ROLES])
-  setUserRole(
-    user_id: ObjectID!
-    role_id: ObjectID!
-    action: ListItemAction!
-  ): User @hasPermissions(role: [MANAGE_USERS])
 }
 
 type Role {
