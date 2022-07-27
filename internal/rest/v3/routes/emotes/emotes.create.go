@@ -355,6 +355,20 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError().SetDetail("failed to create task")
 	}
 
+	// Create a new audit log
+	ab := structures.NewAuditLogBuilder(structures.AuditLog{Changes: []*structures.AuditLogChange{}}).
+		SetActor(eb.Emote.OwnerID).
+		SetTargetID(id).
+		SetTargetKind(structures.ObjectKindEmote).
+		SetKind(structures.AuditLogKindCreateEmote)
+	if _, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, ab.AuditLog); err != nil {
+		zap.S().Errorw("failed to create an audit log about the creation of an emote",
+			"error", err,
+			"EMOTE_ID", id,
+			"ACTOR_ID", eb.Emote.OwnerID,
+		)
+	}
+
 	return ctx.JSON(rest.Created, &model.Emote{ID: id.Hex()})
 }
 

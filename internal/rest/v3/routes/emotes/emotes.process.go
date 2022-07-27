@@ -181,6 +181,9 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		err = epl.Ctx.Inst().Redis.RawClient().Publish(ctx, fmt.Sprintf("events:sub:emotes:%s", id.Hex()), "1").Err()
 	}
 
+	metadata := TaskMetadata{}
+	_ = json.Unmarshal(evt.Metadata, &metadata)
+
 	if err == nil {
 		// Create a mod request for the new emote to be approved
 		mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
@@ -199,18 +202,20 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 			)
 		}
 
-		// Create a new audit log
-		ab := structures.NewAuditLogBuilder(structures.AuditLog{Changes: []*structures.AuditLogChange{}}).
-			SetActor(eb.Emote.OwnerID).
-			SetTargetID(id).
-			SetTargetKind(structures.ObjectKindEmote).
-			SetKind(structures.AuditLogKindCreateEmote)
-		if _, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, ab.AuditLog); err != nil {
-			zap.S().Errorw("failed to create an audit log about the creation of an emote",
-				"error", err,
-				"EMOTE_ID", id,
-				"ACTOR_ID", eb.Emote.OwnerID,
-			)
+		// Write re-processing log?
+		if metadata.Reprocessed.Done {
+			ab := structures.NewAuditLogBuilder(structures.AuditLog{Changes: []*structures.AuditLogChange{}}).
+				SetActor(metadata.Reprocessed.Actor).
+				SetTargetID(id).
+				SetTargetKind(structures.ObjectKindEmote).
+				SetKind(structures.AuditLogKindProcessEmote)
+			if _, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, ab.AuditLog); err != nil {
+				zap.S().Errorw("failed to write an audit log about the reprocessing of an emote",
+					"error", err,
+					"EMOTE_ID", id,
+					"ACTOR_ID", eb.Emote.OwnerID,
+				)
+			}
 		}
 	}
 
@@ -253,4 +258,13 @@ type EmoteResultFile struct {
 	TimeTaken   int    `json:"time_taken"`
 	Width       int32  `json:"width"`
 	Height      int32  `json:"height"`
+}
+
+type TaskMetadata struct {
+	Reprocessed TaskMetadataReprocessed `json:"reprocessed"`
+}
+
+type TaskMetadataReprocessed struct {
+	Done  bool               `json:"done"`
+	Actor primitive.ObjectID `json:"actor"`
 }

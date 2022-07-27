@@ -14,7 +14,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.12.2
-	github.com/seventv/common v0.0.0-20220727051016-a47b814b8903
+	github.com/seventv/common v0.0.0-20220727174036-b25e80837c17
 	github.com/seventv/compactdisc v0.0.0-20220723184527-d3d767eadb5c
 	github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2
 	github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d
@@ -61,6 +61,7 @@ require (
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
+	github.com/seventv/image-processor v0.0.0-20220727172347-4fd5bfc5750c // indirect
 	github.com/urfave/cli/v2 v2.11.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
