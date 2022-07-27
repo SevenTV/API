@@ -185,23 +185,6 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	_ = json.Unmarshal(evt.Metadata, &metadata)
 
 	if err == nil {
-		// Create a mod request for the new emote to be approved
-		mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
-			SetKind(structures.MessageKindModRequest).
-			SetAuthorID(eb.Emote.OwnerID).
-			SetTimestamp(time.Now()).
-			SetData(structures.MessageDataModRequest{
-				TargetKind: structures.ObjectKindEmote,
-				TargetID:   id,
-			})
-		if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
-			zap.S().Errorw("failed to send mod request message for new emote",
-				"error", err,
-				"EMOTE_ID", id,
-				"ACTOR_ID", eb.Emote.OwnerID,
-			)
-		}
-
 		// Write re-processing log?
 		if metadata.Reprocessed.Done {
 			ab := structures.NewAuditLogBuilder(structures.AuditLog{Changes: []*structures.AuditLogChange{}}).
@@ -214,6 +197,23 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 					"error", err,
 					"EMOTE_ID", id,
 					"ACTOR_ID", metadata.Reprocessed.Actor,
+				)
+			}
+		} else {
+			// Create a mod request for the new emote to be approved
+			mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
+				SetKind(structures.MessageKindModRequest).
+				SetAuthorID(eb.Emote.OwnerID).
+				SetTimestamp(time.Now()).
+				SetData(structures.MessageDataModRequest{
+					TargetKind: structures.ObjectKindEmote,
+					TargetID:   id,
+				})
+			if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
+				zap.S().Errorw("failed to send mod request message for new emote",
+					"error", err,
+					"EMOTE_ID", id,
+					"ACTOR_ID", eb.Emote.OwnerID,
 				)
 			}
 		}
