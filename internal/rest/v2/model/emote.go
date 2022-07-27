@@ -31,14 +31,7 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	status := structures.EmoteLifecycle(0)
 
 	if !version.ID.IsZero() {
-		for _, file := range version.ImageFiles {
-			if file.ContentType != webpMime || (version.Animated && file.FrameCount == 1) {
-				continue
-			}
-
-			files = append(files, file)
-		}
-
+		files = version.GetFiles(webpMime, true)
 		status = version.State.Lifecycle
 	}
 

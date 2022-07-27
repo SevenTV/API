@@ -22,15 +22,8 @@ const webpMime = "image/webp"
 
 func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	version, _ := s.GetVersion(s.ID)
-	files := []structures.EmoteFile{}
 
-	for _, file := range version.ImageFiles {
-		if file.ContentType != webpMime || file.IsStatic() {
-			continue
-		}
-
-		files = append(files, file)
-	}
+	files := version.GetFiles(webpMime, true)
 
 	vis := 0
 	if !version.State.Listed {
