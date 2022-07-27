@@ -427,8 +427,8 @@ github.com/seventv/common v0.0.0-20220727174036-b25e80837c17 h1:c+QkLCHXYdeToB1S
 github.com/seventv/common v0.0.0-20220727174036-b25e80837c17/go.mod h1:++S6KoMQtZ4OIZmcDbN26W2/I6JrNP/T/5a+/oLSpM8=
 github.com/seventv/compactdisc v0.0.0-20220723184527-d3d767eadb5c h1:8L3Dr12VNg03iIlFYsEoo4/kQJOcsEf2sjdnj8N3mus=
 github.com/seventv/compactdisc v0.0.0-20220723184527-d3d767eadb5c/go.mod h1:f9JVdhYnBwWk8Rn2w0lL0rWXxZAkWuYBAdvMq1f+eno=
-github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2 h1:yRuIABJ6SQCLYmRSyP20Vq/J9ak3lDxhPE6gYXBh2As=
-github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2/go.mod h1:CM/CucY8KjNSBTJ00/x4xzzbgAvbDgiZcZjM/gxDHRQ=
+github.com/seventv/image-processor/go v0.0.0-20220727172347-4fd5bfc5750c h1:WBkyCR8GkcfspBFnumCNQ3KkMZAu7BxPB/3swOYTSOk=
+github.com/seventv/image-processor/go v0.0.0-20220727172347-4fd5bfc5750c/go.mod h1:CM/CucY8KjNSBTJ00/x4xzzbgAvbDgiZcZjM/gxDHRQ=
 github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d h1:A3LaacuowEN3oKAkQZakz4eK90bafCSurxMSp4zUnHk=
 github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d/go.mod h1:L1iYDSmltUnxlVGX9RayCoVi3e8aNtFrrLJL6Jv+mrM=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=

@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/seventv/common v0.0.0-20220727174036-b25e80837c17
 	github.com/seventv/compactdisc v0.0.0-20220723184527-d3d767eadb5c
-	github.com/seventv/image-processor/go v0.0.0-20220717125033-bf54c62116c2
+	github.com/seventv/image-processor/go v0.0.0-20220727172347-4fd5bfc5750c
 	github.com/seventv/message-queue/go v0.0.0-20220623223012-800919900c0d
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
