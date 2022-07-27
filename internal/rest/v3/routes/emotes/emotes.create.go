@@ -365,7 +365,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		zap.S().Errorw("failed to create an audit log about the creation of an emote",
 			"error", err,
 			"EMOTE_ID", id,
-			"ACTOR_ID", eb.Emote.OwnerID,
+			"ACTOR_ID", actor.ID,
 		)
 	}
 

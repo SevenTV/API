@@ -213,7 +213,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 				zap.S().Errorw("failed to write an audit log about the reprocessing of an emote",
 					"error", err,
 					"EMOTE_ID", id,
-					"ACTOR_ID", eb.Emote.OwnerID,
+					"ACTOR_ID", metadata.Reprocessed.Actor,
 				)
 			}
 		}
