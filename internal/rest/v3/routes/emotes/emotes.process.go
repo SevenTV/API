@@ -140,11 +140,11 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	ver.StartedAt = evt.StartedAt
 	ver.CompletedAt = evt.FinishedAt
 	ver.InputFile = structures.EmoteFile{
-		Name:         ver.InputFile.Name,
-		Key:          ver.InputFile.Key,
-		Bucket:       ver.InputFile.Bucket,
-		ACL:          ver.InputFile.ACL,
-		CacheControl: ver.InputFile.CacheControl,
+		Name:         utils.Ternary(evt.ImageInput.Name != "", evt.ImageInput.Name, ver.InputFile.Name),
+		Key:          utils.Ternary(evt.ImageInput.Key != "", evt.ImageInput.Key, ver.InputFile.Key),
+		Bucket:       utils.Ternary(evt.ImageInput.Bucket != "", evt.ImageInput.Bucket, ver.InputFile.Bucket),
+		ACL:          utils.Ternary(evt.ImageInput.ACL != "", evt.ImageInput.ACL, ver.InputFile.ACL),
+		CacheControl: utils.Ternary(evt.ImageInput.CacheControl != "", evt.ImageInput.CacheControl, ver.InputFile.CacheControl),
 		ContentType:  evt.ImageInput.ContentType,
 		FrameCount:   int32(evt.ImageInput.FrameCount),
 		Size:         int64(evt.ImageInput.Size),
