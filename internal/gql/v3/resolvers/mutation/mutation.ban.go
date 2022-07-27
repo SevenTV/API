@@ -8,9 +8,9 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/mutations"
-	"github.com/seventv/common/structures/v3/query"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -29,13 +29,12 @@ func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, r
 	}
 
 	// Fetch the victim user
-	var victim *structures.User
-	if users, _, err := r.Ctx.Inst().Query.SearchUsers(ctx, bson.M{"_id": victimID}, query.UserSearchOptions{Page: 1, Limit: 1}); err == nil && len(users) > 0 {
-		victim = &users[0]
-	} else {
-		if len(users) == 0 {
-			return nil, errors.ErrUnknownUser().SetDetail("Victim not found")
+	victim, err := r.Ctx.Inst().Query.Users(ctx, bson.M{"_id": victimID}).First()
+	if err != nil {
+		if victim.ID.IsZero() {
+			return nil, errors.ErrUnknownUser()
 		}
+
 		return nil, err
 	}
 
@@ -48,7 +47,7 @@ func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, r
 		SetEffects(structures.BanEffect(effects))
 	if err := r.Ctx.Inst().Mutate.CreateBan(ctx, bb, mutations.CreateBanOptions{
 		Actor:  &actor,
-		Victim: victim,
+		Victim: &victim,
 	}); err != nil {
 		return nil, err
 	}
@@ -57,6 +56,39 @@ func (r *Resolver) CreateBan(ctx context.Context, victimID primitive.ObjectID, r
 }
 
 func (r *Resolver) EditBan(ctx context.Context, banID primitive.ObjectID, reason *string, effects *int, expireAt *string) (*model.Ban, error) {
-	// TODO
+	actor := auth.For(ctx)
+
+	ban := structures.Ban{}
+	if err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameBans).FindOne(ctx, bson.M{
+		"_id": banID,
+	}).Decode(&ban); err != nil {
+		return nil, err
+	}
+
+	bb := structures.NewBanBuilder(ban)
+
+	if reason != nil {
+		bb.SetReason(*reason)
+	}
+
+	if effects != nil {
+		bb.SetEffects(structures.BanEffect(*effects))
+	}
+
+	if expireAt != nil {
+		at, err := time.Parse(time.RFC3339, *expireAt)
+		if err != nil {
+			return nil, errors.ErrInvalidRequest().SetDetail("Unable to parse time: %s", err.Error())
+		}
+
+		bb.SetExpireAt(at)
+	}
+
+	if err := r.Ctx.Inst().Mutate.EditBan(ctx, bb, mutations.EditBanOptions{
+		Actor: &actor,
+	}); err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }

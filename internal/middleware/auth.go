@@ -31,11 +31,12 @@ func Auth(gCtx global.Context) Middleware {
 		t := s[1]
 
 		user, err := DoAuth(gCtx, t)
+
+		ctx.SetUserValue("user", user)
+
 		if err != nil {
 			return err
 		}
-
-		ctx.SetUserValue("user", user)
 
 		return nil
 	}
@@ -79,17 +80,19 @@ func DoAuth(ctx global.Context, t string) (structures.User, errors.APIError) {
 		return user, errors.ErrInternalServerError().SetDetail("Failed")
 	}
 
+	if _, noRights := bans.NoPermissions[userID]; noRights {
+		user.Roles = []structures.Role{structures.RevocationRole}
+	}
+
 	if ban, noAuth := bans.NoAuth[userID]; noAuth {
-		return user, errors.ErrInsufficientPrivilege().SetDetail("You are banned!").SetFields(errors.Fields{
+		user.Bans = append(user.Bans, ban)
+
+		return user, errors.ErrBanned().SetDetail(ban.Reason).SetFields(errors.Fields{
 			"ban": map[string]string{
 				"reason":    ban.Reason,
 				"expire_at": ban.ExpireAt.Format(time.RFC3339),
 			},
 		})
-	}
-
-	if _, noRights := bans.NoPermissions[userID]; noRights {
-		user.Roles = []structures.Role{structures.RevocationRole}
 	}
 
 	return user, nil

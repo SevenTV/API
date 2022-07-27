@@ -94,7 +94,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, &actor, emoteID, "", structures.ListItemActionAdd, esb); err != nil {
 		graphql.AddError(ctx, err)
-		return nil, nil
+		return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 	}
 
 	go func() {
@@ -149,7 +149,7 @@ func (r *Resolver) RemoveChannelEmote(ctx context.Context, channelIDArg, emoteID
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, &actor, emoteID, "", structures.ListItemActionRemove, esb); err != nil {
 		graphql.AddError(ctx, err)
-		return nil, nil
+		return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 	}
 
 	go func() {
@@ -210,7 +210,7 @@ func (r *Resolver) EditChannelEmote(ctx context.Context, channelIDArg string, em
 	// Run mutation
 	if err = r.doSetChannelEmote(ctx, &actor, emoteID, alias, structures.ListItemActionUpdate, esb); err != nil {
 		graphql.AddError(ctx, err)
-		return nil, nil
+		return helpers.UserStructureToModel(target, r.Ctx.Config().CdnURL), nil
 	}
 
 	go func() {

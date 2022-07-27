@@ -2,7 +2,9 @@ package query
 
 import (
 	"context"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
@@ -26,6 +28,17 @@ func New(r types.Resolver) generated.QueryResolver {
 func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
+		return nil, nil
+	}
+
+	if len(actor.Bans) > 0 {
+		ban := actor.Bans[0]
+
+		graphql.AddError(ctx, errors.ErrBanned().SetDetail("for the reason \"%s\"", ban.Reason).SetFields(errors.Fields{
+			"reason":    ban.Reason,
+			"expire_at": ban.ExpireAt.Format(time.RFC3339),
+		}))
+
 		return nil, nil
 	}
 

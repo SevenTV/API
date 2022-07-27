@@ -52,6 +52,12 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		var apiErr errors.APIError
 
 		if goerrors.As(e, &apiErr) {
+			rctx := ctx.Value(helpers.RequestCtxKey)
+			switch rctx := rctx.(type) {
+			case *fasthttp.RequestCtx: // set status code
+				rctx.SetUserValue(string(helpers.StatusGQL2), apiErr.ExpectedHTTPStatus())
+			}
+
 			err.Message = fmt.Sprintf("%d %s", apiErr.Code(), apiErr.Message())
 			err.Extensions = map[string]interface{}{
 				"fields":  apiErr.GetFields(),
@@ -103,5 +109,14 @@ func GqlHandlerV2(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			srv.ServeHTTP(w, r.WithContext(lCtx))
 		}))(ctx)
+
+		// Set error status code if present
+		st := ctx.UserValue(string(helpers.StatusGQL2))
+		if st != nil {
+			switch st := st.(type) {
+			case int:
+				ctx.SetStatusCode(st)
+			}
+		}
 	}
 }
