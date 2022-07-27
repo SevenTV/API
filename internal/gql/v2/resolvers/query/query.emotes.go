@@ -142,6 +142,12 @@ func (r *Resolver) SearchEmotes(
 			}
 			onlyListed = false
 		}
+
+		if utils.BitField.HasBits(int64(vis), int64(v2structures.EmoteVisibilityZeroWidth)) {
+			filterDoc["flags"] = bson.M{
+				"$bitsAllSet": structures.EmoteFlagsZeroWidth,
+			}
+		}
 	}
 
 	result, totalCount, err := r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
