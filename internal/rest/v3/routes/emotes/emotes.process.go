@@ -147,6 +147,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		CacheControl: ver.InputFile.CacheControl,
 		ContentType:  evt.ImageInput.ContentType,
 		FrameCount:   int32(evt.ImageInput.FrameCount),
+		Size:         int64(evt.ImageInput.Size),
 		Height:       int32(evt.ImageInput.Height),
 		Width:        int32(evt.ImageInput.Width),
 		SHA3:         evt.ImageInput.SHA3,
