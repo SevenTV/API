@@ -37,7 +37,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	}
 
 	// Get the emote
-	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"_id": id}).First()
+	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": id}).First()
 	if err != nil {
 		if errors.Compare(err, errors.ErrNoItems()) {
 			return nil, errors.ErrUnknownEmote()
