@@ -158,7 +158,7 @@ data:
       quota:
         default_limit: 1000
         max_bad_queries: 5
-        max_active_mod_requests: 3
+        max_active_mod_requests: 10
 
     message_queue:
       rmq:
