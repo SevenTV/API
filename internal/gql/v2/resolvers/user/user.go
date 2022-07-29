@@ -53,9 +53,15 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 		return []*model.Emote{}, nil
 	}
 
-	arr := make([]*model.Emote, len(emoteSet.Emotes))
+	arr := []*model.Emote{}
 
-	for i, emote := range emoteSet.Emotes {
+	for _, emote := range emoteSet.Emotes {
+		ver, _ := emote.Emote.GetVersion(emote.ID)
+
+		if ver.State.Lifecycle < structures.EmoteLifecycleLive {
+			continue // skip if not live. non-live emotes can't be supported in v2
+		}
+
 		em := helpers.EmoteStructureToModel(*emote.Emote, r.Ctx.Config().CdnURL)
 
 		// set "alias"
@@ -64,7 +70,7 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 			em.Name = emote.Name
 		}
 
-		arr[i] = em
+		arr = append(arr, em)
 	}
 
 	return arr, nil
@@ -88,6 +94,12 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 	}
 
 	for _, e := range emoteSet.Emotes {
+		ver, _ := e.Emote.GetVersion(e.ID)
+
+		if ver.State.Lifecycle < structures.EmoteLifecycleLive {
+			continue // skip if not live. non-live emotes can't be supported in v2
+		}
+
 		result = append(result, e.ID.Hex())
 	}
 
