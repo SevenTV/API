@@ -201,7 +201,7 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 			animated = ver.Animated
 		}
 
-		archive := EmoteFileStructureToArchiveModel(&ver.ArchiveFile, fmt.Sprintf("//%s/%s", cdnURL, ver.ArchiveFile.Key))
+		archive := EmoteFileStructureToArchiveModel(ver.ArchiveFile, fmt.Sprintf("//%s/%s", cdnURL, ver.ArchiveFile.Key))
 		versions[versionCount] = EmoteVersionStructureToModel(ver, vimages, archive)
 		versionCount++
 	}
@@ -304,7 +304,7 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 	}
 }
 
-func EmoteFileStructureToArchiveModel(s *structures.EmoteFile, url string) *model.Archive {
+func EmoteFileStructureToArchiveModel(s structures.EmoteFile, url string) *model.Archive {
 	return &model.Archive{
 		Name:        s.Name,
 		URL:         url,
