@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	v2structures "github.com/seventv/common/structures/v2"
 	"github.com/seventv/common/structures/v3"
@@ -65,18 +66,22 @@ func NewEmote(s structures.Emote, cdnURL string) *Emote {
 
 	width := make([]int32, len(files))
 	height := make([]int32, len(files))
-	urls := make([][2]string, len(files))
+	urls := make([][2]string, 4)
 
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].Width < files[j].Width
 	})
 
 	for i, file := range files {
+		if i > 3 {
+			break
+		}
+
 		width[i] = file.Width
 		height[i] = file.Height
 		urls[i] = [2]string{
-			fmt.Sprintf("%d", i+1),
-			fmt.Sprintf("https://%s/emote/%s/%s", cdnURL, version.ID.Hex(), file.Name),
+			strconv.Itoa(i + 1),
+			fmt.Sprintf("https://%s/%s", cdnURL, file.Key),
 		}
 	}
 

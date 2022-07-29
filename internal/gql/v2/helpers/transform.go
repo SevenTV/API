@@ -43,19 +43,23 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		owner = *s.Owner
 	}
 
-	width := make([]int, len(files))
-	height := make([]int, len(files))
-	urls := make([][]string, len(files))
+	width := make([]int, 4)
+	height := make([]int, 4)
+	urls := make([][]string, 4)
 
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].Width < files[j].Width
 	})
 
 	for i, file := range files {
+		if i > 3 {
+			break
+		}
+
 		width[i] = int(file.Width)
 		height[i] = int(file.Height)
 		urls[i] = []string{
-			file.Name,
+			strconv.Itoa(i + 1),
 			fmt.Sprintf("https://%s/%s", cdnURL, file.Key),
 		}
 	}
