@@ -18,7 +18,6 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/svc/s3"
-	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -120,7 +119,7 @@ func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Em
 	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
 }
 
-func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params model.EmoteUpdate) (*model.Emote, error) {
+func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params model.EmoteUpdate, reason *string) (*model.Emote, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -148,55 +147,74 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		return nil, errors.ErrInsufficientPrivilege().SetDetail("Cannot edit emote in a processing state")
 	}
 
-	// Edit name
-	if params.Name != nil {
-		eb.SetName(*params.Name)
-	}
-	// Edit owner
-	if params.OwnerID != nil {
-		eb.SetOwnerID(*params.OwnerID)
-	}
-	// Edit tags
-	if params.Tags != nil {
-		eb.SetTags(params.Tags, true)
-	}
-	// Edit flags
-	if params.Flags != nil {
-		f := structures.EmoteFlag(*params.Flags)
-		eb.SetFlags(f)
-	}
-
 	// Edit listed (version)
 	versionUpdated := false
 
-	if params.Listed != nil {
-		ver.State.Listed = *params.Listed
-		versionUpdated = true
+	// Reason
+	rsn := ""
+	if reason != nil {
+		rsn = *reason
 	}
 
-	if params.VersionName != nil {
-		ver.Name = *params.VersionName
-		versionUpdated = true
-	}
-
-	if params.VersionDescription != nil {
-		ver.Description = *params.VersionDescription
-		versionUpdated = true
-	}
-
+	// Delete emote
+	// no other params can be used if `deleted` is true
 	if params.Deleted != nil {
-		ver.State.Lifecycle = utils.Ternary(*params.Deleted, structures.EmoteLifecycleDeleted, structures.EmoteLifecycleLive)
-		versionUpdated = true
-	}
+		del := *params.Deleted
 
-	if versionUpdated {
-		eb.UpdateVersion(obj.ID, ver)
-	}
+		if del {
+			err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
+				Actor:     &actor,
+				VersionID: obj.ID,
+				Reason:    rsn,
+			})
+		} // TODO: un-delete
 
-	if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
-		Actor: &actor,
-	}); err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Edit name
+		if params.Name != nil {
+			eb.SetName(*params.Name)
+		}
+		// Edit owner
+		if params.OwnerID != nil {
+			eb.SetOwnerID(*params.OwnerID)
+		}
+		// Edit tags
+		if params.Tags != nil {
+			eb.SetTags(params.Tags, true)
+		}
+		// Edit flags
+		if params.Flags != nil {
+			f := structures.EmoteFlag(*params.Flags)
+			eb.SetFlags(f)
+		}
+
+		if params.Listed != nil {
+			ver.State.Listed = *params.Listed
+			versionUpdated = true
+		}
+
+		if params.VersionName != nil {
+			ver.Name = *params.VersionName
+			versionUpdated = true
+		}
+
+		if params.VersionDescription != nil {
+			ver.Description = *params.VersionDescription
+			versionUpdated = true
+		}
+
+		if versionUpdated {
+			eb.UpdateVersion(obj.ID, ver)
+		}
+
+		if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
+			Actor: &actor,
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	go func() {

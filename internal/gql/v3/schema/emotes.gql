@@ -19,7 +19,8 @@ extend type Mutation {
 
 type EmoteOps {
   id: ObjectID!
-  update(params: EmoteUpdate!): Emote! @goField(forceResolver: true)
+  update(params: EmoteUpdate!, reason: String): Emote!
+    @goField(forceResolver: true)
   rerun: Emote @goField(forceResolver: true)
 }
 
