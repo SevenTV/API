@@ -226,12 +226,11 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			AddVersion(version)
 	} else { // version of existing emote
 		// Parse the id of the parent emote
-		emotes, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": *args.ParentID}).Items()
-		if err != nil || len(emotes) == 0 {
+		parentEmote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": *args.ParentID}).First()
+		if err != nil {
 			return errors.ErrUnknownEmote().SetDetail("Versioning Parent")
 		}
 
-		parentEmote := emotes[0]
 		eb.Emote = parentEmote
 
 		// Check permissions
@@ -246,6 +245,11 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			if !ok {
 				return errors.ErrInsufficientPrivilege()
 			}
+		}
+
+		ver, _ := parentEmote.GetVersion(*args.ParentID)
+		if ver.IsUnavailable() {
+			return errors.ErrInsufficientPrivilege().SetDetail("Parent is unavailable")
 		}
 
 		// Add as version?
