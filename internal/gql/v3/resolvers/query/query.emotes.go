@@ -2,8 +2,11 @@ package query
 
 import (
 	"context"
+	"math"
+	"sort"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
@@ -92,18 +95,71 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	// Run query
-	result, totalCount, err := r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
-		Actor: &actor,
-		Query: queryValue,
-		Page:  page,
-		Limit: limit,
-		Sort:  sortMap,
-		Filter: &query.SearchEmotesFilter{
-			CaseSensitive: filter.CaseSensitive,
-			ExactMatch:    filter.ExactMatch,
-			IgnoreTags:    filter.IgnoreTags,
-		},
-	})
+	var (
+		result     []structures.Emote
+		totalCount int
+		err        error
+	)
+
+	cat := model.EmoteSearchCategoryTop
+	if filter.Category != nil {
+		cat = *filter.Category
+	}
+
+	switch cat {
+	case model.EmoteSearchCategoryTrendingDay, model.EmoteSearchCategoryTrendingWeek, model.EmoteSearchCategoryTrendingMonth:
+		ids, useMap, err2 := r.emoteCategoryTrending(ctx, trendingCategoryOptions{
+			Days: map[model.EmoteSearchCategory]uint32{
+				model.EmoteSearchCategoryTrendingDay:   1,
+				model.EmoteSearchCategoryTrendingWeek:  7,
+				model.EmoteSearchCategoryTrendingMonth: 30,
+			}[cat],
+			UserMinAge:    7,
+			EmoteMaxAge:   365,
+			UsageThresold: 10,
+			Limit:         250,
+		})
+		if err2 != nil {
+			return nil, err
+		}
+
+		sort.Slice(ids, func(i, j int) bool {
+			return useMap[ids[i]] > useMap[ids[j]]
+		})
+
+		totalCount = len(ids)
+
+		// shrink the fetch list if needed
+		if page > 1 {
+			min := math.Min(float64(len(ids)), float64((page-1)*limit))
+			ids = ids[int(min):]
+		}
+
+		if len(ids) > limit+1 {
+			ids = ids[:limit]
+		}
+
+		emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(ids)
+		if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
+			return nil, errors.ErrNoItems()
+		}
+
+		result = emotes
+	default:
+		result, totalCount, err = r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
+			Actor: &actor,
+			Query: queryValue,
+			Page:  page,
+			Limit: limit,
+			Sort:  sortMap,
+			Filter: &query.SearchEmotesFilter{
+				CaseSensitive: filter.CaseSensitive,
+				ExactMatch:    filter.ExactMatch,
+				IgnoreTags:    filter.IgnoreTags,
+			},
+		})
+	}
+
 	if err != nil {
 		return nil, err
 	}

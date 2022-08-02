@@ -91,9 +91,13 @@ type EmoteCommonName {
 }
 
 enum EmoteSearchCategory {
-  ALL
+  TOP
+  TRENDING_DAY
+  TRENDING_WEEK
+  TRENDING_MONTH
+  FEATURED
+  NEW
   GLOBAL
-  TRENDING
 }
 
 type EmoteSearchResult {
