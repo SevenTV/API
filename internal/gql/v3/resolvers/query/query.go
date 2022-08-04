@@ -74,11 +74,6 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User
 	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
 
-func (r *Resolver) Users(ctx context.Context, query string) ([]*model.User, error) {
-	// TODO
-	return nil, nil
-}
-
 func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
 	roles, _ := r.Ctx.Inst().Query.Roles(ctx, bson.M{})
 

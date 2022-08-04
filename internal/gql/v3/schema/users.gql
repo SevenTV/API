@@ -1,7 +1,7 @@
 extend type Query {
   actor: User
   user(id: ObjectID!): User!
-  users(query: String!): [User!]!
+  users(query: String!, page: Int, limit: Int): [UserPartial!]!
 }
 
 extend type Subscription {
