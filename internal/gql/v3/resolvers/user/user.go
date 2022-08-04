@@ -135,8 +135,13 @@ func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.E
 }
 
 func (r *Resolver) InboxUnreadCount(ctx context.Context, obj *model.User) (int, error) {
-	// TODO
-	return 0, nil
+	count, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameMessagesRead).CountDocuments(ctx, bson.M{
+		"kind":         structures.MessageKindInbox,
+		"recipient_id": obj.ID,
+		"read":         false,
+	})
+
+	return int(count), nil
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.User) ([]*model.Report, error) {
