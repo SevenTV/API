@@ -11,10 +11,12 @@ import (
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 type Resolver struct {
@@ -144,6 +146,29 @@ type emoteCommonName struct {
 	Emotes [1]structures.ActiveEmote `json:"-" bson:"emotes"`
 }
 */
+
+// Trending implements generated.EmoteResolver
+func (r *Resolver) Trending(ctx context.Context, obj *model.Emote) (*int, error) {
+	k := r.Ctx.Inst().Redis.ComposeKey("api-gql", "trending-emotes")
+
+	rank, err := r.Ctx.Inst().Redis.RawClient().HGet(r.Ctx, k.String(), obj.ID.Hex()).Int()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+
+		zap.S().Errorw("redis, failed to get trending rank of emote", "emote_id", obj.ID.Hex(), "error", err)
+
+		return nil, errors.ErrInternalServerError()
+	}
+
+	var result *int
+	if rank > 0 {
+		result = &rank
+	}
+
+	return result, err
+}
 
 func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int) ([]*model.AuditLog, error) {
 	result := []*model.AuditLog{}

@@ -174,6 +174,24 @@ func (r *Resolver) emoteCategoryTrending(ctx context.Context, opt trendingCatego
 		return useMap[result[i]] > useMap[result[j]]
 	})
 
+	// Store trending emotes in a hashmap
+	// This can be used to display a ranking to trending emotes in other resolvers
+	if opt.Days == 1 { // only do this for the 1d query
+		p := r.Ctx.Inst().Redis.Pipeline(r.Ctx)
+		k := r.Ctx.Inst().Redis.ComposeKey("api-gql", "trending-emotes")
+		p.Del(r.Ctx, k.String())
+
+		for i, emoteID := range result {
+			_, _ = p.HMSet(r.Ctx, k.String(), emoteID.Hex(), i+1).Result()
+		}
+
+		go func() {
+			if _, err := p.Exec(r.Ctx); err != nil {
+				zap.S().Errorw("redis, failed to store ranking map of trending emotes", "error", err)
+			}
+		}()
+	}
+
 	// Slice off results beyond 100
 	if opt.Limit > 0 && len(result) > opt.Limit {
 		result = result[:opt.Limit]

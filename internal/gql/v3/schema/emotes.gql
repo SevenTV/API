@@ -39,6 +39,7 @@ type Emote {
   channels(page: Int, limit: Int): UserSearchResult!
     @goField(forceResolver: true)
   common_names: [EmoteCommonName!]! @goField(forceResolver: true)
+  trending: Int @goField(forceResolver: true)
 
   images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
   versions: [EmoteVersion!]!
