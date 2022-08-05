@@ -35,6 +35,9 @@ func (epl *EmoteProcessingListener) Listen() {
 	// Results queue
 	messages, err := mq.Subscribe(epl.Ctx, messagequeue.Subscription{
 		Queue: epl.Ctx.Config().MessageQueue.ImageProcessorResultsQueueName,
+		SQS: messagequeue.SubscriptionSQS{
+			WaitTimeSeconds: 10,
+		},
 	})
 	if err != nil {
 		zap.S().Fatal("EmoteProcessingListener, subscribe to results queue failed")

@@ -42,6 +42,9 @@ func (ppl *PictureProcessingListener) Listen() {
 	// Results queue
 	messages, err := mq.Subscribe(ppl.Ctx, messagequeue.Subscription{
 		Queue: ppl.Ctx.Config().MessageQueue.ImageProcessorUserPicturesResultsQueueName,
+		SQS: messagequeue.SubscriptionSQS{
+			WaitTimeSeconds: 10,
+		},
 	})
 	if err != nil {
 		zap.S().Fatal("PictureProcessingListener, subscribe to results queue failed")
