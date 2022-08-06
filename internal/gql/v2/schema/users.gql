@@ -49,6 +49,7 @@ type User {
   description: String!
   # role of this user
   role: Role! @goField(forceResolver: true)
+  permissions: Int!
   # emotes of this user
   emote_ids: [String!]! @goField(forceResolver: true)
   # emote aliases of this user

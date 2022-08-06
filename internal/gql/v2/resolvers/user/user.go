@@ -13,6 +13,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -70,6 +71,11 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 			em.Name = emote.Name
 		}
 
+		zw := emote.Emote.Flags&structures.EmoteFlagsZeroWidth != 0
+		if zw && !utils.BitField.HasBits(int64(obj.Permissions), int64(structures.RolePermissionFeatureZeroWidthEmoteType)) {
+			continue // omit zero-width if unprivileged
+		}
+
 		arr = append(arr, em)
 	}
 
@@ -98,6 +104,13 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 
 		if ver.State.Lifecycle < structures.EmoteLifecycleLive {
 			continue // skip if not live. non-live emotes can't be supported in v2
+		}
+
+		if e.Emote != nil {
+			zw := e.Emote.Flags&structures.EmoteFlagsZeroWidth != 0
+			if zw && !utils.BitField.HasBits(int64(obj.Permissions), int64(structures.RolePermissionFeatureZeroWidthEmoteType)) {
+				continue // omit zero-width if unprivileged
+			}
 		}
 
 		result = append(result, e.ID.Hex())
