@@ -9,13 +9,19 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Cosmetics implements generated.QueryResolver
-func (r *Resolver) Cosmetics(ctx context.Context) (*model.CosmeticsQuery, error) {
+func (r *Resolver) Cosmetics(ctx context.Context, list []primitive.ObjectID) (*model.CosmeticsQuery, error) {
 	result := model.CosmeticsQuery{}
 
-	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameCosmetics).Find(ctx, bson.M{})
+	filter := bson.M{}
+	if len(list) > 0 {
+		filter["_id"] = bson.M{"$in": list}
+	}
+
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameCosmetics).Find(ctx, filter)
 	if err != nil {
 		return &result, errors.ErrInternalServerError()
 	}

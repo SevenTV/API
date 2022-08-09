@@ -423,8 +423,6 @@ github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d h1:Q+gqLBOPkFGHyCJx
 github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20220804161801-652588b31f8b h1:ZNietQ5oP48uYoHY+kaXvtUNO354vjYqywNvrYh/+VI=
-github.com/seventv/common v0.0.0-20220804161801-652588b31f8b/go.mod h1:++S6KoMQtZ4OIZmcDbN26W2/I6JrNP/T/5a+/oLSpM8=
 github.com/seventv/common v0.0.0-20220806091344-e7ed3aa4f7f6 h1:DJ14DRjSDVN1MWwb7ZnUHp7t6o7KvrinCAzz8e+xAl4=
 github.com/seventv/common v0.0.0-20220806091344-e7ed3aa4f7f6/go.mod h1:++S6KoMQtZ4OIZmcDbN26W2/I6JrNP/T/5a+/oLSpM8=
 github.com/seventv/compactdisc v0.0.0-20220723184527-d3d767eadb5c h1:8L3Dr12VNg03iIlFYsEoo4/kQJOcsEf2sjdnj8N3mus=
