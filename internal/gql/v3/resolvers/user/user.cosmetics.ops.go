@@ -32,6 +32,7 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, id prim
 		}
 
 		r.Z().Errorw("failed to get cosmetic", "error", err)
+
 		return nil, errors.ErrInternalServerError()
 	}
 

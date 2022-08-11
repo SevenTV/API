@@ -2,7 +2,7 @@ package externalapis
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/seventv/api/internal/global"
@@ -30,7 +30,7 @@ func (discord) GetCurrentUser(gctx global.Context, token string) (structures.Use
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return result, err
 		}
