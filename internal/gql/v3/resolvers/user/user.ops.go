@@ -21,6 +21,10 @@ type ResolverOps struct {
 	types.Resolver
 }
 
+func (r *ResolverOps) Z() *zap.SugaredLogger {
+	return zap.S().Named("user.ops")
+}
+
 func NewOps(r types.Resolver) generated.UserOpsResolver {
 	return &ResolverOps{r}
 }
