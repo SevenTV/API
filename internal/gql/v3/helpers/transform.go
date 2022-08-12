@@ -462,6 +462,7 @@ func CosmeticBadgeStructureToModel(s structures.Cosmetic[structures.CosmeticData
 		Kind:    model.CosmeticKind(s.Kind),
 		Name:    s.Name,
 		Tooltip: s.Data.Tooltip,
+		Tag:     s.Data.Tag,
 		Images:  []*model.Image{},
 	}
 }

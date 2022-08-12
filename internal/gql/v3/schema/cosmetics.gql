@@ -13,7 +13,7 @@ type CosmeticOps {
 }
 
 extend type Query {
-  cosmetics: CosmeticsQuery! @hasPermissions(role: [MANAGE_COSMETICS])
+  cosmetics(list: [ObjectID!]): CosmeticsQuery!
 }
 
 type CosmeticsQuery {
@@ -32,6 +32,7 @@ type CosmeticBadge implements Cosmetic {
   kind: CosmeticKind!
   name: String!
   tooltip: String!
+  tag: String!
   images: [Image!]!
 }
 

@@ -17,6 +17,8 @@ type UserOps {
   id: ObjectID!
   connections(id: String!, data: UserConnectionUpdate!): [UserConnection]
     @goField(forceResolver: true)
+  cosmetics(id: ObjectID!, selected: Boolean): Boolean
+    @goField(forceResolver: true)
 }
 
 type User {
@@ -31,6 +33,7 @@ type User {
 
   editors: [UserEditor!]! @goField(forceResolver: true)
   editor_of: [UserEditor!]! @goField(forceResolver: true)
+  cosmetics: [UserCosmetic!]! @goField(forceResolver: true)
 
   roles: [ObjectID!]!
   permissions: Int!
@@ -83,6 +86,12 @@ type UserConnection {
   linked_at: Time!
   emote_slots: Int!
   emote_set_id: ObjectID
+}
+
+type UserCosmetic {
+  id: ObjectID!
+  selected: Boolean!
+  kind: CosmeticKind!
 }
 
 enum ConnectionPlatform {
