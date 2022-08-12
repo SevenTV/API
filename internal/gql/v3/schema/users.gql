@@ -17,6 +17,8 @@ type UserOps {
   id: ObjectID!
   connections(id: String!, data: UserConnectionUpdate!): [UserConnection]
     @goField(forceResolver: true)
+  editors(editor_id: ObjectID!, data: UserEditorUpdate!): [UserEditor]
+    @goField(forceResolver: true)
   cosmetics(id: ObjectID!, selected: Boolean): Boolean
     @goField(forceResolver: true)
 }
@@ -102,6 +104,11 @@ enum ConnectionPlatform {
 input UserConnectionUpdate {
   emote_set_id: ObjectID
   unlink: Boolean
+}
+
+input UserEditorUpdate {
+  permissions: Int
+  visible: Boolean
 }
 
 type UserSearchResult {
