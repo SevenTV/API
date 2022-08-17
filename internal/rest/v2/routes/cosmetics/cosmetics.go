@@ -40,7 +40,7 @@ func (r *Route) Config() rest.RouteConfig {
 			newAvatars(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=300"}),
+			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
 		},
 	}
 }
@@ -54,8 +54,20 @@ func (r *Route) Config() rest.RouteConfig {
 // @Success 200 {object} model.CosmeticsMap
 // @Router /cosmetics [get]
 func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
-	r.mx.Lock()
-	defer r.mx.Unlock()
+	mxKey := r.Ctx.Inst().Redis.ComposeKey("api-rest", "lock", "cosmetics-v2")
+	mx := r.Ctx.Inst().Redis.Mutex(mxKey, time.Second*10)
+
+	if err := mx.Lock(); err != nil {
+		ctx.Log().Errorw("Failed to acquire lock for cosmetics v2", "error", err)
+
+		return errors.ErrInternalServerError()
+	}
+
+	defer func() {
+		if _, err := mx.Unlock(); err != nil {
+			ctx.Log().Errorw("Failed to release lock for cosmetics v2", "error", err)
+		}
+	}()
 
 	// identifier type argument
 	idType := utils.B2S(ctx.QueryArgs().Peek("user_identifier"))
