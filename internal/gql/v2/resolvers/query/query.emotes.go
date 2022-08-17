@@ -81,7 +81,6 @@ func (r *Resolver) SearchEmotes(
 
 	// Global State
 	filterDoc := bson.M{}
-	onlyListed := true
 
 	if globalStateArg != nil && *globalStateArg != "include" {
 		set, err := r.Ctx.Inst().Query.GlobalEmoteSet(ctx)
@@ -137,10 +136,13 @@ func (r *Resolver) SearchEmotes(
 				}
 			}
 			// Set to filter
-			filterDoc["versions.id"] = bson.M{
-				"$in": emoteIDs,
-			}
-			onlyListed = false
+			filterDoc["versions"] = bson.M{"$elemMatch": bson.M{
+				"id":              bson.M{"$in": emoteIDs},
+				"state.listed":    false,
+				"state.lifecycle": structures.EmoteLifecycleLive,
+			}}
+
+			limit = 400
 		}
 
 		if utils.BitField.HasBits(int64(vis), int64(v2structures.EmoteVisibilityZeroWidth)) {
@@ -169,7 +171,7 @@ func (r *Resolver) SearchEmotes(
 	for i, e := range result {
 		// Bring forward the latest version
 		if len(e.Versions) > 0 {
-			ver := e.GetLatestVersion(onlyListed)
+			ver := e.GetLatestVersion(true)
 			if !ver.ID.IsZero() {
 				e.ID = ver.ID
 			}
