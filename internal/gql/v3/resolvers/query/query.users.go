@@ -66,7 +66,7 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 }
 
 func (r *Resolver) UserByConnection(ctx context.Context, connectionId string) (*model.User, error) {
-	user, err := r.Ctx.Inst().Query.Users(ctx, bson.M{"connections.id": strings.ToLower(connectionId)}).First()
+	user, err := r.Ctx.Inst().Loaders.UserByConnectionID().Load(strings.ToLower(connectionId))
 	if err != nil {
 		return nil, err
 	}

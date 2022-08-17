@@ -42,6 +42,13 @@ func userLoader[T comparable](ctx context.Context, x inst, keyName string) *data
 					case "username":
 						v, _ := utils.ToAny(u.Username).(T)
 						m[v] = u
+					case "connection.id":
+						for _, c := range u.Connections {
+							if c.ID != "" {
+								v, _ := utils.ToAny(c.ID).(T)
+								m[v] = u
+							}
+						}
 					default:
 						v, _ := utils.ToAny(u.ID).(T)
 						m[v] = u

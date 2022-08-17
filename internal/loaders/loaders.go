@@ -17,6 +17,7 @@ const LoadersKey = utils.Key("dataloaders")
 type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
+	UserByConnectionID() UserByConnectionID
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
 	EmoteSetByID() EmoteSetLoaderByID
@@ -25,8 +26,9 @@ type Instance interface {
 
 type inst struct {
 	// User Loaders
-	userByID       UserLoaderByID
-	userByUsername UserLoaderByUsername
+	userByID           UserLoaderByID
+	userByUsername     UserLoaderByUsername
+	userByConnectionID UserByConnectionID
 
 	// Emote Loaders
 	emoteByID      EmoteLoaderByID
@@ -52,6 +54,7 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 
 	l.userByID = userLoader[primitive.ObjectID](ctx, l, "_id")
 	l.userByUsername = userLoader[string](ctx, l, "username")
+	l.userByConnectionID = userLoader[string](ctx, l, "connection.id")
 	l.emoteByID = emoteLoader(ctx, l, "versions.id")
 	l.emoteByOwnerID = batchEmoteLoader(ctx, l, "owner_id")
 	l.emoteSetByID = emoteSetByID(ctx, l)
@@ -66,6 +69,10 @@ func (l inst) UserByID() UserLoaderByID {
 
 func (l inst) UserByUsername() UserLoaderByUsername {
 	return l.userByUsername
+}
+
+func (l inst) UserByConnectionID() UserByConnectionID {
+	return l.userByConnectionID
 }
 
 func (l inst) EmoteByID() EmoteLoaderByID {
@@ -88,6 +95,7 @@ func (l *inst) EmoteByOwnerID() BatchEmoteLoaderByID {
 type (
 	UserLoaderByID          = *dataloader.DataLoader[primitive.ObjectID, structures.User]
 	UserLoaderByUsername    = *dataloader.DataLoader[string, structures.User]
+	UserByConnectionID      = *dataloader.DataLoader[string, structures.User]
 	EmoteLoaderByID         = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
 	BatchEmoteLoaderByID    = *dataloader.DataLoader[primitive.ObjectID, []structures.Emote]
 	EmoteSetLoaderByID      = *dataloader.DataLoader[primitive.ObjectID, structures.EmoteSet]
