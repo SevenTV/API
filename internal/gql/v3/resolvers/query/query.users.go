@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
@@ -82,4 +83,28 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 	}
 
 	return result, err
+}
+
+func (r *Resolver) UserByConnection(ctx context.Context, connectionId string) (*model.User, error) {
+	user, err := r.Ctx.Inst().Query.Users(ctx, bson.M{"connections.id": strings.ToLower(connectionId)}).First()
+	if err != nil {
+		return nil, err
+	}
+
+	if user.ID.IsZero() || user.ID == structures.DeletedUser.ID {
+		return nil, errors.ErrUnknownUser()
+	}
+
+	bans, err := r.Ctx.Inst().Query.Bans(ctx, query.BanQueryOptions{ // remove emotes made by users who own nothing and are happy
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := bans.MemoryHole[user.ID]; ok {
+		return nil, errors.ErrUnknownUser()
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
