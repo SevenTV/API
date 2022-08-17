@@ -99,6 +99,8 @@ func (r *Resolver) SearchEmotes(
 		}
 	}
 
+	modQueue := false
+
 	if filterArg != nil {
 		var (
 			vis  int32
@@ -143,6 +145,7 @@ func (r *Resolver) SearchEmotes(
 			}}
 
 			limit = 400
+			modQueue = true
 		}
 
 		if utils.BitField.HasBits(int64(vis), int64(v2structures.EmoteVisibilityZeroWidth)) {
@@ -171,7 +174,7 @@ func (r *Resolver) SearchEmotes(
 	for i, e := range result {
 		// Bring forward the latest version
 		if len(e.Versions) > 0 {
-			ver := e.GetLatestVersion(true)
+			ver := e.GetLatestVersion(!modQueue)
 			if !ver.ID.IsZero() {
 				e.ID = ver.ID
 			}
