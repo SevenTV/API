@@ -17,7 +17,7 @@ const LoadersKey = utils.Key("dataloaders")
 type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
-	UserByConnectionID() UserByConnectionID
+	UserByConnectionID(structures.UserConnectionPlatform) (UserByConnectionID, bool)
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
 	EmoteSetByID() EmoteSetLoaderByID
@@ -28,7 +28,7 @@ type inst struct {
 	// User Loaders
 	userByID           UserLoaderByID
 	userByUsername     UserLoaderByUsername
-	userByConnectionID UserByConnectionID
+	userByConnectionID map[structures.UserConnectionPlatform]UserByConnectionID
 
 	// Emote Loaders
 	emoteByID      EmoteLoaderByID
@@ -54,7 +54,11 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 
 	l.userByID = userLoader[primitive.ObjectID](ctx, l, "_id")
 	l.userByUsername = userLoader[string](ctx, l, "username")
-	l.userByConnectionID = userLoader[string](ctx, l, "connection.id")
+	l.userByConnectionID = map[structures.UserConnectionPlatform]*dataloader.DataLoader[string, structures.User]{
+		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch),
+		structures.UserConnectionPlatformYouTube: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformYouTube),
+		structures.UserConnectionPlatformDiscord: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformDiscord),
+	}
 	l.emoteByID = emoteLoader(ctx, l, "versions.id")
 	l.emoteByOwnerID = batchEmoteLoader(ctx, l, "owner_id")
 	l.emoteSetByID = emoteSetByID(ctx, l)
@@ -71,8 +75,9 @@ func (l inst) UserByUsername() UserLoaderByUsername {
 	return l.userByUsername
 }
 
-func (l inst) UserByConnectionID() UserByConnectionID {
-	return l.userByConnectionID
+func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) (UserByConnectionID, bool) {
+	loader, ok := l.userByConnectionID[platform]
+	return loader, ok
 }
 
 func (l inst) EmoteByID() EmoteLoaderByID {

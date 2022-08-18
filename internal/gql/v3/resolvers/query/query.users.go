@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"strings"
 
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
@@ -65,8 +64,12 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 	return result, err
 }
 
-func (r *Resolver) UserByConnection(ctx context.Context, connectionId string) (*model.User, error) {
-	user, err := r.Ctx.Inst().Loaders.UserByConnectionID().Load(strings.ToLower(connectionId))
+func (r *Resolver) UserByConnection(ctx context.Context, connectionPlatform model.ConnectionPlatform, id string) (*model.User, error) {
+	l, ok := r.Ctx.Inst().Loaders.UserByConnectionID(structures.UserConnectionPlatform(connectionPlatform))
+	if !ok {
+		return nil, errors.ErrInvalidRequest().SetDetail("Unknown connection platform")
+	}
+	user, err := l.Load(id)
 	if err != nil {
 		return nil, err
 	}

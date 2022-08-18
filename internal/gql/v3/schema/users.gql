@@ -1,7 +1,7 @@
 extend type Query {
   actor: User
   user(id: ObjectID!): User!
-  userByConnection(id: String!): User!
+  userByConnection(platform: ConnectionPlatform!, id: String!): User!
   users(query: String!, page: Int, limit: Int): [UserPartial!]!
 }
 
