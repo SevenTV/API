@@ -3,9 +3,11 @@ package cosmetics
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
@@ -38,16 +40,48 @@ func (r *avatars) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 600, nil),
+			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
 		},
 	}
 }
 
 // Handler implements rest.Route
 func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
+	mxKey := r.Ctx.Inst().Redis.ComposeKey("api-rest", "lock", "cosmetics-v2:avatars")
+	mx := r.Ctx.Inst().Redis.Mutex(mxKey, time.Second*30)
+
+	if err := mx.Lock(); err != nil {
+		ctx.Log().Errorw("Failed to acquire lock for cosmetics v2 (avatars)", "error", err)
+
+		return errors.ErrInternalServerError()
+	}
+
+	defer func() {
+		if _, err := mx.Unlock(); err != nil {
+			ctx.Log().Errorw("Failed to release lock for cosmetics v2 (avatars)", "error", err)
+		}
+	}()
+
 	mapTo := utils.B2S(ctx.QueryArgs().Peek("map_to"))
 	if mapTo == "" || utils.Contains([]string{}, mapTo) {
 		mapTo = "hash"
+	}
+
+	// Compose cache key
+	cacheKey := r.Ctx.Inst().Redis.ComposeKey("rest", fmt.Sprintf("cache:cosmetics:avatars:%s", mapTo))
+
+	result := make(map[string]string)
+
+	// Return existing cache?
+	d, err := r.Ctx.Inst().Redis.Get(ctx, cacheKey)
+	if err == nil && d != "" {
+		if err := json.Unmarshal(utils.S2B(d), &result); err != nil {
+			zap.S().Errorw("failed to return cache of /v2/cosmetics",
+				"error", err,
+			)
+		}
+
+		return ctx.JSON(rest.OK, result)
 	}
 
 	pipeline := mongo.Pipeline{
@@ -118,8 +152,6 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	result := make(map[string]string)
-
 	for _, u := range userMap {
 		if !u.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
 			continue
@@ -148,6 +180,13 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		}
 
 		result[key] = fmt.Sprintf("https://%s/%s", r.Ctx.Config().CdnURL, r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID))
+	}
+
+	b, _ := json.Marshal(result)
+	if err := r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, utils.B2S(b), 10*time.Minute); err != nil {
+		zap.S().Errorw("couldn't save cosmetics response to redis cache",
+			"map_to", mapTo,
+		)
 	}
 
 	return ctx.JSON(rest.OK, result)
