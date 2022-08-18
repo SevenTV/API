@@ -69,6 +69,7 @@ func (r *Resolver) UserByConnection(ctx context.Context, connectionPlatform mode
 	if !ok {
 		return nil, errors.ErrInvalidRequest().SetDetail("Unknown connection platform")
 	}
+
 	user, err := l.Load(id)
 	if err != nil {
 		return nil, err
