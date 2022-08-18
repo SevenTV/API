@@ -51,7 +51,7 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 1024Mi
+              memory: 1536Mi
             requests:
               cpu: 500m
               memory: 1024Mi
@@ -118,8 +118,8 @@ data:
   config.yaml: |
     level: info
 
-    website_url: https://next.7tv.app/
-    website_old_url: https://7tv.app/
+    website_url: https://7tv.app/
+    website_old_url: https://old.7tv.app/
     cdn_url: cdn.7tv.app
 
     http:
@@ -148,7 +148,7 @@ data:
       buckets:
         gql_v3: [250, 2]
         gql_v2: [250, 3]
-        image_processing: [2, 60]
+        image_processing: [4, 60]
       emotes:
         max_processing_time_seconds: 120
         max_width: 1000
