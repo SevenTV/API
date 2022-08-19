@@ -144,7 +144,7 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 		Platform:    model.ConnectionPlatform(s.Platform),
 		LinkedAt:    s.LinkedAt,
 		EmoteSlots:  int(s.EmoteSlots),
-		EmoteSetID:  &s.EmoteSetID,
+		EmoteSetID:  utils.Ternary(s.EmoteSetID.IsZero(), nil, &s.EmoteSetID),
 	}
 }
 
