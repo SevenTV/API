@@ -184,10 +184,15 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int
 		}
 	}
 
+	idList := make([]primitive.ObjectID, len(obj.Versions))
+	for i, v := range obj.Versions {
+		idList[i] = v.ID
+	}
+
 	logs := []structures.AuditLog{}
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).Find(ctx, bson.M{
 		"kind":        bson.M{"$gte": 1, "$lte": 19},
-		"target_id":   obj.ID,
+		"target_id":   bson.M{"$in": idList},
 		"target_kind": structures.ObjectKindEmote,
 	}, options.Find().SetSort(bson.M{"_id": -1}).SetLimit(int64(limit)))
 
