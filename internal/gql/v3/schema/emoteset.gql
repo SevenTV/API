@@ -35,7 +35,7 @@ type ActiveEmote {
   flags: Int!
   timestamp: Time!
   emote: Emote
-  actor: UserPartial
+  actor: UserPartial @goField(forceResolver: true)
 }
 
 input CreateEmoteSetInput {

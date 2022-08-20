@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/resolvers/emote"
 	emoteversion "github.com/seventv/api/internal/gql/v3/resolvers/emote-version"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emoteset"
+	activeemote "github.com/seventv/api/internal/gql/v3/resolvers/emoteset/active-emote"
 	"github.com/seventv/api/internal/gql/v3/resolvers/mutation"
 	"github.com/seventv/api/internal/gql/v3/resolvers/query"
 	"github.com/seventv/api/internal/gql/v3/resolvers/report"
@@ -95,4 +96,8 @@ func (r *Resolver) EmoteSet() generated.EmoteSetResolver {
 
 func (r *Resolver) EmoteSetOps() generated.EmoteSetOpsResolver {
 	return emoteset.NewOps(r.Resolver)
+}
+
+func (r *Resolver) ActiveEmote() generated.ActiveEmoteResolver {
+	return activeemote.New(r.Resolver)
 }

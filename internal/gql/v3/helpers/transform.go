@@ -251,23 +251,18 @@ func EmoteStructureToPartialModel(m *model.Emote) *model.EmotePartial {
 func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.EmoteSet {
 	emotes := make([]*model.ActiveEmote, len(s.Emotes))
 
-	for i, e := range s.Emotes {
-		if e.Emote == nil {
-			e.Emote = &structures.DeletedEmote
-		}
-
-		var actor *model.UserPartial
-		if e.Actor != nil {
-			actor = UserStructureToPartialModel(UserStructureToModel(*e.Actor, cdnURL))
+	for i, ae := range s.Emotes {
+		if ae.Emote == nil {
+			ae.Emote = &structures.DeletedEmote
 		}
 
 		emotes[i] = &model.ActiveEmote{
-			ID:        e.ID,
-			Name:      e.Name,
-			Flags:     int(e.Flags),
-			Timestamp: e.Timestamp,
-			Emote:     EmoteStructureToModel(*e.Emote, cdnURL),
-			Actor:     actor,
+			ID:        ae.ID,
+			Name:      ae.Name,
+			Flags:     int(ae.Flags),
+			Timestamp: ae.Timestamp,
+			Emote:     EmoteStructureToModel(*ae.Emote, cdnURL),
+			Actor:     &model.UserPartial{ID: ae.ActorID},
 		}
 	}
 
