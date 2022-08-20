@@ -167,7 +167,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int)
 	sets := []primitive.ObjectID{}
 
 	for _, con := range obj.Connections {
-		if con.EmoteSetID.IsZero() {
+		if con.EmoteSetID == nil || con.EmoteSetID.IsZero() {
 			continue
 		}
 

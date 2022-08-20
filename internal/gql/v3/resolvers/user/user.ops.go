@@ -14,11 +14,22 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
 type ResolverOps struct {
 	types.Resolver
+}
+
+// AddRole implements generated.UserOpsResolver
+func (*ResolverOps) AddRole(ctx context.Context, obj *model.UserOps, id primitive.ObjectID) ([]*model.Role, error) {
+	return nil, nil
+}
+
+// RemoveRole implements generated.UserOpsResolver
+func (*ResolverOps) RemoveRole(ctx context.Context, obj *model.UserOps, id primitive.ObjectID) ([]*model.Role, error) {
+	return nil, nil
 }
 
 func (r *ResolverOps) Z() *zap.SugaredLogger {

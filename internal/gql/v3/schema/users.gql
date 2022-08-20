@@ -21,6 +21,10 @@ type UserOps {
     @goField(forceResolver: true)
   cosmetics(id: ObjectID!, selected: Boolean): Boolean
     @goField(forceResolver: true)
+  addRole(id: ObjectID!): [Role!]
+    @goField(forceResolver: true)
+  removeRole(id: ObjectID!): [Role!]
+    @goField(forceResolver: true)
 }
 
 type User {
