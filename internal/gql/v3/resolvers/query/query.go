@@ -15,6 +15,7 @@ import (
 	"github.com/seventv/common/structures/v3/query"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 type Resolver struct {
@@ -23,6 +24,10 @@ type Resolver struct {
 
 func New(r types.Resolver) generated.QueryResolver {
 	return &Resolver{r}
+}
+
+func (r *Resolver) Z() *zap.SugaredLogger {
+	return zap.S().Named("query")
 }
 
 func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {

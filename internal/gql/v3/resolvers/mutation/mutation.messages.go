@@ -149,3 +149,89 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 
 	return helpers.MessageStructureToInboxModel(inb, r.Ctx.Config().CdnURL), nil
 }
+
+func (r *Resolver) DismissVoidTargetModRequests(ctx context.Context, objectKind int) (int, error) {
+	targetKind := structures.ObjectKind(objectKind)
+
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, mongo.Pipeline{
+		{{
+			Key: "$match",
+			Value: bson.M{
+				"kind":             structures.MessageKindModRequest,
+				"data.target_kind": targetKind,
+			},
+		}},
+		{{
+			Key: "$lookup",
+			Value: mongo.Lookup{
+				From: map[structures.ObjectKind]mongo.CollectionName{
+					structures.ObjectKindUser:  mongo.CollectionNameUsers,
+					structures.ObjectKindEmote: mongo.CollectionNameEmotes,
+				}[targetKind],
+				LocalField: "data.target_id",
+				ForeignField: map[structures.ObjectKind]string{
+					structures.ObjectKindUser:  "_id",
+					structures.ObjectKindEmote: "versions.id",
+				}[targetKind],
+				As: "_target",
+			},
+		}},
+		{{
+			Key: "$set",
+			Value: bson.M{
+				"data.target": bson.M{"$arrayElemAt": bson.A{"$_target", 0}},
+			},
+		}},
+		{{Key: "$unset", Value: bson.A{"_target"}}},
+	})
+	if err != nil {
+		r.Z().Errorw("failed to fetch mod requests", "error", err)
+
+		return 0, errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	reqs := []structures.Message[structures.MessageDataModRequest]{}
+
+	if err := cur.All(ctx, &reqs); err != nil {
+		r.Z().Errorw("failed to fetch mod requests", "error", err)
+
+		return 0, errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	w := []mongo.WriteModel{}
+
+	switch targetKind {
+	case structures.ObjectKindEmote:
+		for _, req := range reqs {
+			emote := structures.Emote{}
+
+			if err := bson.Unmarshal(req.Data.Target, &emote); err != nil {
+				continue
+			}
+
+			ver, _ := emote.GetVersion(req.Data.TargetID)
+			if ver.ID.IsZero() || !ver.IsUnavailable() {
+				continue
+			}
+
+			// Only close requests attached to an emote in an unavailable state
+			w = append(w, &mongo.UpdateOneModel{
+				Filter: bson.M{"message_id": req.ID},
+				Update: bson.M{
+					"$set": bson.M{"read": true, "testxd": 1},
+				},
+			})
+		}
+	}
+
+	r.Z().Infow("dismissing mod requests", "count", len(w))
+
+	res, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameMessagesRead).BulkWrite(ctx, w)
+	if err != nil {
+		r.Z().Errorw("failed to dismiss mod requests", "error", err)
+
+		return 0, errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	return int(res.ModifiedCount), nil
+}

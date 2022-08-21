@@ -1,6 +1,7 @@
 extend type Query {
   actor: User
   user(id: ObjectID!): User!
+  usersByID(list: [ObjectID!]!): [UserPartial!]!
   users(query: String!, page: Int, limit: Int): [UserPartial!]!
 }
 

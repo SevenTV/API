@@ -1,5 +1,6 @@
 extend type Query {
   emote(id: ObjectID!): Emote
+  emotesByID(list: [ObjectID!]!): [EmotePartial!]!
   emotes(
     query: String!
     page: Int

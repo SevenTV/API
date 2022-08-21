@@ -14,7 +14,7 @@ import (
 )
 
 // ModRequests implements generated.QueryResolver
-func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID) ([]*model.ModRequestMessage, error) {
+func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID, limitArg *int) ([]*model.ModRequestMessage, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -27,12 +27,18 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 
 	match := bson.M{}
 	if !afterID.IsZero() {
-		match["message_id"] = bson.M{"$gt": afterID}
+		match["_id"] = bson.M{"$lt": afterID}
+	}
+
+	limit := 100
+	if limitArg != nil {
+		limit = *limitArg
 	}
 
 	messages, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
 		Actor:  &actor,
 		Filter: match,
+		Limit:  limit,
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,
 		},

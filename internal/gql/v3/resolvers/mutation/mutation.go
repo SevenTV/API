@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 type Resolver struct {
@@ -15,6 +16,10 @@ type Resolver struct {
 
 func New(r types.Resolver) generated.MutationResolver {
 	return &Resolver{r}
+}
+
+func (r *Resolver) Z() *zap.SugaredLogger {
+	return zap.S().Named("mutation")
 }
 
 func (r *Resolver) SetUserRole(ctx context.Context, userID primitive.ObjectID, roleID primitive.ObjectID, action model.ListItemAction) (*model.User, error) {
