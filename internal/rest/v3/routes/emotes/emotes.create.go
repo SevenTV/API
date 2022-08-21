@@ -82,6 +82,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,
 		},
+		Limit: 1000,
 		Filter: bson.M{
 			"author_id": actor.ID,
 		},

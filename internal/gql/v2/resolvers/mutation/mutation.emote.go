@@ -77,6 +77,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 				Targets: map[structures.ObjectKind]bool{
 					structures.ObjectKindEmote: true,
 				},
+				Limit:     100,
 				TargetIDs: targetIDs,
 			}).Items()
 			if err != nil && !errors.Compare(err, errors.ErrNoItems()) {
