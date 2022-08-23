@@ -35,6 +35,7 @@ func Digest(gctx global.Context) {
 			s   string
 			err error
 		)
+
 		for {
 			select {
 			case <-gctx.Done():
@@ -118,6 +119,7 @@ func encodeValue(v any) *string {
 	}
 
 	encoder.Close()
+
 	return utils.PointerOf(buf.String())
 }
 
