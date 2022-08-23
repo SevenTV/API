@@ -27,6 +27,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	middlewarev3 "github.com/seventv/api/internal/gql/v3/middleware"
 	"github.com/seventv/api/internal/gql/v3/resolvers"
+	"github.com/seventv/api/internal/gql/v3/resolvers/subscription/digest"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
@@ -99,6 +100,9 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 		return true
 	}
+
+	// Event API Digest Bridge
+	digest.Digest(gCtx)
 
 	wsTransport := wsTransport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,

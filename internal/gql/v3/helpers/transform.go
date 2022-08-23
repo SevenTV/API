@@ -171,11 +171,6 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	listed := false
 	animated := false
 
-	// Sort by version timestamp
-	sort.Slice(s.Versions, func(i, j int) bool {
-		return s.Versions[i].CreatedAt.After(s.Versions[j].CreatedAt)
-	})
-
 	for _, ver := range s.Versions {
 		files := ver.GetFiles("", true)
 		sort.Slice(files, func(i, j int) bool {

@@ -11,7 +11,7 @@ extend type Query {
 }
 
 extend type Subscription {
-  emote(id: ObjectID!, init: Boolean): EmotePartial!
+  emote(id: ObjectID!): ChangeMap!
 }
 
 extend type Mutation {
