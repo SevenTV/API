@@ -161,13 +161,12 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	if params.Deleted != nil {
 		del := *params.Deleted
 
-		if del {
-			err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
-				Actor:     &actor,
-				VersionID: obj.ID,
-				Reason:    rsn,
-			})
-		} // TODO: un-delete
+		err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
+			Actor:     &actor,
+			VersionID: obj.ID,
+			Undo:      !del,
+			Reason:    rsn,
+		})
 
 		if err != nil {
 			return nil, err
