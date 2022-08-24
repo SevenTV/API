@@ -38,6 +38,23 @@ func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emo
 	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
 }
 
+func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([]*model.EmotePartial, error) {
+	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(list)
+	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
+		r.Z().Errorw("failed to load emotes", "error", err)
+
+		return nil, nil
+	}
+
+	result := make([]*model.EmotePartial, len(emotes))
+
+	for i, emote := range emotes {
+		result[i] = helpers.EmoteStructureToPartialModel(helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL))
+	}
+
+	return result, nil
+}
+
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
 	actor := auth.For(ctx)
 

@@ -1,7 +1,7 @@
 extend type Query {
   inbox(user_id: ObjectID!, after_id: ObjectID, limit: Int): [InboxMessage!]!
     @hasPermissions
-  mod_requests(after_id: ObjectID): [ModRequestMessage!]!
+  modRequests(after_id: ObjectID, limit: Int): [ModRequestMessage!]!
 }
 
 extend type Mutation {
@@ -13,6 +13,9 @@ extend type Mutation {
     important: Boolean
     anonymous: Boolean
   ): InboxMessage @hasPermissions(role: [SEND_MESSAGES])
+
+  dismissVoidTargetModRequests(object: Int!): Int!
+    @hasPermissions(role: [MANAGE_STACK])
 }
 
 interface Message {

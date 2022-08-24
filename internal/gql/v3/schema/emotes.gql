@@ -1,5 +1,6 @@
 extend type Query {
   emote(id: ObjectID!): Emote
+  emotesByID(list: [ObjectID!]!): [EmotePartial!]!
   emotes(
     query: String!
     page: Int
@@ -10,7 +11,7 @@ extend type Query {
 }
 
 extend type Subscription {
-  emote(id: ObjectID!, init: Boolean): EmotePartial!
+  emote(id: ObjectID!): ChangeMap!
 }
 
 extend type Mutation {

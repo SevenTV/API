@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
@@ -10,7 +11,26 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// EmotesByIDs implements generated.QueryResolver
+func (r *Resolver) UsersByID(ctx context.Context, list []primitive.ObjectID) ([]*model.UserPartial, error) {
+	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(list)
+	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
+		r.Z().Errorw("failed to load users", "error", err)
+
+		return nil, nil
+	}
+
+	result := make([]*model.UserPartial, len(users))
+
+	for i, user := range users {
+		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
+	}
+
+	return result, nil
+}
 
 func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, limitArg *int) ([]*model.UserPartial, error) {
 	actor := auth.For(ctx)

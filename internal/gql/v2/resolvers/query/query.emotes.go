@@ -121,6 +121,7 @@ func (r *Resolver) SearchEmotes(
 			// Fetch mod items
 			result, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
 				Actor: &actor,
+				Limit: 400,
 				Targets: map[structures.ObjectKind]bool{
 					structures.ObjectKindEmote: true,
 				},
