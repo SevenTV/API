@@ -220,7 +220,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	// Generate an access token for the user
-	tokenTTL := time.Now().Add(time.Hour * 168)
+	tokenTTL := time.Now().Add(time.Hour * 2190)
 
 	userToken, err := auth.SignJWT(r.Ctx.Config().Credentials.JWTSecret, &auth.JWTClaimUser{
 		UserID:       userID.Hex(),
