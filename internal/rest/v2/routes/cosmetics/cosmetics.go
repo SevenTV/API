@@ -115,8 +115,18 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	errCh := make(chan error, 1)
 
 	go func() {
+		defer func() {
+			// Close the response channels
+			close(resCh)
+			close(errCh)
+		}()
+
 		busyKey := r.Ctx.Inst().Redis.ComposeKey("api-rest", "busy", "cosmetics", idType)
 		if val, _ := r.Ctx.Inst().Redis.Get(ctx, busyKey); val == "1" {
+			ctx.Log().Errorw("failed to get busy state of generation for cosmetics v2")
+
+			errCh <- errors.ErrInternalServerError()
+
 			return
 		}
 
@@ -124,7 +134,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		// This will ensure that the data isn't being queried concurrently
 		defer func() {
 			if _, err := r.Ctx.Inst().Redis.Del(ctx, busyKey); err != nil {
-				ctx.Log().Errorw("Failed to delete busy key for cosmetics v2", "error", err)
+				ctx.Log().Errorw("failed to delete busy key for cosmetics v2", "error", err)
 			}
 		}()
 
@@ -155,10 +165,6 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			break
 		}
 	} // if cache existed, we can respond to the request and the data will generate in the background for future requests
-
-	// Close the response channels
-	close(resCh)
-	close(errCh)
 
 	return ctx.JSON(rest.OK, result)
 }
