@@ -1,8 +1,9 @@
 package model
 
 type CosmeticsMap struct {
-	Badges []*CosmeticBadge `json:"badges"`
-	Paints []*CosmeticPaint `json:"paints"`
+	Timestamp int64            `json:"t"`
+	Badges    []*CosmeticBadge `json:"badges"`
+	Paints    []*CosmeticPaint `json:"paints"`
 }
 
 type CosmeticBadge struct {
