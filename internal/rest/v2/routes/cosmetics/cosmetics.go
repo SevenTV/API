@@ -111,21 +111,19 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	// Response channels
-	resCh := make(chan *model.CosmeticsMap, 1)
-	errCh := make(chan error, 1)
+	resCh := make(chan cosmeticsChanResult, 1)
 
 	go func() {
 		defer func() {
 			// Close the response channels
 			close(resCh)
-			close(errCh)
 		}()
 
 		busyKey := r.Ctx.Inst().Redis.ComposeKey("api-rest", "busy", "cosmetics", idType)
 		if val, _ := r.Ctx.Inst().Redis.Get(ctx, busyKey); val == "1" {
 			ctx.Log().Errorw("failed to get busy state of generation for cosmetics v2")
 
-			errCh <- errors.ErrInternalServerError()
+			resCh <- cosmeticsChanResult{err: errors.ErrInternalServerError()}
 
 			return
 		}
@@ -142,9 +140,9 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 		result, err := r.generateCosmeticsData(ctx, idType)
 		if err != nil {
-			errCh <- err
+			resCh <- cosmeticsChanResult{err: err}
 		} else {
-			resCh <- result
+			resCh <- cosmeticsChanResult{d: result}
 
 			// Store the result in redis
 			b, _ := json.Marshal(result)
@@ -158,14 +156,21 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 	// if we had no pre-existing cache, we must wait for data to be generated
 	if noData {
-		select {
-		case err := <-errCh:
-			return errors.From(err)
-		case result = <-resCh:
+		res := <-resCh
+
+		if res.err != nil {
+			return errors.From(res.err)
 		}
+
+		result = res.d
 	} // if cache existed, we can respond to the request and the data will generate in the background for future requests
 
 	return ctx.JSON(rest.OK, result)
+}
+
+type cosmeticsChanResult struct {
+	err error
+	d   *model.CosmeticsMap
 }
 
 func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.CosmeticsMap, error) {
