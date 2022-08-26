@@ -45,7 +45,7 @@ func (r *Route) Config() rest.RouteConfig {
 	}
 }
 
-const COSMETICS_CACHE_LIFETIME = time.Second * 5
+const COSMETICS_CACHE_LIFETIME = time.Minute * 10
 
 // Get Cosmetics
 // @Summary Get Cosmetics
