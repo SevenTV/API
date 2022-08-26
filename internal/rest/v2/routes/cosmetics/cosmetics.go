@@ -305,10 +305,10 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 	cur, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
 		"_id": bson.M{"$in": entitledUserIDs[:entitledUserCount]},
 	}, options.Find().SetProjection(bson.M{
-		"_id":                  1,
-		"connections.id":       1,
-		"connections.platform": 1,
-		"username":             1,
+		"_id":                    1,
+		"connections.id":         1,
+		"connections.platform":   1,
+		"connections.data.login": 1,
 	}))
 	if err != nil {
 		ctx.Log().Errorw("mongo, failed to spawn cosmetic users cursor", "error", err)
@@ -505,7 +505,12 @@ func selectUserIDType(users []structures.User, t string) []string {
 
 			userIDs[i] = tw.ID
 		case "login":
-			userIDs[i] = u.Username
+			tw, _, _ := u.Connections.Twitch()
+			if tw.Data.Login == "" {
+				continue
+			}
+
+			userIDs[i] = tw.Data.Login
 		}
 	}
 
