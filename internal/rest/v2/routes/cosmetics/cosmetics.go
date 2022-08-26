@@ -114,7 +114,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	resCh := make(chan *model.CosmeticsMap, 1)
 	errCh := make(chan error, 1)
 
-	go func(resCh chan *model.CosmeticsMap, errCh chan error) {
+	go func() {
 		busyKey := r.Ctx.Inst().Redis.ComposeKey("api-rest", "busy", "cosmetics", idType)
 		if val, _ := r.Ctx.Inst().Redis.Get(ctx, busyKey); val == "1" {
 			return
@@ -144,7 +144,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				)
 			}
 		}
-	}(resCh, errCh)
+	}()
 
 	// if we had no pre-existing cache, we must wait for data to be generated
 	if noData {
@@ -155,6 +155,10 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			break
 		}
 	} // if cache existed, we can respond to the request and the data will generate in the background for future requests
+
+	// Close the response channels
+	close(resCh)
+	close(errCh)
 
 	return ctx.JSON(rest.OK, result)
 }
