@@ -87,6 +87,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 	d, err := r.Ctx.Inst().Redis.Get(ctx, cacheKey)
 	noData := false
+
 	if err == nil && d != "" {
 		if err := json.Unmarshal(utils.S2B(d), result); err != nil {
 			ctx.Log().Errorw("failed to return cache of /v2/cosmetics",
@@ -126,6 +127,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				ctx.Log().Errorw("Failed to delete busy key for cosmetics v2", "error", err)
 			}
 		}()
+
 		_ = r.Ctx.Inst().Redis.SetEX(ctx, busyKey, "1", time.Minute)
 
 		result, err := r.generateCosmeticsData(ctx, idType)
