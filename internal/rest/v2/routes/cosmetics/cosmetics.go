@@ -162,7 +162,6 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		case err := <-errCh:
 			return errors.From(err)
 		case result = <-resCh:
-			break
 		}
 	} // if cache existed, we can respond to the request and the data will generate in the background for future requests
 
