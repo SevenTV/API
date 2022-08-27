@@ -82,6 +82,9 @@ func (r *Resolver) SearchEmotes(
 	// Global State
 	filterDoc := bson.M{}
 
+	exactVersion := make(utils.Set[primitive.ObjectID])
+	modQueue := false
+
 	if globalStateArg != nil && *globalStateArg != "include" {
 		set, err := r.Ctx.Inst().Query.GlobalEmoteSet(ctx)
 		if err == nil {
@@ -93,13 +96,13 @@ func (r *Resolver) SearchEmotes(
 			switch *globalStateArg {
 			case "only":
 				filterDoc["versions.id"] = bson.M{"$in": ids}
+
+				exactVersion.Fill(ids...)
 			case "hide":
 				filterDoc["versions.id"] = bson.M{"$not": bson.M{"$in": ids}}
 			}
 		}
 	}
-
-	modQueue := false
 
 	if filterArg != nil {
 		var (
@@ -173,11 +176,26 @@ func (r *Resolver) SearchEmotes(
 	models := make([]*model.Emote, len(result))
 
 	for i, e := range result {
-		// Bring forward the latest version
 		if len(e.Versions) > 0 {
-			ver := e.GetLatestVersion(!modQueue)
-			if !ver.ID.IsZero() {
+			foundExact := false
+
+			for _, ver := range e.Versions {
+				if !exactVersion.Has(ver.ID) {
+					continue
+				}
+
 				e.ID = ver.ID
+				foundExact = true
+
+				break
+			}
+
+			if !foundExact {
+				// Bring forward the latest version
+				ver := e.GetLatestVersion(!modQueue)
+				if !ver.ID.IsZero() {
+					e.ID = ver.ID
+				}
 			}
 		}
 
