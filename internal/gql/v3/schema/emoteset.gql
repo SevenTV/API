@@ -4,7 +4,7 @@ extend type Query {
 }
 
 extend type Subscription {
-  emoteSet(id: ObjectID!, init: Boolean): EmoteSet!
+  emoteSet(id: ObjectID!): ChangeMap!
 }
 
 extend type Mutation {
@@ -23,7 +23,7 @@ type EmoteSet {
   id: ObjectID!
   name: String!
   tags: [String!]!
-  emotes: [ActiveEmote!]!
+  emotes(limit: Int): [ActiveEmote!]! @goField(forceResolver: true)
   capacity: Int!
   owner_id: ObjectID
   owner: User @goField(forceResolver: true)

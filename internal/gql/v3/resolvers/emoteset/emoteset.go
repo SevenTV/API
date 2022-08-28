@@ -29,3 +29,14 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.User,
 
 	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
 }
+
+func (*Resolver) Emotes(ctx context.Context, obj *model.EmoteSet, limit *int) ([]*model.ActiveEmote, error) {
+	emotes := make([]*model.ActiveEmote, len(obj.Emotes))
+	copy(emotes, obj.Emotes)
+
+	if limit != nil && *limit < len(emotes) {
+		emotes = emotes[:*limit]
+	}
+
+	return emotes, nil
+}
