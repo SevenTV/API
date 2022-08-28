@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
+	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 )
 
@@ -29,6 +30,10 @@ func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*
 
 	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
 	if err != nil {
+		if errors.Compare(err, errors.ErrUnknownUser()) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

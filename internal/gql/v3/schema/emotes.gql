@@ -35,7 +35,7 @@ type Emote {
   created_at: Time!
 
   owner_id: ObjectID!
-  owner: User! @goField(forceResolver: true)
+  owner: User @goField(forceResolver: true)
 
   channels(page: Int, limit: Int): UserSearchResult!
     @goField(forceResolver: true)
@@ -61,7 +61,7 @@ type EmotePartial {
   animated: Boolean!
   created_at: Time!
   owner_id: ObjectID!
-  owner: User! @goField(forceResolver: true)
+  owner: User @goField(forceResolver: true)
   images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
   versions: [EmoteVersion!]!
   listed: Boolean!

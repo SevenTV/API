@@ -39,7 +39,11 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, er
 	}
 
 	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
-	if err != nil && !errors.Compare(err, errors.ErrUnknownUser()) {
+	if err != nil {
+		if errors.Compare(err, errors.ErrUnknownUser()) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
