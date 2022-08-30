@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
@@ -16,7 +17,6 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/svc/s3"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
@@ -161,7 +161,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 	if params.Deleted != nil {
 		del := *params.Deleted
 
-		err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
+		err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutate.DeleteEmoteOptions{
 			Actor:     &actor,
 			VersionID: obj.ID,
 			Undo:      !del,
@@ -209,7 +209,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 			eb.UpdateVersion(obj.ID, ver)
 		}
 
-		if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
+		if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutate.EmoteEditOptions{
 			Actor: &actor,
 		}); err != nil {
 			return nil, err

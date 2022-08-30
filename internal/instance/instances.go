@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/svc/prometheus"
@@ -8,7 +9,6 @@ import (
 	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
-	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc/s3"
 	"github.com/seventv/compactdisc"
@@ -28,5 +28,5 @@ type Instances struct {
 	CD           compactdisc.Instance
 
 	Query  *query.Query
-	Mutate *mutations.Mutate
+	Mutate *mutate.Mutate
 }

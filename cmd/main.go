@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql"
@@ -27,7 +28,6 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
 	"github.com/seventv/common/redis"
-	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc"
 	"github.com/seventv/common/svc/s3"
@@ -183,12 +183,13 @@ func main() {
 		gCtx.Inst().CD = compactdisc.New(config.Platforms.Discord.API)
 
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
-		gCtx.Inst().Mutate = mutations.New(mutations.InstanceOptions{
+		gCtx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
 			ID:     id,
 			Mongo:  gCtx.Inst().Mongo,
 			Redis:  gCtx.Inst().Redis,
 			S3:     gCtx.Inst().S3,
 			Events: gCtx.Inst().Events,
+			CD:     gCtx.Inst().CD,
 		})
 	}
 

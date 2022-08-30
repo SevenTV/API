@@ -14,8 +14,8 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.13.0
-	github.com/seventv/common v0.0.0-20220828103751-ea6f5a62bbcd
-	github.com/seventv/compactdisc v0.0.0-20220805181419-999574b620d1
+	github.com/seventv/common v0.0.0-20220830002112-ce7e23607cfc
+	github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91
 	github.com/seventv/image-processor/go v0.0.0-20220823211530-94fa41d1de6e
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
 	github.com/spf13/pflag v1.0.5
@@ -37,6 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.4 // indirect
 	github.com/aws/smithy-go v1.12.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bwmarrin/discordgo v0.25.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect

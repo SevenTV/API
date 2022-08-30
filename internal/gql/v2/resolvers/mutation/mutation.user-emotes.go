@@ -7,6 +7,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
@@ -14,7 +15,6 @@ import (
 	model3 "github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
@@ -63,7 +63,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			SetName(fmt.Sprintf("%s's Emotes", target.DisplayName)).
 			SetCapacity(250)
 
-		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutations.EmoteSetMutationOptions{
+		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutate.EmoteSetMutationOptions{
 			Actor: &actor,
 		}); err != nil {
 			return nil, err
@@ -76,7 +76,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			}
 
 			ub := structures.NewUserBuilder(target)
-			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, ub, mutations.SetUserActiveEmoteSet{
+			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, ub, mutate.SetUserActiveEmoteSet{
 				EmoteSetID:   esb.EmoteSet.ID,
 				Platform:     structures.UserConnectionPlatformTwitch,
 				Actor:        &actor,
@@ -235,9 +235,9 @@ func (r *Resolver) doSetChannelEmote(
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
 	defer done()
 
-	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutations.EmoteSetMutationSetEmoteOptions{
+	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutate.EmoteSetMutationSetEmoteOptions{
 		Actor: actor,
-		Emotes: []mutations.EmoteSetMutationSetEmoteItem{{
+		Emotes: []mutate.EmoteSetMutationSetEmoteItem{{
 			Action: action,
 			ID:     emoteID,
 			Name:   name,

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -193,7 +193,7 @@ func (r *Resolver) EditReport(ctx context.Context, reportID primitive.ObjectID, 
 					},
 				})
 
-			_ = r.Ctx.Inst().Mutate.SendInboxMessage(ctx, mb, mutations.SendInboxMessageOptions{
+			_ = r.Ctx.Inst().Mutate.SendInboxMessage(ctx, mb, mutate.SendInboxMessageOptions{
 				Actor:                &actor,
 				Recipients:           []primitive.ObjectID{report.ActorID},
 				ConsiderBlockedUsers: false,

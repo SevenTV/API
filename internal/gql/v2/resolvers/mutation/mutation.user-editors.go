@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -107,7 +107,7 @@ func (r *Resolver) doSetChannelEditor(
 	}
 
 	ub := structures.NewUserBuilder(target)
-	if err := r.Ctx.Inst().Mutate.ModifyUserEditors(ctx, ub, mutations.UserEditorsOptions{
+	if err := r.Ctx.Inst().Mutate.ModifyUserEditors(ctx, ub, mutate.UserEditorsOptions{
 		Actor:             actor,
 		Editor:            &editor,
 		EditorPermissions: structures.UserEditorPermissionModifyEmotes | structures.UserEditorPermissionManageEmoteSets,

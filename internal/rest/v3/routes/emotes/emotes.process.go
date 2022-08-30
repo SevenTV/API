@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"github.com/seventv/compactdisc"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -219,6 +221,34 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 					"ACTOR_ID", eb.Emote.OwnerID,
 				)
 			}
+
+			// Send a message on discord
+			emoteOwner, _ := epl.Ctx.Inst().Loaders.UserByID().Load(eb.Emote.OwnerID)
+			_, _ = epl.Ctx.Inst().CD.SendMessage("activity_feed", compactdisc.MessageSend{
+				Content: fmt.Sprintf(
+					"**[activity]** emote created: [%s](%s) by [%s](%s)",
+					eb.Emote.Name, eb.Emote.WebURL(epl.Ctx.Config().WebsiteURL),
+					emoteOwner.DisplayName, emoteOwner.WebURL(epl.Ctx.Config().WebsiteURL),
+				),
+			}, true)
+
+			// Send an Event API update about the emote's lifecycle state
+			_ = epl.Ctx.Inst().Events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+				Type: events.EventTypeUpdateEmote,
+				Body: events.ChangeMap{
+					ID:    eb.Emote.OwnerID,
+					Kind:  structures.ObjectKindEmote,
+					Actor: emoteOwner.ToPublic(),
+					Pulled: []events.ChangeField{{
+						Key:      "lifecycle",
+						OldValue: structures.EmoteLifecycleProcessing,
+						Value:    structures.EmoteLifecycleLive,
+					}},
+				},
+				Condition: map[string]string{
+					"object_id": eb.Emote.ID.Hex(),
+				},
+			}).ToRaw())
 		}
 	}
 
