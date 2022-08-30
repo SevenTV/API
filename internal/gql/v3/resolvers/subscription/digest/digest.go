@@ -92,14 +92,15 @@ func transformChangeFields(fields []events.ChangeField) []*model.ChangeField {
 	result := make([]*model.ChangeField, len(fields))
 
 	for i, cf := range fields {
-		ind := 0
+		var ind *int
+
 		if cf.Index != nil {
-			ind = int(*cf.Index)
+			ind = utils.PointerOf(int(*cf.Index))
 		}
 
 		result[i] = &model.ChangeField{
 			Key:      cf.Key,
-			Index:    utils.PointerOf(ind),
+			Index:    ind,
 			Nested:   cf.Nested,
 			OldValue: encodeValue(cf.OldValue),
 			Value:    encodeValue(cf.Value),
