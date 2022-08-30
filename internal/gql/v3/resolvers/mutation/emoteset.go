@@ -3,11 +3,11 @@ package mutation
 import (
 	"context"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -34,7 +34,7 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 		SetCapacity(250)
 
 	// Execute mutation
-	if err := r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, b, mutations.EmoteSetMutationOptions{
+	if err := r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, b, mutate.EmoteSetMutationOptions{
 		Actor: &actor,
 	}); err != nil {
 		return nil, err

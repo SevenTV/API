@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -60,7 +60,7 @@ func (r *Resolver) BanUser(ctx context.Context, victimIDArg string, expireAtArg 
 		SetReason(reason).
 		SetExpireAt(expireAt).
 		SetEffects(structures.BanEffect(structures.BanEffectMemoryHole | structures.BanEffectNoAuth | structures.BanEffectNoPermissions))
-	if err = r.Ctx.Inst().Mutate.CreateBan(ctx, bb, mutations.CreateBanOptions{
+	if err = r.Ctx.Inst().Mutate.CreateBan(ctx, bb, mutate.CreateBanOptions{
 		Actor:  &actor,
 		Victim: &victim,
 	}); err != nil {
@@ -109,7 +109,7 @@ func (r *Resolver) UnbanUser(ctx context.Context, victimIDArg string, reason *st
 		// (equivalent of setting active: false in v2)
 		bb.SetExpireAt(time.Now())
 
-		if err = r.Ctx.Inst().Mutate.EditBan(ctx, bb, mutations.EditBanOptions{
+		if err = r.Ctx.Inst().Mutate.EditBan(ctx, bb, mutate.EditBanOptions{
 			Actor: &actor,
 		}); err != nil {
 			zap.S().Errorw("failed to perform v2 unban user operation",

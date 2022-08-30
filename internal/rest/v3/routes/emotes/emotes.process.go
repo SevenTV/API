@@ -9,6 +9,7 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"github.com/seventv/compactdisc"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -219,6 +220,16 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 					"ACTOR_ID", eb.Emote.OwnerID,
 				)
 			}
+
+			// Send a message on discord
+			emoteOwner, _ := epl.Ctx.Inst().Loaders.UserByID().Load(eb.Emote.OwnerID)
+			_, _ = epl.Ctx.Inst().CD.SendMessage("activity_feed", compactdisc.MessageSend{
+				Content: fmt.Sprintf(
+					"**[activity]** emote created: [%s](%s) by [%s](%s)",
+					eb.Emote.Name, eb.Emote.WebURL(epl.Ctx.Config().WebsiteURL),
+					emoteOwner.DisplayName, emoteOwner.WebURL(epl.Ctx.Config().WebsiteURL),
+				),
+			}, true)
 		}
 	}
 

@@ -3,12 +3,12 @@ package user
 import (
 	"context"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -71,7 +71,7 @@ func (r *ResolverOps) Editors(
 
 	// Set up mutation
 	ub := structures.NewUserBuilder(user)
-	if err = r.Ctx.Inst().Mutate.ModifyUserEditors(ctx, ub, mutations.UserEditorsOptions{
+	if err = r.Ctx.Inst().Mutate.ModifyUserEditors(ctx, ub, mutate.UserEditorsOptions{
 		Actor:             &actor,
 		Editor:            &editor,
 		EditorPermissions: permissions,

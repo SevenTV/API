@@ -3,6 +3,7 @@ package mutation
 import (
 	"context"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
@@ -10,7 +11,6 @@ import (
 	"github.com/seventv/common/errors"
 	v2structures "github.com/seventv/common/structures/v2"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,7 +87,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 			for _, msg := range result {
 				mb := structures.NewMessageBuilder(msg)
 				// Mark the message as read
-				_, err := r.Ctx.Inst().Mutate.SetMessageReadStates(ctx, mb, true, mutations.MessageReadStateOptions{
+				_, err := r.Ctx.Inst().Mutate.SetMessageReadStates(ctx, mb, true, mutate.MessageReadStateOptions{
 					Actor: &actor,
 				})
 				if err != nil {
@@ -144,7 +144,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 		eb.SetFlags(flags)
 	}
 
-	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutations.EmoteEditOptions{
+	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutate.EmoteEditOptions{
 		Actor: &actor,
 	}); err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 
 	eb := structures.NewEmoteBuilder(emote)
 
-	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutations.DeleteEmoteOptions{
+	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutate.DeleteEmoteOptions{
 		Actor:  &actor,
 		Reason: reason,
 	}); err != nil {
@@ -232,7 +232,7 @@ func (r *Resolver) MergeEmote(ctx context.Context, oldIDArg string, newIDArg str
 		}
 	}
 
-	if err := r.Ctx.Inst().Mutate.MergeEmote(ctx, structures.NewEmoteBuilder(oldEmote), mutations.MergeEmoteOptions{
+	if err := r.Ctx.Inst().Mutate.MergeEmote(ctx, structures.NewEmoteBuilder(oldEmote), mutate.MergeEmoteOptions{
 		Actor:          &actor,
 		NewEmote:       newEmote,
 		Reason:         reason,

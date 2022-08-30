@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
@@ -13,7 +14,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -64,9 +64,9 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	b := structures.NewEmoteSetBuilder(set)
 
 	// Mutate the thing
-	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutations.EmoteSetMutationSetEmoteOptions{
+	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutate.EmoteSetMutationSetEmoteOptions{
 		Actor: &actor,
-		Emotes: []mutations.EmoteSetMutationSetEmoteItem{{
+		Emotes: []mutate.EmoteSetMutationSetEmoteItem{{
 			Action: structures.ListItemAction(action),
 			ID:     id,
 			Name:   name,

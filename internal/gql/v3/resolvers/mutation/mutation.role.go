@@ -4,12 +4,12 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/mutations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -20,7 +20,7 @@ func (r *Resolver) CreateRole(ctx context.Context, data model.CreateRoleInput) (
 	rb := structures.NewRoleBuilder(structures.Role{}).
 		SetName(data.Name)
 
-	if err := r.Ctx.Inst().Mutate.CreateRole(ctx, rb, mutations.RoleMutationOptions{
+	if err := r.Ctx.Inst().Mutate.CreateRole(ctx, rb, mutate.RoleMutationOptions{
 		Actor: &actor,
 	}); err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (r *Resolver) EditRole(ctx context.Context, roleID primitive.ObjectID, data
 		rb.SetDenied(structures.RolePermission(d))
 	}
 
-	if err := r.Ctx.Inst().Mutate.EditRole(ctx, rb, mutations.RoleEditOptions{
+	if err := r.Ctx.Inst().Mutate.EditRole(ctx, rb, mutate.RoleEditOptions{
 		Actor:            &actor,
 		OriginalPosition: roles[0].Position,
 	}); err != nil {
@@ -87,7 +87,7 @@ func (r *Resolver) DeleteRole(ctx context.Context, roleID primitive.ObjectID) (s
 		return "", errors.ErrUnknownRole()
 	}
 
-	if err := r.Ctx.Inst().Mutate.DeleteRole(ctx, structures.NewRoleBuilder(roles[0]), mutations.RoleMutationOptions{
+	if err := r.Ctx.Inst().Mutate.DeleteRole(ctx, structures.NewRoleBuilder(roles[0]), mutate.RoleMutationOptions{
 		Actor: &actor,
 	}); err != nil {
 		return "", err
