@@ -60,6 +60,7 @@ type ChangeField {
   key: String!
   index: Int
   nested: Boolean!
+  type: String!
   old_value: String
   value: String
 }

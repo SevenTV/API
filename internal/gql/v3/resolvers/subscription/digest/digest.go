@@ -101,6 +101,7 @@ func transformChangeFields(fields []events.ChangeField) []*model.ChangeField {
 		result[i] = &model.ChangeField{
 			Key:      cf.Key,
 			Index:    ind,
+			Type:     string(cf.Type),
 			Nested:   cf.Nested,
 			OldValue: encodeValue(cf.OldValue),
 			Value:    encodeValue(cf.Value),

@@ -226,6 +226,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
 						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes))),
+						Type:  events.ChangeFieldTypeObject,
 						Value: structures.ActiveEmote{
 							ID:        tgt.ID,
 							Name:      tgt.Name,
@@ -291,6 +292,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 							Updated: []events.ChangeField{{
 								Key:      "emotes",
 								Index:    utils.PointerOf(int32(ind)),
+								Type:     events.ChangeFieldTypeObject,
 								OldValue: ae.ToPublic(structures.PublicEmote{}),
 								Value: structures.ActiveEmote{
 									ID:        tgt.ID,
@@ -320,6 +322,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						Pulled: []events.ChangeField{{
 							Key:   "emotes",
 							Index: utils.PointerOf(int32(ind)),
+							Type:  events.ChangeFieldTypeObject,
 							OldValue: structures.ActiveEmote{
 								ID:      tgt.ID,
 								Name:    tgt.Name,

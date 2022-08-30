@@ -140,6 +140,10 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	lc := utils.Ternary(evt.State == task.ResultStateSuccess, structures.EmoteLifecycleLive, structures.EmoteLifecycleFailed)
 	ver, verIndex := eb.Emote.GetVersion(id)
 
+	if evt.State == task.ResultStateFailed {
+		ver.State.Error = evt.Message
+	}
+
 	ver.Animated = int32(evt.ImageInput.FrameCount) > 1
 	ver.State.Lifecycle = lc
 	ver.StartedAt = evt.StartedAt
@@ -171,6 +175,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 
 	eb.Update.Set(fmt.Sprintf("versions.%d.animated", verIndex), ver.Animated)
 	eb.Update.Set(fmt.Sprintf("versions.%d.state.lifecycle", verIndex), ver.State.Lifecycle)
+	eb.Update.Set(fmt.Sprintf("versions.%d.state.error", verIndex), ver.State.Error)
 	eb.Update.Set(fmt.Sprintf("versions.%d.started_at", verIndex), ver.StartedAt)
 	eb.Update.Set(fmt.Sprintf("versions.%d.completed_at", verIndex), ver.CompletedAt)
 	eb.Update.Set(fmt.Sprintf("versions.%d.input_file", verIndex), ver.InputFile)
@@ -205,50 +210,76 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 				)
 			}
 		} else {
-			// Create a mod request for the new emote to be approved
-			mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
-				SetKind(structures.MessageKindModRequest).
-				SetAuthorID(eb.Emote.OwnerID).
-				SetTimestamp(time.Now()).
-				SetData(structures.MessageDataModRequest{
-					TargetKind: structures.ObjectKindEmote,
-					TargetID:   id,
-				})
-			if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
-				zap.S().Errorw("failed to send mod request message for new emote",
-					"error", err,
-					"EMOTE_ID", id,
-					"ACTOR_ID", eb.Emote.OwnerID,
-				)
-			}
-
-			// Send a message on discord
-			emoteOwner, _ := epl.Ctx.Inst().Loaders.UserByID().Load(eb.Emote.OwnerID)
-			_, _ = epl.Ctx.Inst().CD.SendMessage("activity_feed", compactdisc.MessageSend{
-				Content: fmt.Sprintf(
-					"**[activity]** emote created: [%s](%s) by [%s](%s)",
-					eb.Emote.Name, eb.Emote.WebURL(epl.Ctx.Config().WebsiteURL),
-					emoteOwner.DisplayName, emoteOwner.WebURL(epl.Ctx.Config().WebsiteURL),
-				),
-			}, true)
-
 			// Send an Event API update about the emote's lifecycle state
-			_ = epl.Ctx.Inst().Events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-				Type: events.EventTypeUpdateEmote,
-				Body: events.ChangeMap{
-					ID:    eb.Emote.OwnerID,
-					Kind:  structures.ObjectKindEmote,
-					Actor: emoteOwner.ToPublic(),
-					Pulled: []events.ChangeField{{
+			fields := []events.ChangeField{
+				{
+					Key:      "lifecycle",
+					Type:     events.ChangeFieldTypeNumber,
+					OldValue: structures.EmoteLifecycleProcessing,
+					Value:    ver.State.Lifecycle,
+				},
+				{
+					Key:    "versions",
+					Index:  utils.PointerOf(int32(verIndex)),
+					Nested: true,
+					Value: []events.ChangeField{{
 						Key:      "lifecycle",
+						Type:     events.ChangeFieldTypeNumber,
 						OldValue: structures.EmoteLifecycleProcessing,
-						Value:    structures.EmoteLifecycleLive,
+						Value:    ver.State.Lifecycle,
 					}},
 				},
-				Condition: map[string]string{
-					"object_id": eb.Emote.ID.Hex(),
-				},
-			}).ToRaw())
+			}
+
+			emoteOwner, _ := epl.Ctx.Inst().Loaders.UserByID().Load(eb.Emote.OwnerID)
+
+			if ver.State.Lifecycle == structures.EmoteLifecycleFailed {
+				fields = append(fields, events.ChangeField{
+					Key:    "versions",
+					Index:  utils.PointerOf(int32(verIndex)),
+					Type:   events.ChangeFieldTypeObject,
+					Nested: true,
+					Value: []events.ChangeField{{
+						Key:      "error",
+						Type:     events.ChangeFieldTypeString,
+						OldValue: nil,
+						Value:    &ver.State.Error,
+					}},
+				})
+			} else {
+				// Create a mod request for the new emote to be approved
+				mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
+					SetKind(structures.MessageKindModRequest).
+					SetAuthorID(eb.Emote.OwnerID).
+					SetTimestamp(time.Now()).
+					SetData(structures.MessageDataModRequest{
+						TargetKind: structures.ObjectKindEmote,
+						TargetID:   id,
+					})
+				if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
+					zap.S().Errorw("failed to send mod request message for new emote",
+						"error", err,
+						"EMOTE_ID", id,
+						"ACTOR_ID", eb.Emote.OwnerID,
+					)
+				}
+
+				// Send a message on discord
+				_, _ = epl.Ctx.Inst().CD.SendMessage("activity_feed", compactdisc.MessageSend{
+					Content: fmt.Sprintf(
+						"**[activity]** emote created: [%s](%s) by [%s](%s)",
+						eb.Emote.Name, eb.Emote.WebURL(epl.Ctx.Config().WebsiteURL),
+						emoteOwner.DisplayName, emoteOwner.WebURL(epl.Ctx.Config().WebsiteURL),
+					),
+				}, true)
+			}
+
+			_ = epl.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
+				ID:      eb.Emote.ID,
+				Kind:    structures.ObjectKindEmote,
+				Actor:   emoteOwner.ToPublic(),
+				Updated: fields,
+			}, events.EventCondition{}.SetObjectID(eb.Emote.ID))
 		}
 	}
 

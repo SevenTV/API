@@ -288,6 +288,7 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 		Images:      images,
 		Lifecycle:   int(s.State.Lifecycle),
 		Listed:      s.State.Listed,
+		Error:       utils.Ternary(s.State.Error == "", nil, &s.State.Error),
 		Archive:     archive,
 	}
 }

@@ -84,6 +84,7 @@ type EmoteVersion {
   images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
   archive: Archive!
   lifecycle: Int!
+  error: String
   listed: Boolean!
 }
 
