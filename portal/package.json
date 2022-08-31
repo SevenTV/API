@@ -12,8 +12,6 @@
 		"vue": "^3.2.37"
 	},
 	"devDependencies": {
-		"@fortawesome/fontawesome-svg-core": "^6.2.0",
-		"@fortawesome/vue-fontawesome": "^2.0.8",
 		"@types/node": "^18.7.14",
 		"@types/swagger-schema-official": "^2.0.22",
 		"@vitejs/plugin-vue": "^3.0.3",
@@ -25,10 +23,5 @@
 		"vite": "^3.0.7",
 		"vue-router": "^4.1.5",
 		"vue-tsc": "^0.39.5"
-	},
-	"optionalDependencies": {
-		"@fortawesome/free-brands-svg-icons": "^6.1.1",
-		"@fortawesome/free-regular-svg-icons": "^6.1.1",
-		"@fortawesome/free-solid-svg-icons": "^6.1.1"
 	}
 }
