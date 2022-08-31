@@ -1,9 +1,8 @@
-package emotes
+package users
 
 import (
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v2/model"
 )
 
 type Route struct {
@@ -11,30 +10,29 @@ type Route struct {
 }
 
 func New(gCtx global.Context) rest.Route {
-	listen(gCtx)
 	return &Route{gCtx}
 }
 
 func (r *Route) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:    "/emotes",
+		URI:    "/users",
 		Method: rest.GET,
 		Children: []rest.Route{
-			newCreate(r.Ctx),
+			newUser(r.Ctx),
+			newPictureUpload(r.Ctx),
 		},
 		Middleware: []rest.Middleware{},
 	}
 }
 
-// Emote Search
-// @Summary Search Emotes
-// @Description Search for emotes
-// @Tags emotes
+// User Search
+// @Summary Search Users
+// @Description Search for users
+// @Tags users
 // @Produce json
-// @Param query query string false "search by emote name / tags"
-// @Success 200 {array} model.EmoteModel
-// @Router /emotes [get]
+// @Param query query string false "search by username, user id, channel name or channel id"
+// @Success 200
+// @Router /users [get]
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	res := []model.Emote{{}}
-	return ctx.JSON(rest.OK, &res)
+	return ctx.JSON(rest.OK, struct{}{})
 }

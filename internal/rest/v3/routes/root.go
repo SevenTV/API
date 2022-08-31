@@ -35,9 +35,9 @@ func (r *Route) Config() rest.RouteConfig {
 }
 
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	return ctx.JSON(rest.OK, &Response{
-		Online: true,
-	})
+	ctx.Redirect("/v3/docs/ui", int(rest.Found))
+
+	return nil
 }
 
 type Response struct {

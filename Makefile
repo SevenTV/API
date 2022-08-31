@@ -1,4 +1,4 @@
-.PHONY: build lint deps dev_deps generate clean work dev
+.PHONY: build lint deps dev_deps generate portal clean work dev
 
 BUILDER := "unknown"
 VERSION := "unknown"
@@ -36,8 +36,12 @@ dev_deps:
 	yarn
 
 generate: 
-	swag init --dir internal/rest/v3 -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
+	swag init --dir internal/rest/v3,data -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
 	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
+
+portal:
+	yarn --cwd ./portal 
+	yarn --cwd ./portal build
 
 test:
 	go test -count=1 -cover -parallel $$(nproc) -race ./...

@@ -18,9 +18,9 @@ import (
 // @license.name Apache 2.0 + Commons Clause
 // @license.url https://github.com/SevenTV/REST/blob/dev/LICENSE.md
 
-// @host 7tv.io
+// @host localhost:3100
 // @BasePath /v3
-// @schemes https
+// @schemes http
 // @query.collection.format multi
 func API(gCtx global.Context, router *rest.Router) rest.Route {
 	return routes.New(gCtx)

@@ -8,6 +8,7 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v3/helpers"
+	"github.com/seventv/api/internal/rest/portal"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -18,17 +19,17 @@ type HttpServer struct {
 	router   *router.Router
 }
 
-func New(gCtx global.Context) error {
+func New(gctx global.Context) error {
 	var err error
 
-	port := gCtx.Config().Http.Ports.REST
+	port := gctx.Config().Http.Ports.REST
 	if port == 0 {
 		port = 80
 	}
 
 	s := HttpServer{}
 
-	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", gCtx.Config().Http.Addr, port))
+	s.listener, err = net.Listen("tcp", fmt.Sprintf("%s:%d", gctx.Config().Http.Addr, port))
 	if err != nil {
 		return err
 	}
@@ -37,8 +38,8 @@ func New(gCtx global.Context) error {
 
 	// Add versions
 	s.SetupHandlers()
-	s.V3(gCtx)
-	s.V2(gCtx)
+	s.V3(gctx)
+	s.V2(gctx)
 
 	srv := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -92,8 +93,8 @@ func New(gCtx global.Context) error {
 			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
 
-			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
-			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)
+			ctx.Response.Header.Set("X-Node-Name", gctx.Config().K8S.NodeName)
+			ctx.Response.Header.Set("X-Pod-Name", gctx.Config().K8S.PodName)
 			if ctx.IsOptions() {
 				return
 			}
@@ -111,9 +112,14 @@ func New(gCtx global.Context) error {
 		CloseOnShutdown:              true,
 	}
 
+	// Dev Portal
+	go func() {
+		portal.Serve(gctx)
+	}()
+
 	// Gracefully exit when the global context is canceled
 	go func() {
-		<-gCtx.Done()
+		<-gctx.Done()
 
 		_ = srv.Shutdown()
 	}()

@@ -2,36 +2,48 @@ package users
 
 import (
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
+	"github.com/seventv/common/errors"
 )
 
-type Route struct {
+type userRoute struct {
 	Ctx global.Context
 }
 
-func New(gCtx global.Context) rest.Route {
-	return &Route{gCtx}
+func newUser(gctx global.Context) rest.Route {
+	return &userRoute{gctx}
 }
 
-func (r *Route) Config() rest.RouteConfig {
+func (r *userRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:    "/users",
-		Method: rest.GET,
-		Children: []rest.Route{
-			newPictureUpload(r.Ctx),
+		URI:      "/{userID}",
+		Method:   rest.GET,
+		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 300, []string{"s-maxage=600"}),
 		},
-		Middleware: []rest.Middleware{},
 	}
 }
 
-// User Search
-// @Summary Search Users
-// @Description Search for users
+// Get User
+// @Summary Get User
+// @Description Get user by ID
+// @Param userID path string true "ID of the user"
 // @Tags users
 // @Produce json
-// @Param query query string false "search by username, user id, channel name or channel id"
-// @Success 200
-// @Router /users [get]
-func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	return ctx.JSON(rest.OK, struct{}{})
+// @Success 200 {object} model.UserModel
+// @Router /users/{userID} [get]
+func (r *userRoute) Handler(ctx *rest.Ctx) rest.APIError {
+	userID, err := ctx.UserValue("userID").ObjectID()
+	if err != nil {
+		return errors.From(err)
+	}
+
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(userID)
+	if err != nil {
+		return errors.From(err)
+	}
+
+	return ctx.JSON(rest.OK, r.Ctx.Inst().Modelizer.User(user))
 }

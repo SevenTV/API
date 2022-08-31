@@ -51,7 +51,7 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 // @Summary Submit Profile Picture
 // @Description Set a new profile picture
 // @Tags users
-// @Accept image/avif, image/webp, image/gif, image/apng, image/png, image/jpeg
+// @Accept image/avif,image/webp,image/gif,image/apng,image/png,image/jpeg
 // @Success 200
 // @Router /users/{user}/profile-picture [put]
 func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {

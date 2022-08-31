@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
@@ -195,6 +196,10 @@ func main() {
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+		gCtx.Inst().Modelizer = model.NewInstance(model.ModelInstanceOptions{
+			CDN:     config.CdnURL,
+			Website: config.WebsiteURL,
+		})
 		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
 			APIKey: config.Platforms.YouTube.APIKey,
 		})
