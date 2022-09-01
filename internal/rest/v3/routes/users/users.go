@@ -17,7 +17,7 @@ func newUser(gctx global.Context) rest.Route {
 
 func (r *userRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:      "/{userID}",
+		URI:      "/{user.id}",
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
@@ -33,9 +33,9 @@ func (r *userRoute) Config() rest.RouteConfig {
 // @Tags users
 // @Produce json
 // @Success 200 {object} model.UserModel
-// @Router /users/{userID} [get]
+// @Router /users/{user.id} [get]
 func (r *userRoute) Handler(ctx *rest.Ctx) rest.APIError {
-	userID, err := ctx.UserValue("userID").ObjectID()
+	userID, err := ctx.UserValue("user.id").ObjectID()
 	if err != nil {
 		return errors.From(err)
 	}

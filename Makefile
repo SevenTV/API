@@ -36,12 +36,18 @@ dev_deps:
 	yarn
 
 generate: 
+	echo ${DOCROOT}
+
 	swag init --dir internal/rest/v3,data -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
 	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
 
 portal:
 	yarn --cwd ./portal 
 	yarn --cwd ./portal build
+
+portal_stage:
+	yarn --cwd ./portal 
+	yarn --cwd ./portal build --mode=stage
 
 test:
 	go test -count=1 -cover -parallel $$(nproc) -race ./...

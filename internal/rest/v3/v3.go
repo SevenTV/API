@@ -18,7 +18,7 @@ import (
 // @license.name Apache 2.0 + Commons Clause
 // @license.url https://github.com/SevenTV/REST/blob/dev/LICENSE.md
 
-// @host localhost:3100
+// @host 7tv.io
 // @BasePath /v3
 // @schemes http
 // @query.collection.format multi

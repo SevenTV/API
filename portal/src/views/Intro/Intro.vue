@@ -1,6 +1,9 @@
 <template>
 	<main class="intro">
-		<h1>Hello, this is a work in progress!</h1>
+		<p>
+			Hello and welcome to 7TV's Developer Portal! This area exists to provide documentation for developers to
+			integrate with our API.
+		</p>
 	</main>
 </template>
 
@@ -10,11 +13,12 @@
 @import "@style/themes.scss";
 
 main.intro {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	text-align: center;
-	height: 100%;
+	padding-top: 1em;
+	margin-right: 15%;
+	margin-left: 15%;
+
+	p {
+		margin-bottom: 1em;
+	}
 }
 </style>

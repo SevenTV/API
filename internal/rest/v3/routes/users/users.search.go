@@ -25,7 +25,6 @@ func (r *Route) Config() rest.RouteConfig {
 	}
 }
 
-// User Search
 // @Summary Search Users
 // @Description Search for users
 // @Tags users

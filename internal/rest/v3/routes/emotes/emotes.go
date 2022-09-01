@@ -26,7 +26,6 @@ func (r *Route) Config() rest.RouteConfig {
 	}
 }
 
-// Emote Search
 // @Summary Search Emotes
 // @Description Search for emotes
 // @Tags emotes

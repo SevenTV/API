@@ -50,7 +50,7 @@ func Serve(ctx context.Context) {
 	}
 
 	// Start HTTP server.
-	log.Printf("Starting HTTP server on %q\n", addr)
+	zap.S().Infow("Starting Portal Frontend", "addr", addr)
 
 	go func() {
 		handler := fs.NewRequestHandler()
@@ -60,8 +60,8 @@ func Serve(ctx context.Context) {
 			if strings.HasPrefix(pth, "/assets/") {
 				handler(ctx)
 			} else {
-				if pth == "/favicon.ico" {
-					ctx.Response.Header.Set("Content-Type", "image/ico")
+				if pth == "/ico.svg" {
+					ctx.Response.Header.Set("Content-Type", "image/svg+xml")
 					ctx.Response.Header.Set("Cache-Control", "max-age=3600")
 					ctx.SetBody(favicon)
 					return

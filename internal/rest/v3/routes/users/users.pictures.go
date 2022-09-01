@@ -37,7 +37,7 @@ func newPictureUpload(gctx global.Context) rest.Route {
 
 func (r *pictureUploadRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:      "/{user}/profile-picture",
+		URI:      "/{user.id}/profile-picture",
 		Method:   rest.PUT,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
@@ -47,13 +47,12 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 	}
 }
 
-// Submit Profile Picture
-// @Summary Submit Profile Picture
+// @Summary Upload Profile Picture
 // @Description Set a new profile picture
 // @Tags users
 // @Accept image/avif,image/webp,image/gif,image/apng,image/png,image/jpeg
 // @Success 200
-// @Router /users/{user}/profile-picture [put]
+// @Router /users/{user.id}/profile-picture [put]
 func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
 	defer done()
@@ -63,7 +62,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrUnauthorized()
 	}
 
-	victimID, _ := ctx.UserValue("user").String()
+	victimID, _ := ctx.UserValue("user.id").String()
 
 	ctx.SetContentType("application/json")
 

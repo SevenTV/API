@@ -20,6 +20,8 @@
 					</router-link>
 				</div>
 			</div>
+
+			<div class="account"></div>
 		</div>
 
 		<span v-if="version" class="env">
@@ -119,6 +121,13 @@ nav {
 			font-weight: 600;
 		}
 	}
+}
+
+.account {
+	display: flex;
+	flex-wrap: wrap;
+
+	width: 20%;
 }
 
 .env {
