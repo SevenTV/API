@@ -48,7 +48,7 @@ func NewRole(s structures.Role) *Role {
 		ID:       s.ID.Hex(),
 		Name:     s.Name,
 		Position: s.Position,
-		Color:    s.Color,
+		Color:    int32(s.Color),
 		Allowed:  int64(p),
 		Denied:   int64(s.Denied),
 	}

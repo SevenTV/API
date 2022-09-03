@@ -48,7 +48,7 @@ func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInpu
 		errType = errors.ErrUnknownEmote()
 		targetFilter = bson.M{"versions.id": data.TargetID}
 	default:
-		return nil, errors.ErrEmoteNameInvalid().SetDetail("You cannot report type %s", kind.String())
+		return nil, errors.ErrNameInvalid().SetDetail("You cannot report type %s", kind.String())
 	}
 
 	if c, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName(kind.CollectionName())).CountDocuments(ctx, targetFilter); c == 0 {

@@ -10,6 +10,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -50,7 +51,7 @@ func (r *Resolver) EditRole(ctx context.Context, roleID primitive.ObjectID, data
 	if data.Color != nil {
 		c := *data.Color
 
-		rb.SetColor(int32(c))
+		rb.SetColor(utils.Color(c))
 	}
 
 	if data.Allowed != nil {

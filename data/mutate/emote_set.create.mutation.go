@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const MAXIMUM_ALLOWED_EMOTE_SETS = 10
+
 // Create: create the new emote set
 func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
 	if esb == nil {
@@ -50,6 +52,18 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			if !ok || !ed.HasPermission(structures.UserEditorPermissionManageEmoteSets) {
 				return noPrivilege
 			}
+		}
+	
+		// The user has created too many sets
+		if count, _ := m.mongo.Collection(mongo.CollectionNameEmoteSets).CountDocuments(ctx, bson.M{
+			"owner_id": esb.EmoteSet.OwnerID,
+		}); count > MAXIMUM_ALLOWED_EMOTE_SETS {
+			return errors.ErrInsufficientPrivilege().SetDetail("You've reached the limit for Emote Sets (%d)", MAXIMUM_ALLOWED_EMOTE_SETS)
+		}
+
+		// The emote set's name is not valid
+		if err := esb.EmoteSet.Validator().Name(); err != nil {
+			return err
 		}
 	}
 
