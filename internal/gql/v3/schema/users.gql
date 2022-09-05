@@ -20,8 +20,7 @@ type UserOps {
     @goField(forceResolver: true)
   editors(editor_id: ObjectID!, data: UserEditorUpdate!): [UserEditor]
     @goField(forceResolver: true)
-  cosmetics(id: ObjectID!, selected: Boolean): Boolean
-    @goField(forceResolver: true)
+  cosmetics(update: UserCosmeticUpdate!): Boolean @goField(forceResolver: true)
   addRole(id: ObjectID!): [Role!] @goField(forceResolver: true)
   removeRole(id: ObjectID!): [Role!] @goField(forceResolver: true)
 }
@@ -112,6 +111,12 @@ input UserConnectionUpdate {
 input UserEditorUpdate {
   permissions: Int
   visible: Boolean
+}
+
+input UserCosmeticUpdate {
+  id: ObjectID!
+  kind: CosmeticKind!
+  selected: Boolean!
 }
 
 type UserSearchResult {

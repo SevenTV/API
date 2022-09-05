@@ -48,7 +48,7 @@ func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInpu
 		errType = errors.ErrUnknownEmote()
 		targetFilter = bson.M{"versions.id": data.TargetID}
 	default:
-		return nil, errors.ErrEmoteNameInvalid().SetDetail("You cannot report type %s", kind.String())
+		return nil, errors.ErrNameInvalid().SetDetail("You cannot report type %s", kind.String())
 	}
 
 	if c, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName(kind.CollectionName())).CountDocuments(ctx, targetFilter); c == 0 {
@@ -76,9 +76,17 @@ func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInpu
 		return nil, errors.ErrValidationRejected().SetDetail("Some fields have been filled incorrectly")
 	}
 
-	// Create the report
+	// Check if the user has reached the limit of active reports
+	if count, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName("reports")).CountDocuments(ctx, bson.M{
+		"actor_id": actor.ID,
+		"status": structures.ReportStatusOpen,
+	}); count > REPORT_ALLOWED_ACTIVE_PER_USER {
+		return nil, errors.ErrInvalidRequest().SetDetail("You have too many open reports!")
+	}
+
 	t := time.Now()
 
+	// Create the report
 	l := kind.String()[:1]
 	yr := strconv.Itoa(t.Year())
 	mo := strconv.Itoa(int(t.Month()))
