@@ -26,7 +26,6 @@ func (r *userRoute) Config() rest.RouteConfig {
 	}
 }
 
-// Get User
 // @Summary Get User
 // @Description Get user by ID
 // @Param userID path string true "ID of the user"

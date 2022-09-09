@@ -9,7 +9,7 @@ import (
 
 type UserModel struct {
 	ID          primitive.ObjectID    `json:"id"`
-	UserType    UserTypeModel         `json:"type,omitempty" enums:",bot,system"`
+	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string                `json:"username"`
 	DisplayName string                `json:"display_name"`
 	RoleIDs     []primitive.ObjectID  `json:"roles"`
@@ -47,7 +47,7 @@ type UserConnectionModel struct {
 	Username    string                      `json:"username"`
 	DisplayName string                      `json:"display_name"`
 	LinkedAt    int64                       `json:"linked_at"`
-	EmoteSetID  primitive.ObjectID          `json:"emote_set_id,omitempty"`
+	EmoteSet    *EmoteSetModel              `json:"emote_set,omitempty" extensions:"x-omitempty"`
 }
 
 type UserConnectionPlatformModel string
@@ -82,12 +82,19 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 		}
 	}
 
+	var set *EmoteSetModel
+
+	if v.EmoteSet != nil {
+		s := x.EmoteSet(*v.EmoteSet)
+		set = &s
+	}
+
 	return UserConnectionModel{
 		ID:          v.ID,
 		Platform:    UserConnectionPlatformModel(v.Platform),
 		Username:    username,
 		DisplayName: displayName,
 		LinkedAt:    v.LinkedAt.UnixMilli(),
-		EmoteSetID:  v.EmoteSetID,
+		EmoteSet:    set,
 	}
 }
