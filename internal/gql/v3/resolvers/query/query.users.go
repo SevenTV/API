@@ -83,3 +83,32 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 
 	return result, err
 }
+
+func (r *Resolver) UserByConnection(ctx context.Context, connectionPlatform model.ConnectionPlatform, id string) (*model.User, error) {
+	l, ok := r.Ctx.Inst().Loaders.UserByConnectionID(structures.UserConnectionPlatform(connectionPlatform))
+	if !ok {
+		return nil, errors.ErrInvalidRequest().SetDetail("Unknown connection platform")
+	}
+
+	user, err := l.Load(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.ID.IsZero() || user.ID == structures.DeletedUser.ID {
+		return nil, errors.ErrUnknownUser()
+	}
+
+	bans, err := r.Ctx.Inst().Query.Bans(ctx, query.BanQueryOptions{ // remove emotes made by users who own nothing and are happy
+		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := bans.MemoryHole[user.ID]; ok {
+		return nil, errors.ErrUnknownUser()
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+}
