@@ -1,3 +1,6 @@
 # Ignore docs
 internal/rest/v*/docs/*
 .vscode/
+
+# Ignore build outputs
+portal/dist

@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/api/internal/loaders"
@@ -25,6 +26,7 @@ type Instances struct {
 	Limiter      limiter.Instance
 	YouTube      youtube.Instance
 	Loaders      loaders.Instance
+	Modelizer    model.Modelizer
 	CD           compactdisc.Instance
 
 	Query  *query.Query

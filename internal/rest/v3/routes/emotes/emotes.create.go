@@ -10,10 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
-	"github.com/seventv/api/internal/rest/v3/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -51,10 +51,10 @@ func (r *create) Config() rest.RouteConfig {
 // @Summary Create Emote
 // @Description Upload a new emote
 // @Tags emotes
-// @Accept image/webp, image/gif, image/png, image/apng, image/avif, image/jpeg, image/tiff, image/webm
+// @Accept image/webp,image/gif,image/png,image/apng,image/avif,image/jpeg,image/tiff,image/webm
 // @Param X-Emote-Data header string false "Initial emote properties"
 // @Produce json
-// @Success 201 {object} model.Emote
+// @Success 201 {object} model.EmoteModel
 // @Router /emotes [post]
 func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
@@ -374,7 +374,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		)
 	}
 
-	return ctx.JSON(rest.Created, &model.Emote{ID: id.Hex()})
+	return ctx.JSON(rest.Created, &model.EmoteModel{ID: id})
 }
 
 type createData struct {

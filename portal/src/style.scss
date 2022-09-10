@@ -1,0 +1,118 @@
+@import "@style/themes.scss";
+
+html {
+	box-sizing: border-box;
+	font-family: Roboto, sans-serif;
+}
+
+@media screen and (max-width: 650px) {
+	:root {
+		font-size: 0.8rem;
+	}
+}
+
+*,
+*:before,
+*:after {
+	box-sizing: inherit;
+	margin: 0;
+}
+
+body {
+	display: flex;
+	height: 100vh;
+	width: 100vw;
+	overflow-x: hidden;
+	@include themify() {
+		background: themed("backgroundColor");
+		color: themed("color");
+	}
+	&.no-transition {
+		* {
+			transition: none !important;
+		}
+	}
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+.unselectable {
+	user-select: none;
+}
+
+.app-overlay {
+	pointer-events: all;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1000;
+
+	&[locked="true"] {
+		pointer-events: none;
+	}
+}
+
+*::-webkit-scrollbar {
+	width: 0.25rem;
+}
+
+/* Track */
+*::-webkit-scrollbar-track {
+	background: #f1f1f1;
+}
+
+*::-webkit-scrollbar-thumb {
+	background: #888;
+}
+
+/* Handle on hover */
+*::-webkit-scrollbar-thumb:hover {
+	background: #555;
+}
+
+.entrypoint {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+
+	.bouncy {
+		display: flex;
+		flex-direction: column;
+		flex-grow: 1;
+
+		&:not(.home, .store) {
+			margin-top: 4.5em;
+		}
+	}
+	@media screen and (max-width: 1000px) {
+		> .hidden {
+			// height: 0;
+			max-height: 100vh;
+			overflow: hidden;
+		}
+	}
+}
+
+a:not(.unstyled-link) {
+	color: #1c64d1;
+	font-weight: 500;
+	text-decoration: none;
+	&:hover {
+		color: inherit;
+		font-weight: 500;
+	}
+}
+
+a.unstyled-link {
+	color: inherit;
+	font-weight: normal;
+	text-decoration: none;
+}

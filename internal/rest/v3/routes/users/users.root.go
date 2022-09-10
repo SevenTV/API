@@ -18,13 +18,13 @@ func (r *Route) Config() rest.RouteConfig {
 		URI:    "/users",
 		Method: rest.GET,
 		Children: []rest.Route{
+			newUser(r.Ctx),
 			newPictureUpload(r.Ctx),
 		},
 		Middleware: []rest.Middleware{},
 	}
 }
 
-// User Search
 // @Summary Search Users
 // @Description Search for users
 // @Tags users

@@ -1,0 +1,30 @@
+{
+	"name": "portal",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --mode dev",
+		"build": "vue-tsc --noEmit && vite build",
+		"lint:style": "stylelint **/*.{vue,scss,css} --ignore-path .gitignore",
+		"lint:js": "eslint --ext .js,.vue,.ts --ignore-path .gitignore .",
+		"lint": "yarn lint:js && yarn lint:style",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"vue": "^3.2.37"
+	},
+	"devDependencies": {
+		"@types/node": "^18.7.14",
+		"@types/swagger-schema-official": "^2.0.22",
+		"@vitejs/plugin-vue": "^3.0.3",
+		"@vueuse/core": "^9.1.1",
+		"@vueuse/head": "^0.7.9",
+		"pinia": "^2.0.21",
+		"sass": "^1.54.7",
+		"typescript": "^4.6.4",
+		"vite": "^3.0.7",
+		"vue-router": "^4.1.5",
+		"vue-tsc": "^0.39.5"
+	}
+}

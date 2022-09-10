@@ -20,7 +20,7 @@ import (
 
 // @host 7tv.io
 // @BasePath /v3
-// @schemes https
+// @schemes http
 // @query.collection.format multi
 func API(gCtx global.Context, router *rest.Router) rest.Route {
 	return routes.New(gCtx)

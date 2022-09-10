@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v3/routes/auth"
 	"github.com/seventv/api/internal/rest/v3/routes/docs"
+	emote_sets "github.com/seventv/api/internal/rest/v3/routes/emote-sets"
 	"github.com/seventv/api/internal/rest/v3/routes/emotes"
 	"github.com/seventv/api/internal/rest/v3/routes/users"
 )
@@ -26,6 +27,7 @@ func (r *Route) Config() rest.RouteConfig {
 			docs.New(r.Ctx),
 			auth.New(r.Ctx),
 			emotes.New(r.Ctx),
+			emote_sets.New(r.Ctx),
 			users.New(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
@@ -35,9 +37,9 @@ func (r *Route) Config() rest.RouteConfig {
 }
 
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	return ctx.JSON(rest.OK, &Response{
-		Online: true,
-	})
+	ctx.Redirect("/v3/docs/ui", int(rest.Found))
+
+	return nil
 }
 
 type Response struct {

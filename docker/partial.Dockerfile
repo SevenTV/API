@@ -11,5 +11,6 @@ FROM $BASE_IMG
         rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
         
     COPY out/api api
+    COPY portal portal
 
     CMD ./api
