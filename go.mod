@@ -3,7 +3,7 @@ module github.com/seventv/api
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.15
+	github.com/99designs/gqlgen v0.17.16
 	github.com/aws/aws-sdk-go v1.44.83
 	github.com/aws/aws-sdk-go-v2 v1.16.11
 	github.com/bugsnag/panicwrap v1.3.4
@@ -20,7 +20,6 @@ require (
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
-	github.com/swaggo/swag v1.8.4
 	go.mongodb.org/mongo-driver v1.10.1
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
@@ -29,7 +28,6 @@ require (
 
 require (
 	cloud.google.com/go/compute v1.9.0 // indirect
-	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.18 // indirect
@@ -39,10 +37,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bwmarrin/discordgo v0.25.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/spec v0.20.7 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-redsync/redsync/v4 v4.5.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -50,8 +44,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.5.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -76,6 +68,7 @@ require (
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
 	google.golang.org/grpc v1.49.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 require (
@@ -103,7 +96,7 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/valyala/fasthttp v1.39.0
 	github.com/valyala/fasttemplate v1.2.1
-	github.com/vektah/gqlparser/v2 v2.4.8
+	github.com/vektah/gqlparser/v2 v2.5.0
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
