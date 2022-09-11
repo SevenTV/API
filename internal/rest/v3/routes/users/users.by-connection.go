@@ -26,12 +26,12 @@ func (r *userConnectionRoute) Config() rest.RouteConfig {
 	}
 }
 
-// @Summary Get User By Connection ID
-// @Description Get user  ID
-// @Param {connection.id} path string true "ID of the user"
+// @Summary Get User Connection
+// @Description Query for a user's connected account and its attached emote set
+// @Param {connection.id} path string true "twitch, youtube or discord user ID"
 // @Tags users
 // @Produce json
-// @Success 200 {object} model.UserModel
+// @Success 200 {object} model.UserConnectionModel
 // @Router /users/{connection.platform}/{connection.id} [get]
 func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	// Retrieve the platform desired

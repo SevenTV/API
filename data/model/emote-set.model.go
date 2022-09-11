@@ -25,6 +25,7 @@ type ActiveEmoteModel struct {
 	Flags     ActiveEmoteFlagModel `json:"flags"`
 	Timestamp time.Time
 	ActorID   primitive.ObjectID `json:"actor_id,omitempty"`
+	Data      *EmotePartialModel `json:"data,omitempty" extensions:"x-nullable"`
 }
 
 type ActiveEmoteFlagModel int32
@@ -50,7 +51,7 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 	}
 
 	if v.Tags == nil {
-		v.Tags = []string{}
+		v.Tags = make([]string, 0)
 	}
 
 	return EmoteSetModel{
@@ -67,11 +68,19 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 }
 
 func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
+	var data *EmotePartialModel
+
+	if v.Emote != nil {
+		e := x.Emote(*v.Emote).ToPartial()
+		data = &e
+	}
+
 	return ActiveEmoteModel{
 		ID:        v.ID,
 		Name:      v.Name,
 		Flags:     ActiveEmoteFlagModel(v.Flags),
 		Timestamp: v.Timestamp,
 		ActorID:   v.ActorID,
+		Data:      data,
 	}
 }

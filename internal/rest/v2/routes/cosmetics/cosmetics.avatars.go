@@ -174,7 +174,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		case "object_id":
 			key = u.ID.Hex()
 		case "login":
-			key = u.Username
+			key = tw.Data.Login
 		default:
 			continue
 		}
