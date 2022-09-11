@@ -21,7 +21,7 @@ func userLoader[T comparable](ctx context.Context, x inst, keyName string) *data
 			items := make([]structures.User, len(keys))
 			errs := make([]error, len(keys))
 
-			// Initially fill the response with deleted emotes in case some cannot be found
+			// Initially fill the response with deleted users in case some cannot be found
 			for i := 0; i < len(items); i++ {
 				items[i] = structures.DeletedUser
 			}
@@ -76,7 +76,7 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 			items := make([]structures.User, len(keys))
 			errs := make([]error, len(keys))
 
-			// Initially fill the response with deleted emotes in case some cannot be found
+			// Initially fill the response with deleted users in case some cannot be found
 			for i := 0; i < len(items); i++ {
 				items[i] = structures.DeletedUser
 			}

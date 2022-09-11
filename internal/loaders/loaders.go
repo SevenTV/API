@@ -17,7 +17,7 @@ const LoadersKey = utils.Key("dataloaders")
 type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
-	UserByConnectionID(structures.UserConnectionPlatform) (UserByConnectionID, bool)
+	UserByConnectionID(structures.UserConnectionPlatform) UserByConnectionID
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
 	EmoteSetByID() EmoteSetLoaderByID
@@ -75,9 +75,13 @@ func (l inst) UserByUsername() UserLoaderByUsername {
 	return l.userByUsername
 }
 
-func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) (UserByConnectionID, bool) {
+func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) UserByConnectionID {
 	loader, ok := l.userByConnectionID[platform]
-	return loader, ok
+	if !ok {
+		return l.userByConnectionID[structures.UserConnectionPlatformTwitch]
+	}
+
+	return loader
 }
 
 func (l inst) EmoteByID() EmoteLoaderByID {

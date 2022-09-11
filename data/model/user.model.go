@@ -1,22 +1,37 @@
 package model
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
+
 type UserModel struct {
-	ID          primitive.ObjectID    `json:"id"`
-	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
-	Username    string                `json:"username"`
-	DisplayName string                `json:"display_name"`
-	RoleIDs     []primitive.ObjectID  `json:"roles"`
-	Connections []UserConnectionModel `json:"connections"`
+	ID                primitive.ObjectID    `json:"id"`
+	UserType          UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username          string                `json:"username"`
+	ProfilePictureURL string                `json:"profile_picture_url,omitempty"`
+	DisplayName       string                `json:"display_name"`
+	Biography         string                `json:"biography,omitempty" extensions:"x-omitempty"`
+	Editors           []UserEditorModel     `json:"editors,omitempty"`
+	RoleIDs           []primitive.ObjectID  `json:"roles"`
+	Connections       []UserConnectionModel `json:"connections"`
 }
 
-// swagger:type string
+type UserPartialModel struct {
+	ID          primitive.ObjectID   `json:"id"`
+	UserType    UserTypeModel        `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username    string               `json:"username"`
+	DisplayName string               `json:"display_name"`
+	RoleIDs     []primitive.ObjectID `json:"roles"`
+}
+
 type UserTypeModel string
 
 var (
@@ -31,23 +46,73 @@ func (x *modelizer) User(v structures.User) UserModel {
 		connections[i] = x.UserConnection(c)
 	}
 
+	editors := make([]UserEditorModel, len(v.Editors))
+	for i, e := range v.Editors {
+		editors[i] = x.UserEditor(e)
+	}
+
+	profilePictureURL := ""
+	if v.AvatarID != "" {
+		profilePictureURL = fmt.Sprintf("//%s/pp/%s/%s", x.cdnURL, v.ID.Hex(), v.AvatarID)
+	} else {
+		for _, con := range v.Connections {
+			if con.Platform == structures.UserConnectionPlatformTwitch {
+				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
+					profilePictureURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
+				}
+			}
+		}
+	}
+
 	return UserModel{
+		ID:                v.ID,
+		UserType:          UserTypeModel(v.UserType),
+		Username:          v.Username,
+		ProfilePictureURL: profilePictureURL,
+		Biography:         v.Biography,
+		DisplayName:       utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
+		Editors:           editors,
+		RoleIDs:           v.RoleIDs,
+		Connections:       connections,
+	}
+}
+
+func (um UserModel) ToPartial() UserPartialModel {
+	return UserPartialModel{
+		ID:          um.ID,
+		UserType:    um.UserType,
+		Username:    um.Username,
+		DisplayName: um.DisplayName,
+		RoleIDs:     um.RoleIDs,
+	}
+}
+
+type UserEditorModel struct {
+	ID          primitive.ObjectID `json:"id"`
+	Permissions int32              `json:"permissions"`
+	Visible     bool               `json:"visible"`
+	AddedAt     int64              `json:"added_at"`
+}
+
+func (x *modelizer) UserEditor(v structures.UserEditor) UserEditorModel {
+	return UserEditorModel{
 		ID:          v.ID,
-		UserType:    UserTypeModel(v.UserType),
-		Username:    v.Username,
-		DisplayName: utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
-		RoleIDs:     v.RoleIDs,
-		Connections: connections,
+		Permissions: int32(v.Permissions),
+		Visible:     v.Visible,
+		AddedAt:     v.AddedAt.UnixMilli(),
 	}
 }
 
 type UserConnectionModel struct {
-	ID          string                      `json:"id"`
-	Platform    UserConnectionPlatformModel `json:"platform" enums:"TWITCH,YOUTUBE,DISCORD"`
-	Username    string                      `json:"username"`
-	DisplayName string                      `json:"display_name"`
-	LinkedAt    int64                       `json:"linked_at"`
-	EmoteSet    *EmoteSetModel              `json:"emote_set,omitempty" extensions:"x-omitempty"`
+	ID            string                      `json:"id"`
+	Platform      UserConnectionPlatformModel `json:"platform" enums:"TWITCH,YOUTUBE,DISCORD"`
+	Username      string                      `json:"username"`
+	DisplayName   string                      `json:"display_name"`
+	LinkedAt      int64                       `json:"linked_at"`
+	EmoteCapacity int32                       `json:"emote_capacity"`
+	EmoteSet      *EmoteSetModel              `json:"emote_set,omitempty" extensions:"x-omitempty"`
+
+	User *UserModel `json:"user,omitempty" extensions:"x-omitempty"`
 }
 
 type UserConnectionPlatformModel string
@@ -90,11 +155,12 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 	}
 
 	return UserConnectionModel{
-		ID:          v.ID,
-		Platform:    UserConnectionPlatformModel(v.Platform),
-		Username:    username,
-		DisplayName: displayName,
-		LinkedAt:    v.LinkedAt.UnixMilli(),
-		EmoteSet:    set,
+		ID:            v.ID,
+		Platform:      UserConnectionPlatformModel(v.Platform),
+		Username:      username,
+		DisplayName:   displayName,
+		LinkedAt:      v.LinkedAt.UnixMilli(),
+		EmoteCapacity: int32(v.EmoteSlots),
+		EmoteSet:      set,
 	}
 }

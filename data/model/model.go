@@ -4,10 +4,13 @@ import (
 	"fmt"
 
 	"github.com/seventv/common/structures/v3"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Modelizer interface {
 	User(v structures.User) UserModel
+	UserEditor(v structures.UserEditor) UserEditorModel
+	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 }
 
