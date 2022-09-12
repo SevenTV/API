@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -23,9 +21,9 @@ type ActiveEmoteModel struct {
 	ID        primitive.ObjectID   `json:"id"`
 	Name      string               `json:"name"`
 	Flags     ActiveEmoteFlagModel `json:"flags"`
-	Timestamp time.Time
-	ActorID   primitive.ObjectID `json:"actor_id,omitempty"`
-	Data      *EmotePartialModel `json:"data,omitempty" extensions:"x-nullable"`
+	Timestamp int64                `json:"timestamp"`
+	ActorID   *primitive.ObjectID  `json:"actor_id" extensions:"x-nullable"`
+	Data      *EmotePartialModel   `json:"data,omitempty" extensions:"x-nullable"`
 }
 
 type ActiveEmoteFlagModel int32
@@ -75,12 +73,17 @@ func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
 		data = &e
 	}
 
+	var actorID *primitive.ObjectID
+	if !v.ActorID.IsZero() {
+		actorID = &v.ActorID
+	}
+
 	return ActiveEmoteModel{
 		ID:        v.ID,
 		Name:      v.Name,
 		Flags:     ActiveEmoteFlagModel(v.Flags),
-		Timestamp: v.Timestamp,
-		ActorID:   v.ActorID,
+		Timestamp: v.Timestamp.UnixMilli(),
+		ActorID:   actorID,
 		Data:      data,
 	}
 }

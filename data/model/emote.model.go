@@ -40,7 +40,7 @@ type EmoteVersionModel struct {
 	Lifecycle   EmoteLifecycleModel `json:"lifecycle"`
 	Listed      bool                `json:"listed"`
 	Animated    bool                `json:"animated"`
-	Host        ImageHost           `json:"host"`
+	Host        *ImageHost          `json:"host,omitempty" extensions:"x-omitempty"`
 }
 
 type EmoteLifecycleModel int32
@@ -106,9 +106,16 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		owner = &u
 	}
 
-	sort.Slice(versions, func(i, j int) bool {
-		return versions[i].ID == v.ID || versions[j].ID.Timestamp().After(versions[i].ID.Timestamp())
-	})
+	if len(versions) > 0 {
+		// Sort versions
+		sort.Slice(versions, func(i, j int) bool {
+			return versions[i].ID == v.ID || versions[j].ID.Timestamp().After(versions[i].ID.Timestamp())
+		})
+
+		// Remove the image host from versions[0]
+		// (it would be redundant with the top-level property)
+		versions[0].Host = nil
+	}
 
 	if v.Tags == nil {
 		v.Tags = make([]string, 0)
@@ -163,7 +170,7 @@ func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
 		Lifecycle:   EmoteLifecycleModel(v.State.Lifecycle),
 		Listed:      v.State.Listed,
 		Animated:    v.Animated,
-		Host: ImageHost{
+		Host: &ImageHost{
 			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
 			Files: files,
 		},

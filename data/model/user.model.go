@@ -18,6 +18,7 @@ type UserModel struct {
 	Username          string                `json:"username"`
 	ProfilePictureURL string                `json:"profile_picture_url,omitempty"`
 	DisplayName       string                `json:"display_name"`
+	Style             UserStyle             `json:"style"`
 	Biography         string                `json:"biography,omitempty" extensions:"x-omitempty"`
 	Editors           []UserEditorModel     `json:"editors,omitempty"`
 	RoleIDs           []primitive.ObjectID  `json:"roles"`
@@ -29,7 +30,13 @@ type UserPartialModel struct {
 	UserType    UserTypeModel        `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string               `json:"username"`
 	DisplayName string               `json:"display_name"`
+	Style       UserStyle            `json:"style"`
 	RoleIDs     []primitive.ObjectID `json:"roles"`
+}
+
+type UserStyle struct {
+	Color int32               `json:"color"`
+	Paint *CosmeticPaintModel `json:"paint" extensions:"x-nullable"`
 }
 
 type UserTypeModel string
@@ -64,15 +71,26 @@ func (x *modelizer) User(v structures.User) UserModel {
 		}
 	}
 
+	roleIDs := make([]primitive.ObjectID, len(v.Roles))
+	for i, r := range v.Roles {
+		roleIDs[i] = r.ID
+	}
+
+	style := UserStyle{
+		Color: int32(v.GetHighestRole().Color),
+		Paint: nil,
+	}
+
 	return UserModel{
 		ID:                v.ID,
 		UserType:          UserTypeModel(v.UserType),
 		Username:          v.Username,
+		DisplayName:       utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
+		Style:             style,
 		ProfilePictureURL: profilePictureURL,
 		Biography:         v.Biography,
-		DisplayName:       utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
 		Editors:           editors,
-		RoleIDs:           v.RoleIDs,
+		RoleIDs:           roleIDs,
 		Connections:       connections,
 	}
 }
