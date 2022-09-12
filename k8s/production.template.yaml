@@ -226,7 +226,6 @@ spec:
                 name: api
                 port:
                   name: portal
-        paths:
           - pathType: Prefix
             path: /v3/gql
             backend:

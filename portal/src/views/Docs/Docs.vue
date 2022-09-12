@@ -40,6 +40,10 @@
 									{{ route.path }}
 								</span>
 							</h1>
+
+							<div class="route-item-description">
+								{{ route.description }}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -154,6 +158,10 @@ main.docs {
 			&[method="delete"] {
 				color: themed("warning");
 			}
+		}
+
+		.route-item-description {
+			margin: 0.5em;
 		}
 	}
 
