@@ -27,6 +27,9 @@ spec:
             - name: rest
               containerPort: 3100
               protocol: TCP
+            - name: portal
+              containerPort: 3200
+              protocol: TCP
             - name: metrics
               containerPort: 9100
               protocol: TCP
@@ -94,6 +97,10 @@ spec:
       protocol: TCP
       port: 3100
       targetPort: rest
+    - name: portal
+      protocol: TCP
+      port: 3200
+      targetPort: portal
     - name: metrics
       protocol: TCP
       port: 9100
@@ -211,6 +218,14 @@ spec:
   rules:
     - host: 7tv.io
       http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: api
+                port:
+                  name: portal
         paths:
           - pathType: Prefix
             path: /v3/gql
