@@ -42,8 +42,8 @@ func hasPermission(gCtx global.Context) func(ctx context.Context, obj interface{
 				perms |= structures.RolePermissionManageBans
 			case model.PermissionManageCosmetics:
 				perms |= structures.RolePermissionManageCosmetics
-			case model.PermissionManageNews:
-				perms |= structures.RolePermissionManageNews
+			case model.PermissionManageContent:
+				perms |= structures.RolePermissionManageContent
 			case model.PermissionManageReports:
 				perms |= structures.RolePermissionManageReports
 			case model.PermissionManageRoles:

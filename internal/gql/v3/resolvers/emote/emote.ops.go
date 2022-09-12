@@ -18,6 +18,7 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -182,6 +183,14 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		}
 		// Edit tags
 		if params.Tags != nil {
+			if !actor.HasPermission(structures.RolePermissionManageContent) {
+				for _, tag := range params.Tags {
+					if utils.Contains(r.Ctx.Config().Limits.Emotes.ReservedTags, tag) {
+						return nil, errors.ErrInsufficientPrivilege().SetDetail("You cannot use reserved tag #%s", tag)
+					}
+				}
+			}
+
 			eb.SetTags(params.Tags, true)
 		}
 		// Edit flags

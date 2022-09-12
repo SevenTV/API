@@ -57,10 +57,6 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 		eb.SetOwnerID(ownerID)
 	}
 
-	if opt.Tags != nil {
-		eb.SetTags(opt.Tags, true)
-	}
-
 	if opt.Visibility != nil {
 		vis := int64(*opt.Visibility)
 		flags := emote.Flags

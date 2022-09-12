@@ -99,10 +99,10 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 	important := false
 
 	if importantArg != nil && *importantArg {
-		if !actor.HasPermission(structures.RolePermissionManageUsers) || !actor.HasPermission(structures.RolePermissionManageNews) {
+		if !actor.HasPermission(structures.RolePermissionManageUsers) || !actor.HasPermission(structures.RolePermissionManageContent) {
 			return nil, errors.ErrInsufficientPrivilege().
 				SetDetail("You are not permitted to send messages marked as important").
-				SetFields(errors.Fields{"MISSING_PERMISSION_ONE_OF": []string{"MANAGE_USERS", "MANAGE_NEWS"}})
+				SetFields(errors.Fields{"MISSING_PERMISSION_ONE_OF": []string{"MANAGE_USERS", "MANAGE_CONTENT"}})
 		}
 
 		important = true

@@ -247,11 +247,12 @@ type Config struct {
 		} `mapstructure:"quota" json:"quota"`
 
 		Emotes struct {
-			MaxProcessingTimeSeconds int `mapstructure:"max_processing_time_seconds" json:"max_processing_time_seconds"`
-			MaxWidth                 int `mapstructure:"max_width" json:"max_width"`
-			MaxHeight                int `mapstructure:"max_height" json:"max_height"`
-			MaxFrameCount            int `mapstructure:"max_frame_count" json:"max_frame_count"`
-			MaxTags                  int `mapstructure:"max_tags" json:"max_tags"`
+			MaxProcessingTimeSeconds int      `mapstructure:"max_processing_time_seconds" json:"max_processing_time_seconds"`
+			MaxWidth                 int      `mapstructure:"max_width" json:"max_width"`
+			MaxHeight                int      `mapstructure:"max_height" json:"max_height"`
+			MaxFrameCount            int      `mapstructure:"max_frame_count" json:"max_frame_count"`
+			MaxTags                  int      `mapstructure:"max_tags" json:"max_tags"`
+			ReservedTags             []string `mapstructure:"reserved_tags" json:"reserved_tags"`
 		} `mapstructure:"emotes" json:"emotes"`
 	} `mapstructure:"limits" json:"limits"`
 
