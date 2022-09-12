@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/seventv/common/structures/v3"
@@ -15,9 +16,21 @@ type EmoteModel struct {
 	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
 	Listed    bool                `json:"listed"`
 	Animated  bool                `json:"animated"`
-	Owner     *UserModel          `json:"owner,omitempty" extensions:"x-omitempty"`
-	Images    []Image             `json:"images"`
+	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
+	Host      ImageHost           `json:"host"`
 	Versions  []EmoteVersionModel `json:"versions"`
+}
+
+type EmotePartialModel struct {
+	ID        primitive.ObjectID  `json:"id"`
+	Name      string              `json:"name"`
+	Flags     EmoteFlagsModel     `json:"flags"`
+	Tags      []string            `json:"tags"`
+	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
+	Listed    bool                `json:"listed"`
+	Animated  bool                `json:"animated"`
+	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
+	Host      ImageHost           `json:"host"`
 }
 
 type EmoteVersionModel struct {
@@ -27,7 +40,7 @@ type EmoteVersionModel struct {
 	Lifecycle   EmoteLifecycleModel `json:"lifecycle"`
 	Listed      bool                `json:"listed"`
 	Animated    bool                `json:"animated"`
-	Images      []Image             `json:"images"`
+	Host        ImageHost           `json:"host"`
 }
 
 type EmoteLifecycleModel int32
@@ -57,7 +70,7 @@ const (
 )
 
 func (x *modelizer) Emote(v structures.Emote) EmoteModel {
-	images := make([]Image, 0)
+	images := make([]ImageFile, 0)
 	lifecycle := EmoteLifecycleDisabled
 	listed := false
 	animated := false
@@ -65,12 +78,12 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 	versions := make([]EmoteVersionModel, len(v.Versions))
 
 	for i, ver := range v.Versions {
-		files := ver.GetFiles("", true)
+		files := append(ver.GetFiles("image/avif", true), ver.GetFiles("image/webp", true)...)
 		sort.Slice(files, func(i, j int) bool {
-			return files[i].Width > files[j].Width
+			return files[i].Width < files[j].Width
 		})
 
-		vimages := make([]Image, len(files))
+		vimages := make([]ImageFile, len(files))
 
 		for i, fi := range files {
 			vimages[i] = x.Image(fi)
@@ -86,11 +99,19 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		versions[i] = x.EmoteVersion(ver)
 	}
 
-	var owner *UserModel
+	var owner *UserPartialModel
 
 	if v.Owner != nil {
-		u := x.User(*v.Owner)
+		u := x.User(*v.Owner).ToPartial()
 		owner = &u
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		return versions[i].ID == v.ID || versions[j].ID.Timestamp().After(versions[i].ID.Timestamp())
+	})
+
+	if v.Tags == nil {
+		v.Tags = make([]string, 0)
 	}
 
 	return EmoteModel{
@@ -102,17 +123,38 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		Listed:    listed,
 		Animated:  animated,
 		Owner:     owner,
-		Images:    images,
-		Versions:  versions,
+		Host: ImageHost{
+			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
+			Files: images,
+		},
+		Versions: versions,
+	}
+}
+
+func (em EmoteModel) ToPartial() EmotePartialModel {
+	return EmotePartialModel{
+		ID:        em.ID,
+		Name:      em.Name,
+		Flags:     em.Flags,
+		Tags:      em.Tags,
+		Lifecycle: em.Lifecycle,
+		Listed:    em.Listed,
+		Animated:  em.Animated,
+		Owner:     em.Owner,
+		Host:      em.Host,
 	}
 }
 
 func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
-	var images []Image
+	var files []ImageFile
 
-	for _, fi := range v.GetFiles("", true) {
-		images = append(images, x.Image(fi))
+	for _, fi := range append(v.GetFiles("image/avif", true), v.GetFiles("image/webp", true)...) {
+		files = append(files, x.Image(fi))
 	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Width < files[j].Width
+	})
 
 	return EmoteVersionModel{
 		ID:          v.ID,
@@ -121,6 +163,9 @@ func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
 		Lifecycle:   EmoteLifecycleModel(v.State.Lifecycle),
 		Listed:      v.State.Listed,
 		Animated:    v.Animated,
-		Images:      images,
+		Host: ImageHost{
+			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
+			Files: files,
+		},
 	}
 }

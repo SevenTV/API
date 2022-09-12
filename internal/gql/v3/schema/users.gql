@@ -1,8 +1,15 @@
 extend type Query {
   actor: User
+
+  # Fetch a single user by ID
   user(id: ObjectID!): User!
-  usersByID(list: [ObjectID!]!): [UserPartial!]!
+  # Fetch a single user by connection id
+  userByConnection(platform: ConnectionPlatform!, id: String!): User!
+
+  # Search users
   users(query: String!, page: Int, limit: Int): [UserPartial!]!
+  # Fetch many users by ID
+  usersByID(list: [ObjectID!]!): [UserPartial!]!
 }
 
 extend type Subscription {
@@ -101,6 +108,7 @@ type UserCosmetic {
 enum ConnectionPlatform {
   TWITCH
   YOUTUBE
+  DISCORD
 }
 
 input UserConnectionUpdate {

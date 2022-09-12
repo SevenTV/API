@@ -24,8 +24,8 @@
 			<div class="account"></div>
 		</div>
 
-		<span v-if="version" class="env">
-			{{ version.toString().toUpperCase() }}
+		<span v-if="env !== 'production'" class="env">
+			{{ env.toString().toUpperCase() }}
 		</span>
 	</nav>
 </template>
@@ -34,7 +34,7 @@
 import { ref } from "vue";
 import Logo from "@svg/Logo.vue";
 
-const version = import.meta.env.VITE_APP_ENV;
+const env = import.meta.env.VITE_APP_ENV;
 
 const navOpen = ref(false);
 const toggleNav = () => {

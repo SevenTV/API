@@ -83,3 +83,16 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 
 	return result, err
 }
+
+func (r *Resolver) UserByConnection(ctx context.Context, platform model.ConnectionPlatform, id string) (*model.User, error) {
+	user, err := r.Ctx.Inst().Loaders.UserByConnectionID(structures.UserConnectionPlatform(platform)).Load(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.ID.IsZero() || user.ID == structures.DeletedUser.ID {
+		return nil, errors.ErrUnknownUser()
+	}
+
+	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+}
