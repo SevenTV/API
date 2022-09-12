@@ -158,6 +158,8 @@ data:
         max_height: 1000
         max_frame_count: 750
         max_tags: 6
+        reserved_tags:
+          - halloween2022
       quota:
         default_limit: 1000
         max_bad_queries: 5
