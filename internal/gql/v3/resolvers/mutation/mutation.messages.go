@@ -210,7 +210,7 @@ func (r *Resolver) DismissVoidTargetModRequests(ctx context.Context, objectKind 
 			}
 
 			ver, _ := emote.GetVersion(req.Data.TargetID)
-			if ver.ID.IsZero() || !ver.IsUnavailable() {
+			if !ver.ID.IsZero() && !ver.IsUnavailable() {
 				continue
 			}
 
@@ -218,7 +218,7 @@ func (r *Resolver) DismissVoidTargetModRequests(ctx context.Context, objectKind 
 			w = append(w, &mongo.UpdateOneModel{
 				Filter: bson.M{"message_id": req.ID},
 				Update: bson.M{
-					"$set": bson.M{"read": true, "testxd": 1},
+					"$set": bson.M{"read": true, "_manual_dismiss": 1},
 				},
 			})
 		}
