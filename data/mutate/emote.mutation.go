@@ -31,14 +31,14 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 	actor := opt.Actor
 	actorID := primitive.NilObjectID
 
-	if actor != nil {
+	if !actor.ID.IsZero() {
 		actorID = actor.ID
 	}
 
 	emote := &eb.Emote
 
 	// Check actor's permission
-	if actor != nil {
+	if !actor.ID.IsZero() {
 		// User is not privileged
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			if emote.OwnerID.IsZero() { // Deny when emote has no owner
@@ -144,7 +144,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 							},
 						})
 					if err := m.SendInboxMessage(ctx, mb, SendInboxMessageOptions{
-						Actor:                actor,
+						Actor:                &actor,
 						Recipients:           []primitive.ObjectID{emote.OwnerID},
 						ConsiderBlockedUsers: true,
 					}); err != nil {
@@ -366,7 +366,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					Body: events.ChangeMap{
 						ID:      ver.ID,
 						Kind:    structures.ObjectKindEmote,
-						Actor:   actor.ToPublic(),
+						Actor:   m.modelizer.User(actor),
 						Updated: changeFields,
 					},
 				}).ToRaw())
@@ -380,6 +380,6 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 }
 
 type EmoteEditOptions struct {
-	Actor          *structures.User
+	Actor          structures.User
 	SkipValidation bool
 }

@@ -31,7 +31,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 	// Can actor do this?
 	actor := opt.Actor
-	if actor == nil || !actor.HasPermission(structures.RolePermissionEditEmoteSet) {
+	if actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionEditEmoteSet) {
 		return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{"MISSING_PERMISSION": "EDIT_EMOTE_SET"})
 	}
 
@@ -222,17 +222,19 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				Body: events.ChangeMap{
 					ID:    esb.EmoteSet.ID,
 					Kind:  structures.ObjectKindEmoteSet,
-					Actor: actor.ToPublic(),
+					Actor: m.modelizer.User(actor),
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
 						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes))),
 						Type:  events.ChangeFieldTypeObject,
-						Value: structures.ActiveEmote{
+						Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
 							ID:        tgt.ID,
 							Name:      tgt.Name,
+							Flags:     tgt.Flags,
 							Timestamp: at,
 							ActorID:   actor.ID,
-						}.ToPublic(tgt.emote.ToPublic(m.id.CDN)),
+							Emote:     tgt.emote,
+						}),
 					}},
 				},
 			}).ToRaw())
@@ -288,18 +290,25 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						Body: events.ChangeMap{
 							ID:    esb.EmoteSet.ID,
 							Kind:  structures.ObjectKindEmoteSet,
-							Actor: actor.ToPublic(),
+							Actor: m.modelizer.User(actor),
 							Updated: []events.ChangeField{{
-								Key:      "emotes",
-								Index:    utils.PointerOf(int32(ind)),
-								Type:     events.ChangeFieldTypeObject,
-								OldValue: ae.ToPublic(structures.PublicEmote{}),
-								Value: structures.ActiveEmote{
+								Key:   "emotes",
+								Index: utils.PointerOf(int32(ind)),
+								Type:  events.ChangeFieldTypeObject,
+								OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
+									ID:        ae.ID,
+									Name:      ae.Name,
+									Flags:     ae.Flags,
+									Timestamp: ae.Timestamp,
+									ActorID:   ae.ActorID,
+								}),
+								Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
 									ID:        tgt.ID,
 									Name:      tgt.Name,
+									Flags:     tgt.Flags,
 									Timestamp: ae.Timestamp,
 									ActorID:   actor.ID,
-								}.ToPublic(structures.PublicEmote{}),
+								}),
 							}},
 						},
 					}).ToRaw())
@@ -318,16 +327,16 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Body: events.ChangeMap{
 						ID:    esb.EmoteSet.ID,
 						Kind:  structures.ObjectKindEmoteSet,
-						Actor: actor.ToPublic(),
+						Actor: m.modelizer.User(actor),
 						Pulled: []events.ChangeField{{
 							Key:   "emotes",
 							Index: utils.PointerOf(int32(ind)),
 							Type:  events.ChangeFieldTypeObject,
-							OldValue: structures.ActiveEmote{
+							OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
 								ID:      tgt.ID,
 								Name:    tgt.Name,
 								ActorID: actor.ID,
-							}.ToPublic(structures.PublicEmote{}),
+							}),
 						}},
 					},
 				}).ToRaw())

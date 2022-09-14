@@ -235,8 +235,12 @@ func (r *Resolver) doSetChannelEmote(
 	done := r.Ctx.Inst().Limiter.AwaitMutation(ctx)
 	defer done()
 
+	if actor == nil {
+		return errors.ErrUnauthorized()
+	}
+
 	if err := r.Ctx.Inst().Mutate.EditEmotesInSet(ctx, b, mutate.EmoteSetMutationSetEmoteOptions{
-		Actor: actor,
+		Actor: *actor,
 		Emotes: []mutate.EmoteSetMutationSetEmoteItem{{
 			Action: action,
 			ID:     emoteID,

@@ -219,7 +219,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		}
 
 		if err := r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutate.EmoteEditOptions{
-			Actor: &actor,
+			Actor: actor,
 		}); err != nil {
 			return nil, err
 		}

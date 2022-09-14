@@ -53,7 +53,7 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 				return noPrivilege
 			}
 		}
-	
+
 		// The user has created too many sets
 		if count, _ := m.mongo.Collection(mongo.CollectionNameEmoteSets).CountDocuments(ctx, bson.M{
 			"owner_id": esb.EmoteSet.OwnerID,
@@ -170,7 +170,7 @@ type EmoteSetMutationOptions struct {
 }
 
 type EmoteSetMutationSetEmoteOptions struct {
-	Actor    *structures.User
+	Actor    structures.User
 	Emotes   []EmoteSetMutationSetEmoteItem
 	Channels []primitive.ObjectID
 }

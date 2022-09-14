@@ -183,23 +183,24 @@ func main() {
 
 		gCtx.Inst().CD = compactdisc.New(config.Platforms.Discord.API)
 
+		gCtx.Inst().Modelizer = model.NewInstance(model.ModelInstanceOptions{
+			CDN:     config.CdnURL,
+			Website: config.WebsiteURL,
+		})
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
 		gCtx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
-			ID:     id,
-			Mongo:  gCtx.Inst().Mongo,
-			Redis:  gCtx.Inst().Redis,
-			S3:     gCtx.Inst().S3,
-			Events: gCtx.Inst().Events,
-			CD:     gCtx.Inst().CD,
+			ID:        id,
+			Mongo:     gCtx.Inst().Mongo,
+			Redis:     gCtx.Inst().Redis,
+			S3:        gCtx.Inst().S3,
+			Modelizer: gCtx.Inst().Modelizer,
+			Events:    gCtx.Inst().Events,
+			CD:        gCtx.Inst().CD,
 		})
 	}
 
 	{
 		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
-		gCtx.Inst().Modelizer = model.NewInstance(model.ModelInstanceOptions{
-			CDN:     config.CdnURL,
-			Website: config.WebsiteURL,
-		})
 		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
 			APIKey: config.Platforms.YouTube.APIKey,
 		})

@@ -13,6 +13,7 @@ type Modelizer interface {
 	UserEditor(v structures.UserEditor) UserEditorModel
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
+	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 }
 
 type modelizer struct {
@@ -41,8 +42,8 @@ type ImageFile struct {
 	Name       string      `json:"name"`
 	Width      int32       `json:"width"`
 	Height     int32       `json:"height"`
-	FrameCount int32       `json:"frame_count"`
-	Size       int64       `json:"size"`
+	FrameCount int32       `json:"frame_count,omitempty"`
+	Size       int64       `json:"size,omitempty"`
 	Format     ImageFormat `json:"format"`
 }
 

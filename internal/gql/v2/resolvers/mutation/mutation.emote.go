@@ -141,7 +141,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 	}
 
 	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutate.EmoteEditOptions{
-		Actor: &actor,
+		Actor: actor,
 	}); err != nil {
 		return nil, err
 	}
