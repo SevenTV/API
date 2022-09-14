@@ -5,6 +5,7 @@ import (
 
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -23,6 +24,9 @@ func (r *userConnectionRoute) Config() rest.RouteConfig {
 		URI:      "/{connection.platform}/{connection.id}",
 		Method:   rest.GET,
 		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 60, []string{"s-maxage=60"}),
+		},
 	}
 }
 

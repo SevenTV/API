@@ -2,6 +2,7 @@ package emote_sets
 
 import (
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/common/errors"
 )
@@ -19,6 +20,9 @@ func (r *emoteSetByIDRoute) Config() rest.RouteConfig {
 		URI:      "/{emote-set.id}",
 		Method:   rest.GET,
 		Children: []rest.Route{},
+		Middleware: []rest.Middleware{
+			middleware.SetCacheControl(r.Ctx, 60, []string{"s-maxage=60"}),
+		},
 	}
 }
 
