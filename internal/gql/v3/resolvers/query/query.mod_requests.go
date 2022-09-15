@@ -30,7 +30,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		match["_id"] = bson.M{"$lt": afterID}
 	}
 
-	limit := 100
+	limit := 500
 	if limitArg != nil {
 		limit = *limitArg
 	}
