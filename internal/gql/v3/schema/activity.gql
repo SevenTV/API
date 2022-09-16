@@ -1,5 +1,13 @@
 extend type Mutation {
-  sendActivity(input: SendActivityInput!): ObjectID!
+  sendActivity(
+    status: ActivityStatus!
+    type: ActivityTypeInput
+    object: ActivityObjectInput
+  ): ObjectID!
+}
+
+extend type Query {
+  onlineUsers: [UserPartial!]!
 }
 
 type Activity {
@@ -32,11 +40,12 @@ type ActivityTimespan {
   end: Time!
 }
 
-input SendActivityInput {
+input ActivityTypeInput {
   name: String!
   type: ActivityType!
-  status: ActivityStatus!
+}
 
-  target_kind: Int
-  target_id: ObjectID
+input ActivityObjectInput {
+  target_kind: Int!
+  target_id: ObjectID!
 }

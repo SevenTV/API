@@ -11,13 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (r *Resolver) SendActivity(ctx context.Context, input model.SendActivityInput) (primitive.ObjectID, error) {
+func (r *Resolver) SendActivity(ctx context.Context, status model.ActivityStatus, typ *model.ActivityTypeInput, obj *model.ActivityObjectInput) (primitive.ObjectID, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return primitive.NilObjectID, errors.ErrUnauthorized()
 	}
 
-	atype := map[model.ActivityType]structures.ActivityType{
+	typeMap := map[model.ActivityType]structures.ActivityType{
 		model.ActivityTypeViewing:   structures.ActivityTypeViewing,
 		model.ActivityTypeEditing:   structures.ActivityTypeEditing,
 		model.ActivityTypeWatching:  structures.ActivityTypeWatching,
@@ -25,10 +25,16 @@ func (r *Resolver) SendActivity(ctx context.Context, input model.SendActivityInp
 		model.ActivityTypeChatting:  structures.ActivityTypeChatting,
 		model.ActivityTypeCreating:  structures.ActivityTypeCreating,
 		model.ActivityTypeUpdating:  structures.ActivityTypeUpdating,
-	}[input.Type]
+	}
 
-	if atype == 0 {
-		return primitive.NilObjectID, errors.ErrInvalidRequest().SetDetail("Invalid Activity Type")
+	var (
+		aname string
+		atype structures.ActivityType
+	)
+
+	if typ != nil {
+		aname = typ.Name
+		atype = typeMap[typ.Type]
 	}
 
 	astatus := map[model.ActivityStatus]structures.ActivityStatus{
@@ -36,7 +42,7 @@ func (r *Resolver) SendActivity(ctx context.Context, input model.SendActivityInp
 		model.ActivityStatusIDLe:    structures.ActivityStatusIdle,
 		model.ActivityStatusDnd:     structures.ActivityStatusDnd,
 		model.ActivityStatusOnline:  structures.ActivityStatusOnline,
-	}[input.Status]
+	}[status]
 
 	id := primitive.NewObjectIDFromTimestamp(time.Now())
 
@@ -47,12 +53,12 @@ func (r *Resolver) SendActivity(ctx context.Context, input model.SendActivityInp
 
 	ab.SetUserID(actor.ID)
 	ab.SetType(atype)
-	ab.SetName(structures.ActivityName(input.Name))
+	ab.SetName(structures.ActivityName(aname))
 	ab.SetStatus(astatus)
 	ab.SetTimespan(time.Now(), time.Time{})
 
-	if input.TargetKind != nil && input.TargetID != nil {
-		ab.SetObject(structures.ObjectKind(*input.TargetKind), *input.TargetID)
+	if obj != nil {
+		ab.SetObject(structures.ObjectKind(obj.TargetKind), obj.TargetID)
 	}
 
 	if err := r.Ctx.Inst().Mutate.EmitActivity(ctx, ab); err != nil {
