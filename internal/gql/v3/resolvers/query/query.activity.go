@@ -42,6 +42,7 @@ func (r *Resolver) OnlineUsers(ctx context.Context) ([]*model.UserPartial, error
 
 	userMap := make(map[primitive.ObjectID]structures.User)
 	userIDs := make([]primitive.ObjectID, len(users))
+
 	for i, user := range users {
 		userIDs[i] = user.ID
 		userMap[user.ID] = user
@@ -58,6 +59,7 @@ func (r *Resolver) OnlineUsers(ctx context.Context) ([]*model.UserPartial, error
 	})
 
 	result := []*model.UserPartial{}
+
 	for cur.Next(ctx) {
 		a := structures.Activity{}
 
