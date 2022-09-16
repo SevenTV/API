@@ -433,12 +433,6 @@ github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d h1:Q+gqLBOPkFGHyCJx
 github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20220914003823-5f757d278204 h1:Rh1h36ZsF4LH+8bEbhTyDMt8WtFO7yEaEQ/+oSUZFD4=
-github.com/seventv/common v0.0.0-20220914003823-5f757d278204/go.mod h1:zhrUKYYOTAIF8PpmD2LCRtSLsTyViOJtUKnXxMGtCa0=
-github.com/seventv/common v0.0.0-20220914014646-075d7527b851 h1:JT+pD+5NVaCi5jDBo+vSnxZCFEkdRysA5+nICtogTPw=
-github.com/seventv/common v0.0.0-20220914014646-075d7527b851/go.mod h1:zhrUKYYOTAIF8PpmD2LCRtSLsTyViOJtUKnXxMGtCa0=
-github.com/seventv/common v0.0.0-20220914015301-b47d43704b7d h1:tJiWub/nmGoOa9PARx+53i1NaTjFhBD5UPn0U9prxcA=
-github.com/seventv/common v0.0.0-20220914015301-b47d43704b7d/go.mod h1:WlWt8/cst4XtW27D/Ii6bAFht7t1lWiZUyqOsH7PDt0=
 github.com/seventv/common v0.0.0-20220915022718-fd51a4a3a411 h1:hy1a/545vZDWKkstRSUY7Ii9tgXsZ6JS3wAgwcXShPI=
 github.com/seventv/common v0.0.0-20220915022718-fd51a4a3a411/go.mod h1:WlWt8/cst4XtW27D/Ii6bAFht7t1lWiZUyqOsH7PDt0=
 github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91 h1:Ea9415Yq3xZNNrKSlq4XyOViZ0gFWgqOKRxsN0ILOhk=

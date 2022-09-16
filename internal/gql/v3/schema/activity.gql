@@ -1,0 +1,42 @@
+extend type Mutation {
+  sendActivity(input: SendActivityInput!): ObjectID!
+}
+
+type Activity {
+  user_id: ObjectID!
+  user: User!
+  name: String!
+  type: ActivityType!
+  status: ActivityStatus!
+}
+
+enum ActivityStatus {
+  OFFLINE
+  IDLE
+  DND
+  ONLINE
+}
+
+enum ActivityType {
+  VIEWING
+  EDITING
+  WATCHING
+  LISTENING
+  CHATTING
+  CREATING
+  UPDATING
+}
+
+type ActivityTimespan {
+  start: Time!
+  end: Time!
+}
+
+input SendActivityInput {
+  name: String!
+  type: ActivityType!
+  status: ActivityStatus!
+
+  target_kind: Int
+  target_id: ObjectID
+}
