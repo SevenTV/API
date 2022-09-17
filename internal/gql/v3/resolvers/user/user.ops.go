@@ -66,6 +66,10 @@ func (r *ResolverOps) Roles(ctx context.Context, obj *model.UserOps, roleID prim
 
 	events.Publish(r.Ctx, "users", obj.ID)
 
+	if _, err := r.Ctx.Inst().CD.SyncUser(obj.ID); err != nil {
+		r.Z().Errorw("failed to sync user with discord", "user", obj.ID, "err", err)
+	}
+
 	return ub.User.RoleIDs, nil
 }
 
