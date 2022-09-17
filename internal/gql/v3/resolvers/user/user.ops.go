@@ -22,14 +22,51 @@ type ResolverOps struct {
 	types.Resolver
 }
 
-// AddRole implements generated.UserOpsResolver
-func (*ResolverOps) AddRole(ctx context.Context, obj *model.UserOps, id primitive.ObjectID) ([]*model.Role, error) {
-	return nil, nil
-}
+// Roles implements generated.UserOpsResolver
+func (r *ResolverOps) Roles(ctx context.Context, obj *model.UserOps, roleID primitive.ObjectID, action model.ListItemAction) ([]primitive.ObjectID, error) {
+	if action == model.ListItemActionUpdate {
+		return nil, errors.ErrInvalidRequest().SetDetail("Cannot use UPDATE action for roles")
+	}
 
-// RemoveRole implements generated.UserOpsResolver
-func (*ResolverOps) RemoveRole(ctx context.Context, obj *model.UserOps, id primitive.ObjectID) ([]*model.Role, error) {
-	return nil, nil
+	actor := auth.For(ctx)
+
+	// Get target user
+	user, err := r.Ctx.Inst().Query.Users(ctx, bson.M{
+		"_id": obj.ID,
+	}).First()
+	if err != nil {
+		if errors.Compare(err, errors.ErrNoItems()) {
+			return nil, errors.ErrUnknownUser()
+		}
+
+		return nil, err
+	}
+
+	// Get role
+	var role structures.Role
+
+	roles, err := r.Ctx.Inst().Query.Roles(ctx, bson.M{
+		"_id": roleID,
+	})
+	if err != nil || len(roles) == 0 {
+		return nil, err
+	} else {
+		role = roles[0]
+	}
+
+	ub := structures.NewUserBuilder(user)
+
+	if err = r.Ctx.Inst().Mutate.SetRole(ctx, ub, mutate.SetUserRoleOptions{
+		Role:   role,
+		Actor:  actor,
+		Action: structures.ListItemAction(action),
+	}); err != nil {
+		return nil, err
+	}
+
+	events.Publish(r.Ctx, "users", obj.ID)
+
+	return ub.User.RoleIDs, nil
 }
 
 func (r *ResolverOps) Z() *zap.SugaredLogger {

@@ -28,8 +28,9 @@ type UserOps {
   editors(editor_id: ObjectID!, data: UserEditorUpdate!): [UserEditor]
     @goField(forceResolver: true)
   cosmetics(update: UserCosmeticUpdate!): Boolean @goField(forceResolver: true)
-  addRole(id: ObjectID!): [Role!] @goField(forceResolver: true)
-  removeRole(id: ObjectID!): [Role!] @goField(forceResolver: true)
+  roles(role_id: ObjectID!, action: ListItemAction!): [ObjectID!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_USERS, MANAGE_ROLES])
 }
 
 type User {
