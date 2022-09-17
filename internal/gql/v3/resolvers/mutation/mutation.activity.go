@@ -55,10 +55,9 @@ func (r *Resolver) SendActivity(ctx context.Context, status model.ActivityStatus
 	ab.SetType(atype)
 	ab.SetName(structures.ActivityName(aname))
 	ab.SetStatus(astatus)
-	ab.SetTimespan(time.Now(), time.Time{})
 
 	if obj != nil {
-		ab.SetObject(structures.ObjectKind(obj.TargetKind), obj.TargetID)
+		ab.SetObject(structures.ObjectKind(obj.Kind), obj.ID)
 	}
 
 	if err := r.Ctx.Inst().Mutate.EmitActivity(ctx, ab); err != nil {

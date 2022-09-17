@@ -46,6 +46,6 @@ input ActivityTypeInput {
 }
 
 input ActivityObjectInput {
-  target_kind: Int!
-  target_id: ObjectID!
+  kind: Int!
+  id: ObjectID!
 }

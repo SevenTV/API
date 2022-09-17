@@ -48,20 +48,32 @@ func (r *Resolver) OnlineUsers(ctx context.Context) ([]*model.UserPartial, error
 		userMap[user.ID] = user
 	}
 
-	cur, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameActivities).Find(ctx, bson.M{
-		"status":             bson.M{"$in": []structures.ActivityStatus{structures.ActivityStatusOnline, structures.ActivityStatusIdle, structures.ActivityStatusDnd}},
-		"state.user_id":      bson.M{"$in": userIDs},
-		"state.timespan.end": nil,
-		// user was last active at least 5 minutes ago
-		"state.timespan.start": bson.M{
-			"$gte": time.Now().Add(-ONLINE_ACTIVITY_TIMEOUT),
-		},
+	cur, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameActivities).Aggregate(ctx, mongo.Pipeline{
+		{{
+			Key: "$match",
+			Value: bson.M{
+				"values.status":    bson.M{"$in": []structures.ActivityStatus{structures.ActivityStatusOnline, structures.ActivityStatusIdle, structures.ActivityStatusDnd}},
+				"metadata.user_id": bson.M{"$in": userIDs},
+				"timestamp": bson.M{
+					"$gte": time.Now().Add(-ONLINE_ACTIVITY_TIMEOUT),
+				},
+			},
+		}},
+		{{
+			Key: "$group",
+			Value: bson.M{
+				"_id": "$metadata.user_id",
+				"activity": bson.M{
+					"$last": "$$ROOT",
+				},
+			},
+		}},
 	})
 
 	result := []*model.UserPartial{}
 
 	for cur.Next(ctx) {
-		a := structures.Activity{}
+		a := aggregatedLatestActivity{}
 
 		if err := cur.Decode(&a); err != nil {
 			r.Z().Errorw("failed to decode activity", "error", err)
@@ -69,7 +81,7 @@ func (r *Resolver) OnlineUsers(ctx context.Context) ([]*model.UserPartial, error
 			continue
 		}
 
-		user, ok := userMap[a.State.UserID]
+		user, ok := userMap[a.Activity.Metadata.UserID]
 		if !ok {
 			continue
 		}
@@ -78,4 +90,8 @@ func (r *Resolver) OnlineUsers(ctx context.Context) ([]*model.UserPartial, error
 	}
 
 	return result, nil
+}
+
+type aggregatedLatestActivity struct {
+	Activity structures.Activity `bson:"activity"`
 }
