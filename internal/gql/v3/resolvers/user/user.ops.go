@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/events"
@@ -146,9 +147,8 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				return nil, errors.ErrUnknownUserConnection()
 			}
 
-			// oldSetID := conn.EmoteSetID
-
-			// setID := *d.EmoteSetID
+			oldSetID := conn.EmoteSetID
+			setID := *d.EmoteSetID
 
 			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutate.SetUserActiveEmoteSet{
 				EmoteSetID:   *d.EmoteSetID,
@@ -163,66 +163,66 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 
 				return nil, err
 			}
-		}
-	}
 
-	// Send legacy events
-	/*
-		if conn.Platform == structures.UserConnectionPlatformTwitch {
-			sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{setID, oldSetID}}})
-			if !sets.Empty() {
-				go func() {
-					var (
-						newSet structures.EmoteSet
-						oldSet structures.EmoteSet
-					)
+			// Send legacy events
+			if conn.Platform == structures.UserConnectionPlatformTwitch {
+				twc, _ := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](conn.ToRaw())
 
-					items, _ := sets.Items()
-					for _, es := range items {
-						switch es.ID {
-						case setID:
-							newSet = es
-						case oldSetID:
-							oldSet = es
+				sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{setID, oldSetID}}})
+				if !sets.Empty() {
+					go func() {
+						var (
+							newSet structures.EmoteSet
+							oldSet structures.EmoteSet
+						)
+
+						items, _ := sets.Items()
+						for _, es := range items {
+							switch es.ID {
+							case setID:
+								newSet = es
+							case oldSetID:
+								oldSet = es
+							}
 						}
-					}
 
-					if !newSet.ID.IsZero() {
-						if !oldSet.ID.IsZero() {
-							// Send "REMOVE" events to former set
-							for _, ae := range oldSet.Emotes {
+						if !newSet.ID.IsZero() {
+							if !oldSet.ID.IsZero() {
+								// Send "REMOVE" events to former set
+								for _, ae := range oldSet.Emotes {
+									if ae.Emote == nil {
+										continue
+									}
+
+									if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
+										zap.S().Errorw("redis",
+											"error", err,
+										)
+									}
+
+									time.Sleep(time.Millisecond * 25)
+								}
+							}
+
+							for _, ae := range newSet.Emotes {
 								if ae.Emote == nil {
 									continue
 								}
 
-								if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
+								if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
 									zap.S().Errorw("redis",
 										"error", err,
 									)
 								}
 
-								time.Sleep(time.Millisecond * 10) // todo
+								time.Sleep(time.Millisecond * 25)
 							}
 						}
-
-						for _, ae := range newSet.Emotes {
-							if ae.Emote == nil {
-								continue
-							}
-
-							if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, conn.Data.Login, *actor, oldSet, *ae.Emote); err != nil {
-								zap.S().Errorw("redis",
-									"error", err,
-								)
-							}
-
-							time.Sleep(time.Millisecond * 10) // todo
-						}
-					}
-				}()
+					}()
+				}
 			}
 		}
-	*/
+	}
 
 	if err != nil {
 		return nil, err
