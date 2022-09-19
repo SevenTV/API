@@ -40,6 +40,7 @@ type ImageHost struct {
 
 type ImageFile struct {
 	Name       string      `json:"name"`
+	StaticName string      `json:"static_name"`
 	Width      int32       `json:"width"`
 	Height     int32       `json:"height"`
 	FrameCount int32       `json:"frame_count,omitempty"`
@@ -60,6 +61,7 @@ func (x *modelizer) Image(v structures.EmoteFile) ImageFile {
 
 	return ImageFile{
 		Name:       v.Name,
+		StaticName: strings.Replace(v.Name, ".", "_static.", 1),
 		Format:     ImageFormat(format),
 		Width:      v.Width,
 		Height:     v.Height,

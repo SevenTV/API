@@ -25,7 +25,7 @@ type EmotePartialModel struct {
 	ID        primitive.ObjectID  `json:"id"`
 	Name      string              `json:"name"`
 	Flags     EmoteFlagsModel     `json:"flags"`
-	Tags      []string            `json:"tags"`
+	Tags      []string            `json:"tags,omitempty"`
 	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
 	Listed    bool                `json:"listed"`
 	Animated  bool                `json:"animated"`
@@ -115,10 +115,6 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		// Remove the image host from versions[0]
 		// (it would be redundant with the top-level property)
 		versions[0].Host = nil
-	}
-
-	if v.Tags == nil {
-		v.Tags = make([]string, 0)
 	}
 
 	return EmoteModel{
