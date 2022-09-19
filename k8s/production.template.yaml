@@ -160,7 +160,7 @@ data:
         max_processing_time_seconds: 120
         max_width: 1000
         max_height: 1000
-        max_frame_count: 750
+        max_frame_count: 1000
         max_tags: 6
         reserved_tags:
           - halloween2022
