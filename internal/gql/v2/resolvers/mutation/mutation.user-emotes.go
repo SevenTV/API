@@ -64,7 +64,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			SetCapacity(250)
 
 		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutate.EmoteSetMutationOptions{
-			Actor: &actor,
+			Actor: actor,
 		}); err != nil {
 			return nil, err
 		}

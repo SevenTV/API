@@ -17,6 +17,7 @@ type EmoteSetOps {
   id: ObjectID!
   emotes(id: ObjectID!, action: ListItemAction!, name: String): [ActiveEmote!]!
     @goField(forceResolver: true)
+  delete: Boolean! @goField(forceResolver: true)
 }
 
 type EmoteSet {

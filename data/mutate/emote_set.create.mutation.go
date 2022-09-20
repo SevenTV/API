@@ -29,7 +29,7 @@ func (m *Mutate) CreateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	// Check actor's permissions
 	actor := opt.Actor
 	if !opt.SkipValidation {
-		if actor == nil {
+		if actor.ID.IsZero() {
 			return errors.ErrUnauthorized()
 		}
 
@@ -101,7 +101,7 @@ func (m *Mutate) EditEmoteSet(ctx context.Context, esb *structures.EmoteSetBuild
 	actor := opt.Actor
 	set := esb.EmoteSet
 
-	if actor == nil || !actor.HasPermission(structures.RolePermissionEditEmoteSet) {
+	if actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionEditEmoteSet) {
 		return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{"MISSING_PERMISSION": "EDIT_EMOTE_SET"})
 	}
 
@@ -165,7 +165,7 @@ func (m *Mutate) EditEmoteSet(ctx context.Context, esb *structures.EmoteSetBuild
 }
 
 type EmoteSetMutationOptions struct {
-	Actor          *structures.User
+	Actor          structures.User
 	SkipValidation bool
 }
 

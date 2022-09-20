@@ -35,7 +35,7 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 
 	// Execute mutation
 	if err := r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, b, mutate.EmoteSetMutationOptions{
-		Actor: &actor,
+		Actor: actor,
 	}); err != nil {
 		return nil, err
 	}

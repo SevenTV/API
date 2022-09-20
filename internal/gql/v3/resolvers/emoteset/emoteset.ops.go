@@ -120,3 +120,28 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 
 	return setModel.Emotes, multierror.Append(nil, errs...).ErrorOrNil()
 }
+
+func (r *ResolverOps) Delete(ctx context.Context, obj *model.EmoteSetOps) (bool, error) {
+	actor := auth.For(ctx)
+	if actor.ID.IsZero() {
+		return false, errors.ErrUnauthorized()
+	}
+
+	// Get the emote set
+	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(obj.ID)
+	if err != nil {
+		return false, err
+	}
+
+	// Get a builder
+	esb := structures.NewEmoteSetBuilder(es)
+
+	// Do delete
+	if err := r.Ctx.Inst().Mutate.DeleteEmoteSet(ctx, esb, mutate.EmoteSetMutationOptions{
+		Actor: actor,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
