@@ -85,12 +85,15 @@ func (r *Resolver) SearchEmotes(
 	exactVersion := make(utils.Set[primitive.ObjectID])
 	modQueue := false
 
+	namedMap := map[primitive.ObjectID]string{}
+
 	if globalStateArg != nil && *globalStateArg != "include" {
 		set, err := r.Ctx.Inst().Query.GlobalEmoteSet(ctx)
 		if err == nil {
 			ids := make([]primitive.ObjectID, len(set.Emotes))
 			for i, ae := range set.Emotes {
 				ids[i] = ae.ID
+				namedMap[ae.ID] = ae.Name
 			}
 
 			switch *globalStateArg {
@@ -180,11 +183,16 @@ func (r *Resolver) SearchEmotes(
 			foundExact := false
 
 			for _, ver := range e.Versions {
+				if name, ok := namedMap[ver.ID]; ok {
+					e.Name = name
+				}
+
 				if !exactVersion.Has(ver.ID) {
 					continue
 				}
 
 				e.ID = ver.ID
+
 				foundExact = true
 
 				break

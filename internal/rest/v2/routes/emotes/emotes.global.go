@@ -48,6 +48,8 @@ func (r *globals) Handler(ctx *rest.Ctx) errors.APIError {
 			continue
 		}
 
+		ae.Emote.Name = ae.Name
+
 		result[i] = model.NewEmote(*ae.Emote, r.Ctx.Config().CdnURL)
 		result[i].Visibility |= v2structures.EmoteVisibilityGlobal
 	}
