@@ -9,7 +9,7 @@ extend type Subscription {
 
 extend type Mutation {
   emoteSet(id: ObjectID!): EmoteSetOps
-  createEmoteSet(data: CreateEmoteSetInput!): EmoteSet
+  createEmoteSet(user_id: ObjectID!, data: CreateEmoteSetInput!): EmoteSet
     @hasPermissions(role: [CREATE_EMOTE_SET])
 }
 
