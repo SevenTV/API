@@ -43,6 +43,12 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		}
 	}
 
+	alb := structures.NewAuditLogBuilder(structures.AuditLog{}).
+		SetKind(structures.AuditLogKindUpdateEmoteSet).
+		SetActor(actor.ID).
+		SetTargetID(esb.EmoteSet.ID).
+		SetTargetKind(structures.ObjectKindEmoteSet)
+
 	changeFields := make([]events.ChangeField, 0)
 	init := esb.Initial()
 
@@ -58,6 +64,8 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			OldValue: init.Name,
 			Value:    esb.EmoteSet.Name,
 		})
+
+		alb.AddChanges(structures.NewAuditChange("name").WriteSingleValues(init.Name, esb.EmoteSet.Name))
 	}
 
 	if init.Privileged != esb.EmoteSet.Privileged {
@@ -71,6 +79,8 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			OldValue: init.Privileged,
 			Value:    esb.EmoteSet.Privileged,
 		})
+
+		alb.AddChanges(structures.NewAuditChange("privileged").WriteSingleValues(init.Privileged, esb.EmoteSet.Privileged))
 	}
 
 	if init.OwnerID != esb.EmoteSet.OwnerID {
@@ -84,6 +94,8 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			OldValue: init.OwnerID.Hex(),
 			Value:    esb.EmoteSet.OwnerID.Hex(),
 		})
+
+		alb.AddChanges(structures.NewAuditChange("owner_id").WriteSingleValues(init.OwnerID.Hex(), esb.EmoteSet.OwnerID.Hex()))
 	}
 
 	if init.Capacity != esb.EmoteSet.Capacity {
@@ -105,6 +117,8 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			OldValue: init.Capacity,
 			Value:    esb.EmoteSet.Capacity,
 		})
+
+		alb.AddChanges(structures.NewAuditChange("capacity").WriteSingleValues(init.Capacity, esb.EmoteSet.Capacity))
 	}
 
 	if len(changeFields) > 0 {
@@ -129,6 +143,11 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 			"object_id": esb.EmoteSet.ID.Hex(),
 		}); err != nil {
 			zap.S().Errorw("failed to dispatch event", "error", err)
+		}
+
+		// Write audit log
+		if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {
+			zap.S().Errorw("failed to write audit log", "error", err)
 		}
 	} else {
 		return errors.ErrNothingHappened()

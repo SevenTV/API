@@ -92,16 +92,14 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 					Key:    "connections",
 					Index:  utils.PointerOf(int32(connInd)),
 					Nested: true,
-					Type:   events.ChangeFieldTypeObject,
-					Value: events.ChangeField{
+					Value: []events.ChangeField{{
 						Key:      "emote_set",
 						Type:     events.ChangeFieldTypeObject,
 						OldValue: utils.Ternary(oldSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(oldSet))),
 						Value:    utils.Ternary(newSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(newSet))),
-					},
+					}},
 				},
 			},
-			Object: []byte{},
 		}, events.EventCondition{
 			"object_id": ub.User.ID.Hex(),
 		}); err != nil {

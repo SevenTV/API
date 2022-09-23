@@ -65,6 +65,19 @@ func (m *Mutate) DeleteEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		zap.S().Errorw("failed to dispatch event", "error", err)
 	}
 
+	// Write audit log
+	alb := structures.NewAuditLogBuilder(structures.AuditLog{
+		Changes: []*structures.AuditLogChange{},
+	}).
+		SetKind(structures.AuditLogKindDeleteEmoteSet).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmoteSet).
+		SetTargetID(esb.EmoteSet.ID)
+
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {
+		zap.S().Errorw("failed to write audit log", "error", err)
+	}
+
 	esb.MarkAsTainted()
 
 	return nil
