@@ -14,7 +14,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.13.0
-	github.com/seventv/common v0.0.0-20220915022718-fd51a4a3a411
+	github.com/seventv/common v0.0.0-20220922151117-d22a79579e3f
 	github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91
 	github.com/seventv/image-processor/go v0.0.0-20220823211530-94fa41d1de6e
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643

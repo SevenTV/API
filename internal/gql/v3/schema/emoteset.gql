@@ -9,7 +9,7 @@ extend type Subscription {
 
 extend type Mutation {
   emoteSet(id: ObjectID!): EmoteSetOps
-  createEmoteSet(data: CreateEmoteSetInput!): EmoteSet
+  createEmoteSet(user_id: ObjectID!, data: CreateEmoteSetInput!): EmoteSet
     @hasPermissions(role: [CREATE_EMOTE_SET])
 }
 
@@ -17,6 +17,8 @@ type EmoteSetOps {
   id: ObjectID!
   emotes(id: ObjectID!, action: ListItemAction!, name: String): [ActiveEmote!]!
     @goField(forceResolver: true)
+  update(data: UpdateEmoteSetInput!): EmoteSet! @goField(forceResolver: true)
+  delete: Boolean! @goField(forceResolver: true)
 }
 
 type EmoteSet {
@@ -41,6 +43,11 @@ type ActiveEmote {
 input CreateEmoteSetInput {
   name: String!
   privileged: Boolean @hasPermissions(role: [SUPER_ADMINISTRATOR])
+}
+
+input UpdateEmoteSetInput {
+  name: String
+  capacity: Int
 }
 
 enum EmoteSetName {

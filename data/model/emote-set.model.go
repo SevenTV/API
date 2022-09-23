@@ -11,7 +11,7 @@ type EmoteSetModel struct {
 	Tags       []string            `json:"tags"`
 	Immutable  bool                `json:"immutable"`
 	Privileged bool                `json:"privileged"`
-	Emotes     []ActiveEmoteModel  `json:"emotes"`
+	Emotes     []ActiveEmoteModel  `json:"emote,omitempty" extensions:"x-omitempty"`
 	Capacity   int32               `json:"capacity"`
 	ParentID   *primitive.ObjectID `json:"parent_id,omitempty"`
 	Owner      *UserPartialModel   `json:"owner" extensions:"x-nullable"`

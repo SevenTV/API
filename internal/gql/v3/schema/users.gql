@@ -93,6 +93,7 @@ type UserEmote {
 
 type UserConnection {
   id: String!
+  username: String!
   display_name: String!
   platform: ConnectionPlatform!
   linked_at: Time!

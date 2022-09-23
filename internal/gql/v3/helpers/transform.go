@@ -112,20 +112,24 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 	var (
 		err         error
 		displayName string
+		username    string
 	)
 	// Decode the connection data
 	switch s.Platform {
 	case structures.UserConnectionPlatformTwitch:
 		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](s); err == nil {
 			displayName = s.Data.DisplayName
+			username = s.Data.Login
 		}
 	case structures.UserConnectionPlatformYouTube:
 		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](s); err == nil {
 			displayName = s.Data.Title
+			username = s.Data.ID
 		}
 	case structures.UserConnectionPlatformDiscord:
 		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataDiscord](s); err == nil {
-			displayName = s.Data.Username + "#" + s.Data.Discriminator
+			displayName = s.Data.Username
+			username = s.Data.Username + "#" + s.Data.Discriminator
 		}
 	}
 
@@ -140,6 +144,7 @@ func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *mode
 
 	return &model.UserConnection{
 		ID:          s.ID,
+		Username:    username,
 		DisplayName: displayName,
 		Platform:    model.ConnectionPlatform(s.Platform),
 		LinkedAt:    s.LinkedAt,

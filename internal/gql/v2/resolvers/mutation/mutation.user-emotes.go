@@ -64,7 +64,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 			SetCapacity(250)
 
 		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutate.EmoteSetMutationOptions{
-			Actor: &actor,
+			Actor: actor,
 		}); err != nil {
 			return nil, err
 		}
@@ -75,11 +75,14 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 				continue // skip if connection doesn't support emotes
 			}
 
+			oldSet, _ := r.Ctx.Inst().Loaders.EmoteSetByID().Load(conn.EmoteSetID)
+
 			ub := structures.NewUserBuilder(target)
 			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, ub, mutate.SetUserActiveEmoteSet{
-				EmoteSetID:   esb.EmoteSet.ID,
+				NewSet:       esb.EmoteSet,
+				OldSet:       oldSet,
 				Platform:     structures.UserConnectionPlatformTwitch,
-				Actor:        &actor,
+				Actor:        actor,
 				ConnectionID: conn.ID,
 			}); err != nil {
 				return nil, err

@@ -18,7 +18,7 @@ func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID) (*model.
 }
 
 // CreateEmoteSet: create a new emote set
-func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSetInput) (*model.EmoteSet, error) {
+func (r *Resolver) CreateEmoteSet(ctx context.Context, userID primitive.ObjectID, input model.CreateEmoteSetInput) (*model.EmoteSet, error) {
 	actor := auth.For(ctx)
 
 	// Set up emote set builder
@@ -30,12 +30,12 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, input model.CreateEmoteSe
 	b := structures.NewEmoteSetBuilder(structures.EmoteSet{Emotes: []structures.ActiveEmote{}}).
 		SetName(input.Name).
 		SetPrivileged(isPrivileged).
-		SetOwnerID(actor.ID).
+		SetOwnerID(userID).
 		SetCapacity(250)
 
 	// Execute mutation
 	if err := r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, b, mutate.EmoteSetMutationOptions{
-		Actor: &actor,
+		Actor: actor,
 	}); err != nil {
 		return nil, err
 	}

@@ -107,12 +107,12 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 
 	// Unlink is mutually exclusive to all other mutation fields
 	if d.Unlink != nil && *d.Unlink {
-		if len(b.User.Connections) <= 1 {
-			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
-		}
-
 		if actor.ID != b.User.ID && !actor.HasPermission(structures.RolePermissionManageUsers) {
 			return nil, errors.ErrInsufficientPrivilege()
+		}
+
+		if len(b.User.Connections) <= 1 {
+			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
 		}
 
 		conn, ind := b.User.Connections.Get(id)
@@ -147,20 +147,16 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				return nil, errors.ErrUnknownUserConnection()
 			}
 
-			oldSetID := conn.EmoteSetID
-			setID := *d.EmoteSetID
+			newSet, _ := r.Ctx.Inst().Loaders.EmoteSetByID().Load(*d.EmoteSetID)
+			oldSet, _ := r.Ctx.Inst().Loaders.EmoteSetByID().Load(conn.EmoteSetID)
 
 			if err = r.Ctx.Inst().Mutate.SetUserConnectionActiveEmoteSet(ctx, b, mutate.SetUserActiveEmoteSet{
-				EmoteSetID:   *d.EmoteSetID,
+				NewSet:       newSet,
+				OldSet:       oldSet,
 				Platform:     structures.UserConnectionPlatformTwitch,
-				Actor:        &actor,
+				Actor:        actor,
 				ConnectionID: id,
 			}); err != nil {
-				zap.S().Errorw("failed to update user's active emote set",
-					"error", err,
-					"connection_id", conn.ID,
-				)
-
 				return nil, err
 			}
 
@@ -168,7 +164,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			if conn.Platform == structures.UserConnectionPlatformTwitch {
 				twc, _ := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](conn.ToRaw())
 
-				sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{setID, oldSetID}}})
+				sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{newSet.ID, oldSet.ID}}})
 				if !sets.Empty() {
 					go func() {
 						var (
@@ -179,9 +175,9 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 						items, _ := sets.Items()
 						for _, es := range items {
 							switch es.ID {
-							case setID:
+							case newSet.ID:
 								newSet = es
-							case oldSetID:
+							case oldSet.ID:
 								oldSet = es
 							}
 						}
