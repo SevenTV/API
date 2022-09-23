@@ -107,12 +107,12 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 
 	// Unlink is mutually exclusive to all other mutation fields
 	if d.Unlink != nil && *d.Unlink {
-		if len(b.User.Connections) <= 1 {
-			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
-		}
-
 		if actor.ID != b.User.ID && !actor.HasPermission(structures.RolePermissionManageUsers) {
 			return nil, errors.ErrInsufficientPrivilege()
+		}
+
+		if len(b.User.Connections) <= 1 {
+			return nil, errors.ErrDontBeSilly().SetDetail("Cannot unlink the last connection, that would render your account inaccessible")
 		}
 
 		conn, ind := b.User.Connections.Get(id)
