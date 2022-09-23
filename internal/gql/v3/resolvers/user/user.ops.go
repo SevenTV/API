@@ -157,11 +157,6 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				Actor:        actor,
 				ConnectionID: id,
 			}); err != nil {
-				zap.S().Errorw("failed to update user's active emote set",
-					"error", err,
-					"connection_id", conn.ID,
-				)
-
 				return nil, err
 			}
 
