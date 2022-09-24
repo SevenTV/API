@@ -194,8 +194,8 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 			if pos >= 0 {
 				ub.Update.Set(fmt.Sprintf("connections.%d.data", pos), twUser)
 				ub.Update.Set(fmt.Sprintf("connections.%d.grant", pos), structures.UserConnectionGrant{
-					AccessToken:  grant.TokenType,
-					RefreshToken: grant.AccessToken,
+					AccessToken:  grant.AccessToken,
+					RefreshToken: grant.RefreshToken,
 					Scope:        grant.Scope,
 					ExpiresAt:    time.Now().Add(time.Second * time.Duration(grant.ExpiresIn)),
 				})

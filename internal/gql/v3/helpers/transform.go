@@ -50,9 +50,14 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
-			if con.Platform == structures.UserConnectionPlatformTwitch {
+			switch con.Platform {
+			case structures.UserConnectionPlatformTwitch:
 				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
 					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
+				}
+			case structures.UserConnectionPlatformYouTube:
+				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](con); err == nil {
+					avatarURL = con.Data.ProfileImageURL
 				}
 			}
 		}

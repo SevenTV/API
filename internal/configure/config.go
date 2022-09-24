@@ -221,7 +221,10 @@ type Config struct {
 			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
 		} `mapstructure:"twitch" json:"twitch"`
 		YouTube struct {
-			APIKey string `mapstructure:"api_key" json:"api_key"`
+			APIKey       string `mapstructure:"api_key" json:"api_key"`
+			ClientID     string `mapstructure:"client_id" json:"client_id"`
+			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
 		} `mapstructure:"youtube" json:"youtube"`
 		Discord struct {
 			ClientID     string `mapstructure:"client_id" json:"client_id"`

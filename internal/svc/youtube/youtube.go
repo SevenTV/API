@@ -14,17 +14,17 @@ type Instance interface {
 }
 
 type youtubeInst struct {
-	svc *youtube.Service
+	api *youtube.Service
 }
 
 func New(ctx context.Context, opt YouTubeOptions) (Instance, error) {
-	yts, err := youtube.NewService(ctx, option.WithAPIKey(opt.APIKey))
+	ytapi, err := youtube.NewService(ctx, option.WithAPIKey(opt.APIKey))
 	if err != nil {
 		return nil, err
 	}
 
 	return &youtubeInst{
-		svc: yts,
+		api: ytapi,
 	}, nil
 }
 
@@ -33,7 +33,7 @@ type YouTubeOptions struct {
 }
 
 func (inst *youtubeInst) GetChannelByID(ctx context.Context, id string) (*youtube.Channel, error) {
-	res, err := inst.svc.Channels.List([]string{"snippet", "statistics"}).Id(id).Context(ctx).Do()
+	res, err := inst.api.Channels.List([]string{"snippet", "statistics"}).Id(id).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.ErrInternalServerError()
 	}
@@ -48,7 +48,7 @@ func (inst *youtubeInst) GetChannelByID(ctx context.Context, id string) (*youtub
 }
 
 func (inst *youtubeInst) GetChannelByUsername(ctx context.Context, name string) (*youtube.Channel, error) {
-	res, err := inst.svc.Channels.List([]string{"snippet", "statistics"}).ForUsername(name).Context(ctx).Do()
+	res, err := inst.api.Channels.List([]string{"snippet", "statistics"}).ForUsername(name).Context(ctx).Do()
 	if err != nil {
 		return nil, errors.ErrInternalServerError()
 	}
