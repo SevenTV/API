@@ -166,7 +166,6 @@ func (r *youtubeCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	firstChannel := ytList[0]
 
 	ucb := structures.NewUserConnectionBuilder(structures.UserConnection[structures.UserConnectionDataYoutube]{
-		ChoiceData: resultRaw,
 		EmoteSlots: 250,
 	}).
 		SetID(firstChannel.ID).
@@ -174,6 +173,11 @@ func (r *youtubeCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		SetLinkedAt(time.Now()).
 		SetData(firstChannel).
 		SetGrant(grant.AccessToken, grant.RefreshToken, int(time.Since(grant.Expiry).Seconds()), youtubeScopes)
+
+	// set choice data if multiple channels were returned
+	if len(resultRaw) > 1 {
+		ucb.UserConnection.ChoiceData = resultRaw
+	}
 
 	// Find the user
 	f := utils.Ternary(stateToken.Bind.IsZero(), bson.M{
