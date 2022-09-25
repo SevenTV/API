@@ -31,6 +31,12 @@ type EmoteSet {
   owner: User @goField(forceResolver: true)
 }
 
+type EmoteSetPartial {
+  id: ObjectID!
+  name: String!
+  capacity: Int!
+}
+
 type ActiveEmote {
   id: ObjectID!
   name: String!

@@ -101,3 +101,8 @@ func (r *Resolver) EmoteSetOps() generated.EmoteSetOpsResolver {
 func (r *Resolver) ActiveEmote() generated.ActiveEmoteResolver {
 	return activeemote.New(r.Resolver)
 }
+
+// UserPartial implements generated.ResolverRoot
+func (r *Resolver) UserPartial() generated.UserPartialResolver {
+	return user.NewPartial(r.Resolver)
+}

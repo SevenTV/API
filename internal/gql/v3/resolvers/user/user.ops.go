@@ -164,58 +164,42 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 			if conn.Platform == structures.UserConnectionPlatformTwitch {
 				twc, _ := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](conn.ToRaw())
 
-				sets := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": bson.A{newSet.ID, oldSet.ID}}})
-				if !sets.Empty() {
-					go func() {
-						var (
-							newSet structures.EmoteSet
-							oldSet structures.EmoteSet
-						)
-
-						items, _ := sets.Items()
-						for _, es := range items {
-							switch es.ID {
-							case newSet.ID:
-								newSet = es
-							case oldSet.ID:
-								oldSet = es
+				go func() {
+					if !oldSet.ID.IsZero() {
+						// Send "REMOVE" events to former set
+						for _, ae := range oldSet.Emotes {
+							if ae.Emote == nil {
+								continue
 							}
+
+							if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
+								zap.S().Errorw("redis",
+									"error", err,
+								)
+							}
+
+							// disregard this awful shit, this is temporary to support set swapping with event api v1
+							// not adding some artificial delay in event delivery tends to break clients
+							time.Sleep(time.Millisecond * 50)
 						}
+					}
 
-						if !newSet.ID.IsZero() {
-							if !oldSet.ID.IsZero() {
-								// Send "REMOVE" events to former set
-								for _, ae := range oldSet.Emotes {
-									if ae.Emote == nil {
-										continue
-									}
-
-									if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionRemove, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
-										zap.S().Errorw("redis",
-											"error", err,
-										)
-									}
-
-									time.Sleep(time.Millisecond * 25)
-								}
+					if !newSet.ID.IsZero() {
+						for _, ae := range newSet.Emotes {
+							if ae.Emote == nil {
+								continue
 							}
 
-							for _, ae := range newSet.Emotes {
-								if ae.Emote == nil {
-									continue
-								}
-
-								if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
-									zap.S().Errorw("redis",
-										"error", err,
-									)
-								}
-
-								time.Sleep(time.Millisecond * 25)
+							if err := events.PublishLegacyEventAPI(r.Ctx, model.ListItemActionAdd, twc.Data.Login, actor, oldSet, *ae.Emote); err != nil {
+								zap.S().Errorw("redis",
+									"error", err,
+								)
 							}
+
+							time.Sleep(time.Millisecond * 50)
 						}
-					}()
-				}
+					}
+				}()
 			}
 		}
 	}

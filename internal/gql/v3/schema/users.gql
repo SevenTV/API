@@ -74,6 +74,7 @@ type UserPartial {
   tag_color: Int!
   roles: [ObjectID!]!
   connections(type: [ConnectionPlatform!]): [UserConnection]!
+  emote_sets: [EmoteSetPartial!]! @goField(forceResolver: true)
 }
 
 type UserEditor {
