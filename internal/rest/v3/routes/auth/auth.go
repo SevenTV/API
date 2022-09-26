@@ -29,6 +29,8 @@ func (r *Route) Config() rest.RouteConfig {
 		Children: []rest.Route{
 			newTwitch(r.Ctx),
 			newTwitchCallback(r.Ctx),
+			newYouTube(r.Ctx),
+			newYoutubeCallback(r.Ctx),
 			newDiscord(r.Ctx),
 			newDiscordCallback(r.Ctx),
 		},
@@ -122,4 +124,16 @@ func handleOAuthState(gctx global.Context, ctx *rest.Ctx, cookieName string) (*a
 	ctx.Response.Header.Cookie(&cookie) // We have now validated this request is authentic.
 
 	return csrfClaim, nil
+}
+
+func bindMiddleware(ctx *rest.Ctx) rest.APIError {
+	tok := utils.B2S(ctx.QueryArgs().Peek("token"))
+	if tok == "" {
+		return nil
+	}
+
+	req := &ctx.Request
+	req.Header.Set("Authorization", "Bearer "+tok)
+
+	return nil
 }

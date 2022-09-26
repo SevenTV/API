@@ -16,38 +16,33 @@ import (
 	"go.uber.org/zap"
 )
 
-const TWITCH_CSRF_COOKIE_NAME = "csrf_token_tw"
+const YOUTUBE_CSRF_COOKIE_NAME = "csrf_token_yt"
 
-type OAuth2CallbackAppParams struct {
-	Token string `url:"token"`
+var youtubeScopes = []string{
+	"https://www.googleapis.com/auth/userinfo.email",
+	"https://www.googleapis.com/auth/youtube.readonly",
 }
 
-var twitchScopes = []string{
-	"user:read:email",
-}
-
-type twitch struct {
+type youtube struct {
 	Ctx global.Context
 }
 
-func newTwitch(gCtx global.Context) rest.Route {
-	return &twitch{gCtx}
+func newYouTube(gCtx global.Context) rest.Route {
+	return &youtube{gCtx}
 }
 
-func (r *twitch) Config() rest.RouteConfig {
+func (r *youtube) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:      "/twitch",
+		URI:      "/youtube",
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			// Handle binding token
-			// this is for linking the connection to an existing account
 			bindMiddleware,
 			middleware.Auth(r.Ctx, false)},
 	}
 }
 
-func (r *twitch) Handler(ctx *rest.Ctx) rest.APIError {
+func (r *youtube) Handler(ctx *rest.Ctx) rest.APIError {
 	actor, _ := ctx.GetActor()
 
 	// Generate a randomized value for a CSRF token
@@ -68,18 +63,18 @@ func (r *twitch) Handler(ctx *rest.Ctx) rest.APIError {
 		OldRedirect: ctx.QueryArgs().GetBool("old"),
 	})
 	if err != nil {
-		ctx.Log().Errorw("csrf, jwt",
+		zap.S().Errorw("csrf, sign jwt",
 			"error", err,
 		)
 
 		return errors.ErrInternalServerError()
 	}
 
-	// Set cookie
+	// Set the CSRF token as a cookie
 	cookie := fasthttp.Cookie{}
-	cookie.SetKey(TWITCH_CSRF_COOKIE_NAME)
+	cookie.SetKey(YOUTUBE_CSRF_COOKIE_NAME)
 	cookie.SetValue(csrfToken)
-	cookie.SetExpire(time.Now().Add(time.Minute * 5))
+	cookie.SetExpire(time.Now().Add(5 * time.Minute))
 	cookie.SetHTTPOnly(true)
 	cookie.SetDomain(r.Ctx.Config().Http.Cookie.Domain)
 	cookie.SetSecure(r.Ctx.Config().Http.Cookie.Secure)
@@ -87,22 +82,24 @@ func (r *twitch) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Format querystring options for the redirection URL
 	params, err := query.Values(&OAuth2URLParams{
-		ClientID:     r.Ctx.Config().Platforms.Twitch.ClientID,
-		RedirectURI:  r.Ctx.Config().Platforms.Twitch.RedirectURI,
+		ClientID:     r.Ctx.Config().Platforms.YouTube.ClientID,
+		RedirectURI:  r.Ctx.Config().Platforms.YouTube.RedirectURI,
 		ResponseType: "code",
-		Scope:        strings.Join(twitchScopes, " "),
+		Scope:        strings.Join(youtubeScopes, " "),
 		State:        csrfValue,
 	})
 	if err != nil {
-		zap.S().Errorw("querystring",
+		zap.S().Errorw("youtube, query values",
 			"error", err,
 		)
 
 		return errors.ErrInternalServerError()
 	}
 
-	// Redirect the client
-	ctx.Redirect(fmt.Sprintf("https://id.twitch.tv/oauth2/authorize?%s", params.Encode()), int(rest.Found))
+	params.Set("prompt", "select_account")
+
+	// Redirect to YouTube OAuth2 URL
+	ctx.Redirect(fmt.Sprintf("https://accounts.google.com/o/oauth2/v2/auth?%s", params.Encode()), int(rest.Found))
 
 	return nil
 }
