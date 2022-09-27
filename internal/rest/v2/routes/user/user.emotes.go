@@ -87,7 +87,13 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	if con.ID == "" {
-		return errors.ErrUnknownUser()
+		// try username
+		tw, _, _ := user.Connections.Twitch()
+		if tw.ID == "" && strings.ToLower(key) != tw.Data.Login {
+			return errors.ErrUnknownUser()
+		}
+
+		con = tw.ToRaw()
 	}
 
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(con.EmoteSetID)
