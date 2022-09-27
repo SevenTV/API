@@ -8,6 +8,7 @@ import (
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -75,9 +76,18 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	// Fetch user's channel emoes
-	con, _, err := user.Connections.Twitch()
-	if err != nil {
-		return errors.ErrUnknownUser().SetDetail("No Twitch Connection but this is a v2 request")
+	var con structures.UserConnection[bson.Raw]
+
+	for _, c := range user.Connections {
+		if key != c.ID {
+			continue
+		}
+
+		con = c
+	}
+
+	if con.ID == "" {
+		return errors.ErrUnknownUser()
 	}
 
 	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(con.EmoteSetID)
