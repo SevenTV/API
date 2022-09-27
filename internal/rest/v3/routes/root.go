@@ -1,6 +1,9 @@
 package routes
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
@@ -10,6 +13,8 @@ import (
 	"github.com/seventv/api/internal/rest/v3/routes/emotes"
 	"github.com/seventv/api/internal/rest/v3/routes/users"
 )
+
+var uptime = time.Now()
 
 type Route struct {
 	Ctx global.Context
@@ -37,11 +42,13 @@ func (r *Route) Config() rest.RouteConfig {
 }
 
 func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
-	ctx.Redirect("/v3/docs/ui", int(rest.Found))
-
-	return nil
+	return ctx.JSON(rest.OK, HealthResponse{
+		Online: true,
+		Uptime: strconv.Itoa(int(uptime.UnixMilli())),
+	})
 }
 
-type Response struct {
-	Online bool `json:"online"`
+type HealthResponse struct {
+	Online bool   `json:"online"`
+	Uptime string `json:"uptime"`
 }
