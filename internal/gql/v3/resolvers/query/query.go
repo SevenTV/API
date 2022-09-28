@@ -95,6 +95,15 @@ func (r *Resolver) Role(ctx context.Context, id primitive.ObjectID) (*model.Role
 	return nil, nil
 }
 
+func (r *Resolver) Announcement(ctx context.Context) (string, error) {
+	s, err := r.Ctx.Inst().Redis.Get(ctx, "meta:announcement")
+	if err != nil {
+		return "", nil
+	}
+
+	return s, nil
+}
+
 type Sort struct {
 	Value string    `json:"value"`
 	Order SortOrder `json:"order"`

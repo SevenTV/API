@@ -1,4 +1,5 @@
 extend type Query {
+  announcement: String!
   inbox(user_id: ObjectID!, after_id: ObjectID, limit: Int): [InboxMessage!]!
     @hasPermissions
   modRequests(after_id: ObjectID, limit: Int): [ModRequestMessage!]!
