@@ -2,14 +2,12 @@ package users
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/google/uuid"
 	"github.com/h2non/filetype/matchers"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
@@ -23,6 +21,7 @@ import (
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -114,11 +113,9 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad emote upload type '%s'", fileType.MIME.Value))
 	}
 
-	id := uuid.New()
-	idb, _ := id.MarshalBinary()
-	strId := hex.EncodeToString(idb)
+	id := primitive.NewObjectIDFromTimestamp(time.Now())
 
-	rawFilekey := r.Ctx.Inst().S3.ComposeKey("pp", victim.ID.Hex(), fmt.Sprintf("%s_raw.%s", strId, fileType.Extension))
+	rawFilekey := r.Ctx.Inst().S3.ComposeKey("user", victim.ID.Hex(), fmt.Sprintf("av_%s", id.Hex()), fmt.Sprintf("input.%s", fileType.Extension))
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
@@ -141,14 +138,14 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
 
 	taskData, err := json.Marshal(task.Task{
-		ID:    strId,
+		ID:    id.Hex(),
 		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP, 0) | task.TaskFlagWEBP_STATIC,
 		Input: task.TaskInput{
 			Bucket: r.Ctx.Config().S3.InternalBucket,
 			Key:    rawFilekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:               r.Ctx.Inst().S3.ComposeKey("pp", victim.ID.Hex()),
+			Prefix:               r.Ctx.Inst().S3.ComposeKey("user", victim.ID.Hex(), fmt.Sprintf("av_%s", id.Hex())),
 			Bucket:               r.Ctx.Config().S3.PublicBucket,
 			ACL:                  *s3.AclPrivate,
 			CacheControl:         *s3.DefaultCacheControl,
@@ -170,7 +167,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			Queue:   r.Ctx.Config().MessageQueue.ImageProcessorJobsQueueName,
 			Headers: map[string]string{},
 			Flags: messagequeue.MessageFlags{
-				ID:          strId,
+				ID:          id.Hex(),
 				ContentType: "application/json",
 				ReplyTo:     r.Ctx.Config().MessageQueue.ImageProcessorUserPicturesResultsQueueName,
 				Timestamp:   time.Now(),
@@ -193,7 +190,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 		"_id": victim.ID,
 	}, bson.M{
-		"$set": bson.M{"state.pending_avatar_id": strId},
+		"$set": bson.M{"avatar.pending_id": id.Hex()},
 	}); err != nil {
 		zap.S().Errorw("mongo, failed to update user state with pending profile picture", "error", err)
 		return errors.ErrInternalServerError()

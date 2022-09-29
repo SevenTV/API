@@ -19,6 +19,7 @@ import (
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -116,6 +117,12 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 
 	l := zap.S().Named("profile picture processing").With("task_id", evt.ID)
 
+	oid, err := primitive.ObjectIDFromHex(evt.ID)
+	if err != nil {
+		l.Errorw("failed to parse task id")
+		return err
+	}
+
 	var (
 		img    task.ResultImage
 		static task.ResultImage
@@ -123,11 +130,9 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 
 	// Find the user that triggered this job
 	var actor structures.User
-	err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
-		"state.pending_avatar_id": evt.ID,
-	}, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&actor)
-
-	if err != nil {
+	if err = ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+		"avatar.pending_id": oid,
+	}, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&actor); err != nil {
 		return err
 	}
 
@@ -173,11 +178,22 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 		return err
 	}
 
+	inputFile := jobImageToStructImage(evt.ImageInput)
+
+	imagesFiles := make([]structures.ImageFile, len(evt.ImageOutputs))
+	for i, im := range evt.ImageOutputs {
+		imagesFiles[i] = jobImageToStructImage(im)
+	}
+
 	if _, err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
-		"state.pending_avatar_id": evt.ID,
+		"avatar.pending_id": evt.ID,
 	}, bson.M{
-		"$set":   bson.M{"avatar_id": evt.ID},
-		"$unset": bson.M{"state.pending_avatar_id": 1},
+		"$set": bson.M{"avatar": structures.UserAvatar{
+			ID:         oid,
+			InputFile:  inputFile,
+			ImageFiles: imagesFiles,
+		}},
+		"$unset": bson.M{"avatar.pending_id": 1},
 	}); err != nil {
 		l.Errorw("failed to update user avatar id", "error", err)
 	}
@@ -185,4 +201,20 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	events.Publish(ppl.Ctx, "users", actor.ID)
 
 	return nil
+}
+
+func jobImageToStructImage(im task.ResultImage) structures.ImageFile {
+	return structures.ImageFile{
+		Name:         im.Name,
+		Key:          im.Key,
+		Bucket:       im.Bucket,
+		ACL:          im.ACL,
+		CacheControl: im.CacheControl,
+		ContentType:  im.ContentType,
+		FrameCount:   int32(im.FrameCount),
+		Size:         int64(im.Size),
+		Width:        int32(im.Width),
+		Height:       int32(im.Height),
+		SHA3:         im.SHA3,
+	}
 }
