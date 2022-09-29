@@ -437,6 +437,8 @@ github.com/seventv/common v0.0.0-20220929195049-55a495a2a332 h1:cUvdnPKQ5xIb+ppj
 github.com/seventv/common v0.0.0-20220929195049-55a495a2a332/go.mod h1:WlWt8/cst4XtW27D/Ii6bAFht7t1lWiZUyqOsH7PDt0=
 github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91 h1:Ea9415Yq3xZNNrKSlq4XyOViZ0gFWgqOKRxsN0ILOhk=
 github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91/go.mod h1:f9JVdhYnBwWk8Rn2w0lL0rWXxZAkWuYBAdvMq1f+eno=
+github.com/seventv/image-processor v0.0.0-20220929230643-70e265af33d6 h1:IerssmYLaSCwFy4Wg6Vr1UHDCs4apQF7/oB4h01f4N0=
+github.com/seventv/image-processor v0.0.0-20220929230643-70e265af33d6/go.mod h1:wDZa9fRcCuJO0KwUIcLNGv+qLbefJpYgLSD6zXOZfKw=
 github.com/seventv/image-processor/go v0.0.0-20220823211530-94fa41d1de6e h1:lHy2dU7PZ5II1z/0VzEClpOyxwVoX6ylBnKqwH7cTeU=
 github.com/seventv/image-processor/go v0.0.0-20220823211530-94fa41d1de6e/go.mod h1:CM/CucY8KjNSBTJ00/x4xzzbgAvbDgiZcZjM/gxDHRQ=
 github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643 h1:7DAXa8jZl3f3mltSEaqLFir+qLkDKx/J04LcxcpdEhA=
