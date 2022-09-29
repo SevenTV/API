@@ -66,7 +66,7 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 		for i, f := range v.ImageFiles {
 			// Set object ACL
-			go func(f structures.EmoteFile) {
+			go func(f structures.ImageFile) {
 				if err := m.s3.SetACL(ctx, &s3.PutObjectAclInput{
 					ACL:    aws.String(acl),
 					Bucket: &f.Bucket,

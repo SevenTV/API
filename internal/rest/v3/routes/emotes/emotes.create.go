@@ -204,8 +204,8 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	version := structures.EmoteVersion{
 		Name:        args.Name,
 		Description: args.Description,
-		ImageFiles:  []structures.EmoteFile{},
-		InputFile: structures.EmoteFile{
+		ImageFiles:  []structures.ImageFile{},
+		InputFile: structures.ImageFile{
 			Name:         "original",
 			ContentType:  fileType.MIME.Value,
 			Key:          filekey,

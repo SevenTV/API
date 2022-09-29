@@ -119,10 +119,10 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		return err
 	}
 
-	imageFiles := []structures.EmoteFile{}
+	imageFiles := []structures.ImageFile{}
 	// Iterate through files, append sizes to formats
 	for _, file := range evt.ImageOutputs {
-		imageFiles = append(imageFiles, structures.EmoteFile{
+		imageFiles = append(imageFiles, structures.ImageFile{
 			Name:         file.Name,
 			Width:        int32(file.Width),
 			Height:       int32(file.Height),
@@ -148,7 +148,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	ver.State.Lifecycle = lc
 	ver.StartedAt = evt.StartedAt
 	ver.CompletedAt = evt.FinishedAt
-	ver.InputFile = structures.EmoteFile{
+	ver.InputFile = structures.ImageFile{
 		Name:         utils.Ternary(evt.ImageInput.Name != "", evt.ImageInput.Name, ver.InputFile.Name),
 		Key:          utils.Ternary(evt.ImageInput.Key != "", evt.ImageInput.Key, ver.InputFile.Key),
 		Bucket:       utils.Ternary(evt.ImageInput.Bucket != "", evt.ImageInput.Bucket, ver.InputFile.Bucket),
@@ -162,7 +162,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		SHA3:         evt.ImageInput.SHA3,
 	}
 	ver.ImageFiles = imageFiles
-	ver.ArchiveFile = structures.EmoteFile{
+	ver.ArchiveFile = structures.ImageFile{
 		Name:         evt.ZipOutput.Name,
 		Size:         int64(evt.ZipOutput.Size),
 		ContentType:  "application/zip",

@@ -55,7 +55,7 @@ const (
 	ImageFormatWEBP ImageFormat = "WEBP"
 )
 
-func (x *modelizer) Image(v structures.EmoteFile) ImageFile {
+func (x *modelizer) Image(v structures.ImageFile) ImageFile {
 	format := strings.Split(v.ContentType, "/")[1]
 	format = strings.ToUpper(format)
 

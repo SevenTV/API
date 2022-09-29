@@ -28,7 +28,7 @@ const webpMime = "image/webp"
 
 func NewEmote(s structures.Emote, cdnURL string) *Emote {
 	version, _ := s.GetVersion(s.ID)
-	files := []structures.EmoteFile{}
+	files := []structures.ImageFile{}
 	status := structures.EmoteLifecycle(0)
 
 	if !version.ID.IsZero() {

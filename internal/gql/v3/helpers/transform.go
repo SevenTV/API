@@ -303,7 +303,7 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 	}
 }
 
-func EmoteFileStructureToArchiveModel(s structures.EmoteFile, url string) *model.Archive {
+func EmoteFileStructureToArchiveModel(s structures.ImageFile, url string) *model.Archive {
 	return &model.Archive{
 		Name:        s.Name,
 		URL:         url,
@@ -312,7 +312,7 @@ func EmoteFileStructureToArchiveModel(s structures.EmoteFile, url string) *model
 	}
 }
 
-func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
+func EmoteFileStructureToModel(s *structures.ImageFile, url string) *model.Image {
 	// Transform image format
 	var format model.ImageFormat
 
