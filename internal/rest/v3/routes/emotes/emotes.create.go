@@ -199,7 +199,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad emote upload type '%s'", fileType.MIME.Value))
 	}
 
-	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("raw.%s", fileType.Extension))
+	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("input.%s", fileType.Extension))
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
