@@ -163,14 +163,14 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	}
 	ver.ImageFiles = imageFiles
 	ver.ArchiveFile = structures.ImageFile{
-		Name:         evt.ZipOutput.Name,
-		Size:         int64(evt.ZipOutput.Size),
+		Name:         evt.ArchiveOutput.Name,
+		Size:         int64(evt.ArchiveOutput.Size),
 		ContentType:  "application/zip",
-		SHA3:         evt.ZipOutput.SHA3,
-		Key:          evt.ZipOutput.Key,
-		Bucket:       evt.ZipOutput.Bucket,
-		ACL:          evt.ZipOutput.ACL,
-		CacheControl: evt.ZipOutput.CacheControl,
+		SHA3:         evt.ArchiveOutput.SHA3,
+		Key:          evt.ArchiveOutput.Key,
+		Bucket:       evt.ArchiveOutput.Bucket,
+		ACL:          evt.ArchiveOutput.ACL,
+		CacheControl: evt.ArchiveOutput.CacheControl,
 	}
 
 	eb.Update.Set(fmt.Sprintf("versions.%d.animated", verIndex), ver.Animated)

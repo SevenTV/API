@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	awsS3 "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/h2non/filetype/matchers"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
@@ -119,7 +119,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&awsS3.PutObjectInput{
+		&s3manager.UploadInput{
 			Body: aws.ReadSeekCloser(bytes.NewReader(body)),
 			Key:  aws.String(rawFilekey),
 			// ACL:          s3.AclPrivate,

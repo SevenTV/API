@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	awsS3 "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/seventv/api/data/model"
@@ -287,7 +287,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&awsS3.PutObjectInput{
+		&s3manager.UploadInput{
 			Body:         aws.ReadSeekCloser(bytes.NewReader(body)),
 			Key:          aws.String(filekey),
 			ACL:          s3.AclPrivate,
@@ -317,11 +317,10 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			Key:    filekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:               r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
-			Bucket:               r.Ctx.Config().S3.PublicBucket,
-			ACL:                  *s3.AclPublicRead,
-			CacheControl:         *s3.DefaultCacheControl,
-			ExcludeFileExtension: true,
+			Prefix:       r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
+			Bucket:       r.Ctx.Config().S3.PublicBucket,
+			ACL:          *s3.AclPublicRead,
+			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  96,
 		SmallestMaxHeight: 32,

@@ -124,8 +124,8 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}
 
 	var (
-		img    task.ResultImage
-		static task.ResultImage
+		img    task.ResultFile
+		static task.ResultFile
 	)
 
 	// Find the user that triggered this job
@@ -203,7 +203,7 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	return nil
 }
 
-func jobImageToStructImage(im task.ResultImage) structures.ImageFile {
+func jobImageToStructImage(im task.ResultFile) structures.ImageFile {
 	return structures.ImageFile{
 		Name:         im.Name,
 		Key:          im.Key,
