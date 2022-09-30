@@ -130,14 +130,14 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 	// Remove any mod requests for the emote
 	// if !opt.Undo {
-	// 	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
-	// 		"kind":             structures.MessageKindModRequest,
-	// 		"data.target_kind": structures.ObjectKindEmote,
-	// 		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
-	// 	})
-	// 	if err != nil {
-	// 		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
-	// 	}
+	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
+		"kind":             structures.MessageKindModRequest,
+		"data.target_kind": structures.ObjectKindEmote,
+		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
+	})
+	if err != nil {
+		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+	}
 	// }
 
 	// Write audit log
