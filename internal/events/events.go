@@ -64,7 +64,7 @@ func PublishLegacyEventAPI(
 	}
 
 	evt := Event{
-		Channel: set.Owner.Username,
+		Channel: channelLogin,
 		EmoteID: emote.ID,
 		Name:    name,
 		Action:  action,
