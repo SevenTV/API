@@ -64,7 +64,6 @@ func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Em
 		Output: task.TaskOutput{
 			Prefix:       r.Ctx.Inst().S3.ComposeKey("emote", path.Dir(ver.InputFile.Key)),
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
-			ACL:          *s3.AclPublicRead,
 			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  96,

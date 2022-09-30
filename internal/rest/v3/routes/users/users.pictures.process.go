@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/mongo"
@@ -156,6 +158,22 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}
 
 	events.Publish(ppl.Ctx, "users", actor.ID)
+
+	if actor.Avatar != nil && actor.Avatar.ID != aid {
+		// Delete the old avatar
+		go func() {
+			for _, im := range actor.Avatar.ImageFiles {
+				if err := ppl.Ctx.Inst().S3.DeleteFile(ctx, &s3.DeleteObjectInput{
+					Bucket: aws.String(im.Bucket),
+					Key:    aws.String(im.Key),
+				}); err != nil {
+					zap.S().Errorw("failed to delete old avatar",
+						"error", err,
+					)
+				}
+			}
+		}()
+	}
 
 	return nil
 }
