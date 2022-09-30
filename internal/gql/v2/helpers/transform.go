@@ -144,7 +144,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 			avatarURL = largestStatic.Key
 		}
 
-		avatarURL = fmt.Sprintf("https://%s/%s", cdnURL, avatarURL)
+		avatarURL = fmt.Sprintf("//%s/%s", cdnURL, avatarURL)
 	} else if s.AvatarID != "" && allowAnim {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	}
