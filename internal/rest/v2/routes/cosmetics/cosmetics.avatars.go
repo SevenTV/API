@@ -221,7 +221,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			ref = r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID)
 		}
 
-		result[key] = fmt.Sprintf("https://%s/%s/", r.Ctx.Config().CdnURL, ref)
+		result[key] = fmt.Sprintf("https://%s/%s", r.Ctx.Config().CdnURL, ref)
 	}
 
 	b, _ := json.Marshal(result)
