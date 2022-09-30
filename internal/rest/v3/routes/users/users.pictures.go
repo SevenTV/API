@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	awsS3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/h2non/filetype/matchers"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
@@ -119,13 +119,13 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&s3manager.UploadInput{
-			Body:         bytes.NewBuffer(body),
-			Key:          aws.String(rawFilekey),
-			ACL:          s3.AclPrivate,
-			Bucket:       aws.String(r.Ctx.Config().S3.InternalBucket),
-			ContentType:  aws.String(fileType.MIME.Value),
-			CacheControl: s3.DefaultCacheControl,
+		&awsS3.PutObjectInput{
+			Body: aws.ReadSeekCloser(bytes.NewReader(body)),
+			Key:  aws.String(rawFilekey),
+			// ACL:          s3.AclPrivate,
+			Bucket: aws.String(r.Ctx.Config().S3.InternalBucket),
+			// ContentType:  aws.String(fileType.MIME.Value),
+			// CacheControl: s3.DefaultCacheControl,
 		},
 	); err != nil {
 		zap.S().Errorw("failed to upload image to s3",
