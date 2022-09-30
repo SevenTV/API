@@ -197,7 +197,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			var img structures.ImageFile
 
 			for _, im := range u.Avatar.ImageFiles {
-				if im.Name == "3x.webp" { // hardcode to 3x for this endpoint
+				if im.Name == "1x" && im.ContentType == "image/webp" { // hardcode to 1x for this endpoint
 					img = im
 					break
 				}
