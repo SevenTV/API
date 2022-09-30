@@ -92,7 +92,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 					bson.M{
 						"avatar.id": bson.M{
 							"$exists": true,
-							"$not":    nil,
+							"$not":    bson.M{"$in": bson.A{nil}},
 						},
 					},
 					bson.M{
