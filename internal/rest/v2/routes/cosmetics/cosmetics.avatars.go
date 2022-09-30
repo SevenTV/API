@@ -196,10 +196,23 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		if u.Avatar != nil {
 			var img structures.ImageFile
 
-			for _, im := range u.Avatar.ImageFiles {
-				if im.Name == "1x" && im.ContentType == "image/webp" { // hardcode to 1x for this endpoint
+			i := 0
+			imgFiles := u.Avatar.ImageFiles
+
+			// filter all webp images
+			for _, img = range imgFiles {
+				if img.ContentType == "image/webp" && !img.IsStatic() {
+					imgFiles[i] = img
+					i++
+				}
+			}
+
+			imgFiles = imgFiles[:i]
+
+			// Get the largest image
+			for _, im := range imgFiles {
+				if im.Width > img.Width {
 					img = im
-					break
 				}
 			}
 

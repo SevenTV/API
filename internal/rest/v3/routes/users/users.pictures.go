@@ -151,7 +151,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	taskData, err := json.Marshal(task.Task{
 		ID:    id.Hex(),
-		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP, 0) | task.TaskFlagWEBP_STATIC,
+		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP|task.TaskFlagAVIF|task.TaskFlagGIF, 0) | task.TaskFlagWEBP_STATIC | task.TaskFlagAVIF_STATIC | task.TaskFlagPNG | task.TaskFlagPNG_STATIC,
 		Input: task.TaskInput{
 			Bucket: r.Ctx.Config().S3.InternalBucket,
 			Key:    rawFilekey,
@@ -161,9 +161,9 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
 			CacheControl: *s3.DefaultCacheControl,
 		},
-		SmallestMaxWidth:  128,
-		SmallestMaxHeight: 128,
-		Scales:            []int{1},
+		SmallestMaxWidth:  48,
+		SmallestMaxHeight: 48,
+		Scales:            []int{1, 2, 3},
 		ResizeRatio:       task.ResizeRatioPaddingCenter,
 		Limits: task.TaskLimits{
 			MaxProcessingTime: time.Duration(r.Ctx.Config().Limits.Emotes.MaxProcessingTimeSeconds) * time.Second,

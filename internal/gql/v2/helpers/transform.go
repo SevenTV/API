@@ -110,31 +110,41 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	avatarURL := ""
 
 	if s.Avatar != nil && !s.Avatar.ID.IsZero() {
+		files := s.Avatar.ImageFiles
+		i := 0
+
+		for _, file := range files {
+			if file.ContentType == webpMime {
+				files[i] = file
+				i++
+			}
+		}
+
+		files = files[:i]
+
 		var (
-			staticURL   string
-			animatedURL string
+			largestStatic   structures.ImageFile
+			largestAnimated structures.ImageFile
 		)
 
-		for _, file := range s.Avatar.ImageFiles {
-			if file.FrameCount == 0 {
-				continue
-			}
-
-			if file.FrameCount == 1 && !file.IsStatic() {
-				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
-				animatedURL = staticURL
-			} else if file.IsStatic() {
-				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
-			} else {
-				animatedURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
+		for _, file := range files {
+			if file.FrameCount == 1 && !file.IsStatic() && file.Width > largestStatic.Width {
+				largestStatic = file
+				largestAnimated = file
+			} else if file.IsStatic() && file.Width > largestStatic.Width {
+				largestStatic = file
+			} else if file.FrameCount > largestAnimated.FrameCount {
+				largestAnimated = file
 			}
 		}
 
 		if allowAnim {
-			avatarURL = animatedURL
+			avatarURL = largestAnimated.Key
 		} else {
-			avatarURL = staticURL
+			avatarURL = largestStatic.Key
 		}
+
+		avatarURL = fmt.Sprintf("https://%s/%s", cdnURL, avatarURL)
 	} else if s.AvatarID != "" && allowAnim {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	}
