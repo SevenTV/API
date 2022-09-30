@@ -137,6 +137,8 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
 
+	victimIDBytes, _ := json.Marshal(victim.ID)
+
 	taskData, err := json.Marshal(task.Task{
 		ID:    id.Hex(),
 		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP, 0) | task.TaskFlagWEBP_STATIC,
@@ -147,7 +149,6 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		Output: task.TaskOutput{
 			Prefix:       r.Ctx.Inst().S3.ComposeKey("user", victim.ID.Hex(), fmt.Sprintf("av_%s", id.Hex())),
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
-			ACL:          *s3.AclPrivate,
 			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  128,
@@ -160,6 +161,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			MaxWidth:          r.Ctx.Config().Limits.Emotes.MaxWidth,
 			MaxHeight:         r.Ctx.Config().Limits.Emotes.MaxHeight,
 		},
+		Metadata: victimIDBytes,
 	})
 	if err == nil {
 		err = r.Ctx.Inst().MessageQueue.Publish(ctx, messagequeue.OutgoingMessage{
@@ -189,7 +191,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 		"_id": victim.ID,
 	}, bson.M{
-		"$set": bson.M{"avatar.pending_id": id.Hex()},
+		"$set": bson.M{"avatar.pending_id": id},
 	}); err != nil {
 		zap.S().Errorw("mongo, failed to update user state with pending profile picture", "error", err)
 		return errors.ErrInternalServerError()

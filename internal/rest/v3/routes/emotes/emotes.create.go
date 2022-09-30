@@ -319,7 +319,6 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		Output: task.TaskOutput{
 			Prefix:       r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
 			Bucket:       r.Ctx.Config().S3.PublicBucket,
-			ACL:          *s3.AclPublicRead,
 			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  96,
