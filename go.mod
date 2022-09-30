@@ -15,7 +15,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/seventv/common v0.0.0-20220930055725-570c398490a0
 	github.com/seventv/compactdisc v0.0.0-20220830002302-eb0e50b2ee91
-	github.com/seventv/image-processor/go v0.0.0-20220823211530-94fa41d1de6e
+	github.com/seventv/image-processor/go v0.0.0-20220930011354-459c31b11417
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.12.0
@@ -64,7 +64,6 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d // indirect
-	github.com/seventv/image-processor v0.0.0-20220930011354-459c31b11417 // indirect
 	github.com/urfave/cli/v2 v2.11.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect

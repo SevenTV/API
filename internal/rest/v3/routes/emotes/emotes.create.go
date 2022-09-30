@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	awss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/seventv/api/data/model"
@@ -287,7 +287,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&s3manager.UploadInput{
+		&awss3.PutObjectInput{
 			Body:         aws.ReadSeekCloser(bytes.NewReader(body)),
 			Key:          aws.String(filekey),
 			ACL:          s3.AclPrivate,
