@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -119,10 +119,10 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		return err
 	}
 
-	imageFiles := []structures.EmoteFile{}
+	imageFiles := []structures.ImageFile{}
 	// Iterate through files, append sizes to formats
 	for _, file := range evt.ImageOutputs {
-		imageFiles = append(imageFiles, structures.EmoteFile{
+		imageFiles = append(imageFiles, structures.ImageFile{
 			Name:         file.Name,
 			Width:        int32(file.Width),
 			Height:       int32(file.Height),
@@ -148,7 +148,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 	ver.State.Lifecycle = lc
 	ver.StartedAt = evt.StartedAt
 	ver.CompletedAt = evt.FinishedAt
-	ver.InputFile = structures.EmoteFile{
+	ver.InputFile = structures.ImageFile{
 		Name:         utils.Ternary(evt.ImageInput.Name != "", evt.ImageInput.Name, ver.InputFile.Name),
 		Key:          utils.Ternary(evt.ImageInput.Key != "", evt.ImageInput.Key, ver.InputFile.Key),
 		Bucket:       utils.Ternary(evt.ImageInput.Bucket != "", evt.ImageInput.Bucket, ver.InputFile.Bucket),
@@ -162,15 +162,15 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 		SHA3:         evt.ImageInput.SHA3,
 	}
 	ver.ImageFiles = imageFiles
-	ver.ArchiveFile = structures.EmoteFile{
-		Name:         evt.ZipOutput.Name,
-		Size:         int64(evt.ZipOutput.Size),
+	ver.ArchiveFile = structures.ImageFile{
+		Name:         evt.ArchiveOutput.Name,
+		Size:         int64(evt.ArchiveOutput.Size),
 		ContentType:  "application/zip",
-		SHA3:         evt.ZipOutput.SHA3,
-		Key:          evt.ZipOutput.Key,
-		Bucket:       evt.ZipOutput.Bucket,
-		ACL:          evt.ZipOutput.ACL,
-		CacheControl: evt.ZipOutput.CacheControl,
+		SHA3:         evt.ArchiveOutput.SHA3,
+		Key:          evt.ArchiveOutput.Key,
+		Bucket:       evt.ArchiveOutput.Bucket,
+		ACL:          evt.ArchiveOutput.ACL,
+		CacheControl: evt.ArchiveOutput.CacheControl,
 	}
 
 	eb.Update.Set(fmt.Sprintf("versions.%d.animated", verIndex), ver.Animated)

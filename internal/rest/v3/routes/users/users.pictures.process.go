@@ -4,22 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	s3_opts "github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/svc/s3"
-	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
@@ -116,73 +112,90 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 
 	l := zap.S().Named("profile picture processing").With("task_id", evt.ID)
 
-	var (
-		img    task.ResultImage
-		static task.ResultImage
-	)
+	aid, err := primitive.ObjectIDFromHex(evt.ID)
+	if err != nil {
+		l.Errorw("failed to parse task id")
+		return err
+	}
+
+	var metadata pictureTaskMetadata
+	if err := json.Unmarshal(evt.Metadata, &metadata); err != nil {
+		l.Errorw("failed to parse metadata")
+		return err
+	}
 
 	// Find the user that triggered this job
-	var actor structures.User
-	err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
-		"state.pending_avatar_id": evt.ID,
-	}, options.FindOne().SetProjection(bson.M{"_id": 1})).Decode(&actor)
-
-	if err != nil {
-		return err
-	}
-
 	// Fetch the full data about the actor
-	actor, err = ppl.Ctx.Inst().Loaders.UserByID().Load(actor.ID)
+	actor, err := ppl.Ctx.Inst().Loaders.UserByID().Load(metadata.UserID)
 	if err != nil {
 		l.Errorw("failed to fetch actor")
-	}
-
-	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
-
-	for _, im := range evt.ImageOutputs {
-		if im.ContentType != "image/webp" {
-			continue
-		}
-
-		if im.FrameCount > 1 {
-			img = im
-		} else {
-			static = im
-		}
-	}
-
-	if img.Key == "" || !allowAnim {
-		img = static
-	}
-
-	inputKey := ppl.Ctx.Config().S3.PublicBucket + "/" + utils.Ternary(allowAnim, img.Key, static.Key)
-	outputKey := strings.TrimSuffix(img.Key, path.Base(inputKey)) + "/" + evt.ID
-
-	if err := ppl.Ctx.Inst().S3.CopyFile(ctx, &s3_opts.CopyObjectInput{
-		ACL:          aws.String(*s3.AclPublicRead),
-		Bucket:       &ppl.Ctx.Config().S3.PublicBucket,
-		CacheControl: s3.DefaultCacheControl,
-		CopySource:   aws.String(inputKey),
-		Key:          aws.String(outputKey),
-	}); err != nil {
-		l.Errorw("failed to copy object to correct location for user profile picture",
-			"error", "err",
-			"task_id", evt.ID,
-		)
-
 		return err
+	}
+
+	if actor.Avatar != nil && actor.Avatar.ID != aid && actor.Avatar.PendingID != nil && *actor.Avatar.PendingID != aid {
+		l.Error("avatar was changed while processing")
+		return nil
+	}
+
+	inputFile := jobImageToStructImage(evt.ImageInput)
+	inputFile.Name = "input"
+	inputFile.Key = metadata.InputFileKey
+	inputFile.Bucket = metadata.InputFileBucket
+
+	imagesFiles := make([]structures.ImageFile, len(evt.ImageOutputs))
+	for i, im := range evt.ImageOutputs {
+		imagesFiles[i] = jobImageToStructImage(im)
 	}
 
 	if _, err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
-		"state.pending_avatar_id": evt.ID,
+		"_id": metadata.UserID,
 	}, bson.M{
-		"$set":   bson.M{"avatar_id": evt.ID},
-		"$unset": bson.M{"state.pending_avatar_id": 1},
+		"$set": bson.M{"avatar": structures.UserAvatar{
+			ID:         aid,
+			InputFile:  inputFile,
+			ImageFiles: imagesFiles,
+		}},
 	}); err != nil {
 		l.Errorw("failed to update user avatar id", "error", err)
+		return err
 	}
 
 	events.Publish(ppl.Ctx, "users", actor.ID)
 
+	if actor.Avatar != nil && actor.Avatar.ID != aid {
+		// Delete the old avatar
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+
+			for _, im := range actor.Avatar.ImageFiles {
+				if err := ppl.Ctx.Inst().S3.DeleteFile(ctx, &s3.DeleteObjectInput{
+					Bucket: aws.String(im.Bucket),
+					Key:    aws.String(im.Key),
+				}); err != nil {
+					zap.S().Errorw("failed to delete old avatar",
+						"error", err,
+					)
+				}
+			}
+		}()
+	}
+
 	return nil
+}
+
+func jobImageToStructImage(im task.ResultFile) structures.ImageFile {
+	return structures.ImageFile{
+		Name:         im.Name,
+		Key:          im.Key,
+		Bucket:       im.Bucket,
+		ACL:          im.ACL,
+		CacheControl: im.CacheControl,
+		ContentType:  im.ContentType,
+		FrameCount:   int32(im.FrameCount),
+		Size:         int64(im.Size),
+		Width:        int32(im.Width),
+		Height:       int32(im.Height),
+		SHA3:         im.SHA3,
+	}
 }

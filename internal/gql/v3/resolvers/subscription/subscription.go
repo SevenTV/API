@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/api/internal/gql/v3/resolvers/subscription/digest"
 	"github.com/seventv/api/internal/gql/v3/types"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"

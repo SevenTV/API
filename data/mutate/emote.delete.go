@@ -2,9 +2,9 @@ package mutate
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -20,6 +20,10 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		return errors.ErrInternalIncompleteMutation()
 	} else if eb.IsTainted() {
 		return errors.ErrMutateTaintedObject()
+	}
+
+	if opt.Undo {
+		return fmt.Errorf("TODO error unimplemented emote deletion undo")
 	}
 
 	// Check permissions
@@ -62,17 +66,16 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 	setACL := func(v structures.EmoteVersion, acl string) structures.EmoteVersion {
 		wg := sync.WaitGroup{}
-		wg.Add(len(v.ImageFiles))
+		wg.Add(len(v.ImageFiles) + 1)
 
-		for i, f := range v.ImageFiles {
+		for _, f := range append(v.ImageFiles, v.ArchiveFile) {
 			// Set object ACL
-			go func(f structures.EmoteFile) {
-				if err := m.s3.SetACL(ctx, &s3.PutObjectAclInput{
-					ACL:    aws.String(acl),
+			go func(f structures.ImageFile) {
+				if err := m.s3.DeleteFile(ctx, &s3.DeleteObjectInput{
 					Bucket: &f.Bucket,
 					Key:    &f.Key,
 				}); err != nil {
-					zap.S().Errorw("s3, failed to set ACL on emote during its deletion",
+					zap.S().Errorw("s3, failed to set delete file emote during its deletion",
 						"error", err,
 						"emote_id", eb.Emote.ID,
 						"version_id", v.ID,
@@ -83,9 +86,6 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 				wg.Done()
 			}(f)
-
-			f.ACL = "private"
-			v.ImageFiles[i] = f
 		}
 
 		wg.Wait()
@@ -129,16 +129,16 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 	}
 
 	// Remove any mod requests for the emote
-	if !opt.Undo {
-		_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
-			"kind":             structures.MessageKindModRequest,
-			"data.target_kind": structures.ObjectKindEmote,
-			"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
-		})
-		if err != nil {
-			zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
-		}
-	}
+	// if !opt.Undo {
+	// 	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
+	// 		"kind":             structures.MessageKindModRequest,
+	// 		"data.target_kind": structures.ObjectKindEmote,
+	// 		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
+	// 	})
+	// 	if err != nil {
+	// 		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+	// 	}
+	// }
 
 	// Write audit log
 	alb := structures.NewAuditLogBuilder(structures.AuditLog{

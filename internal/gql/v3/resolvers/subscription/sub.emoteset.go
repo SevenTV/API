@@ -3,8 +3,8 @@ package subscription
 import (
 	"context"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/common/events"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

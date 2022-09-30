@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/sync_map"
 	"github.com/seventv/common/utils"

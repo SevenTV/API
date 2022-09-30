@@ -2,14 +2,12 @@ package users
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/google/uuid"
+	awss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/h2non/filetype/matchers"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
@@ -23,6 +21,7 @@ import (
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -45,6 +44,12 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 			middleware.RateLimit(r.Ctx, "UpdateUserPicture", [2]int64{2, 60}),
 		},
 	}
+}
+
+type pictureTaskMetadata struct {
+	UserID          primitive.ObjectID `json:"user_id"`
+	InputFileKey    string             `json:"input_file_key"`
+	InputFileBucket string             `json:"input_file_bucket"`
 }
 
 // @Summary Upload Profile Picture
@@ -114,16 +119,14 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad emote upload type '%s'", fileType.MIME.Value))
 	}
 
-	id := uuid.New()
-	idb, _ := id.MarshalBinary()
-	strId := hex.EncodeToString(idb)
+	id := primitive.NewObjectIDFromTimestamp(time.Now())
 
-	rawFilekey := r.Ctx.Inst().S3.ComposeKey("pp", victim.ID.Hex(), fmt.Sprintf("%s_raw.%s", strId, fileType.Extension))
+	rawFilekey := r.Ctx.Inst().S3.ComposeKey("user", victim.ID.Hex(), fmt.Sprintf("av_%s", id.Hex()), fmt.Sprintf("input.%s", fileType.Extension))
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&s3manager.UploadInput{
-			Body:         bytes.NewBuffer(body),
+		&awss3.PutObjectInput{
+			Body:         aws.ReadSeekCloser(bytes.NewReader(body)),
 			Key:          aws.String(rawFilekey),
 			ACL:          s3.AclPrivate,
 			Bucket:       aws.String(r.Ctx.Config().S3.InternalBucket),
@@ -140,19 +143,23 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
 
+	victimIDBytes, _ := json.Marshal(pictureTaskMetadata{
+		UserID:          victim.ID,
+		InputFileKey:    rawFilekey,
+		InputFileBucket: r.Ctx.Config().S3.InternalBucket,
+	})
+
 	taskData, err := json.Marshal(task.Task{
-		ID:    strId,
+		ID:    id.Hex(),
 		Flags: utils.Ternary(allowAnim, task.TaskFlagWEBP, 0) | task.TaskFlagWEBP_STATIC,
 		Input: task.TaskInput{
 			Bucket: r.Ctx.Config().S3.InternalBucket,
 			Key:    rawFilekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:               r.Ctx.Inst().S3.ComposeKey("pp", victim.ID.Hex()),
-			Bucket:               r.Ctx.Config().S3.PublicBucket,
-			ACL:                  *s3.AclPrivate,
-			CacheControl:         *s3.DefaultCacheControl,
-			ExcludeFileExtension: true,
+			Prefix:       r.Ctx.Inst().S3.ComposeKey("user", victim.ID.Hex(), fmt.Sprintf("av_%s", id.Hex())),
+			Bucket:       r.Ctx.Config().S3.PublicBucket,
+			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  128,
 		SmallestMaxHeight: 128,
@@ -164,13 +171,14 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			MaxWidth:          r.Ctx.Config().Limits.Emotes.MaxWidth,
 			MaxHeight:         r.Ctx.Config().Limits.Emotes.MaxHeight,
 		},
+		Metadata: victimIDBytes,
 	})
 	if err == nil {
 		err = r.Ctx.Inst().MessageQueue.Publish(ctx, messagequeue.OutgoingMessage{
 			Queue:   r.Ctx.Config().MessageQueue.ImageProcessorJobsQueueName,
 			Headers: map[string]string{},
 			Flags: messagequeue.MessageFlags{
-				ID:          strId,
+				ID:          id.Hex(),
 				ContentType: "application/json",
 				ReplyTo:     r.Ctx.Config().MessageQueue.ImageProcessorUserPicturesResultsQueueName,
 				Timestamp:   time.Now(),
@@ -193,7 +201,7 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 		"_id": victim.ID,
 	}, bson.M{
-		"$set": bson.M{"state.pending_avatar_id": strId},
+		"$set": bson.M{"avatar.pending_id": id},
 	}); err != nil {
 		zap.S().Errorw("mongo, failed to update user state with pending profile picture", "error", err)
 		return errors.ErrInternalServerError()

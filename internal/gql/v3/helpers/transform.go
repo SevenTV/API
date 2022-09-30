@@ -45,8 +45,37 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		editors[i] = UserEditorStructureToModel(v, cdnURL)
 	}
 
+	allowAnim := s.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
+
 	avatarURL := ""
-	if s.AvatarID != "" {
+
+	if s.Avatar != nil && !s.Avatar.ID.IsZero() {
+		var (
+			staticURL   string
+			animatedURL string
+		)
+
+		for _, file := range s.Avatar.ImageFiles {
+			if file.FrameCount == 0 {
+				continue
+			}
+
+			if file.FrameCount == 1 && !file.IsStatic() {
+				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
+				animatedURL = staticURL
+			} else if file.IsStatic() {
+				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
+			} else {
+				animatedURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
+			}
+		}
+
+		if allowAnim {
+			avatarURL = animatedURL
+		} else {
+			avatarURL = staticURL
+		}
+	} else if s.AvatarID != "" && allowAnim {
 		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
@@ -303,7 +332,7 @@ func EmoteVersionStructureToModel(s structures.EmoteVersion, images []*model.Ima
 	}
 }
 
-func EmoteFileStructureToArchiveModel(s structures.EmoteFile, url string) *model.Archive {
+func EmoteFileStructureToArchiveModel(s structures.ImageFile, url string) *model.Archive {
 	return &model.Archive{
 		Name:        s.Name,
 		URL:         url,
@@ -312,7 +341,7 @@ func EmoteFileStructureToArchiveModel(s structures.EmoteFile, url string) *model
 	}
 }
 
-func EmoteFileStructureToModel(s *structures.EmoteFile, url string) *model.Image {
+func EmoteFileStructureToModel(s *structures.ImageFile, url string) *model.Image {
 	// Transform image format
 	var format model.ImageFormat
 

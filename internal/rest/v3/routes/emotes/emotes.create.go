@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	awss3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/h2non/filetype/matchers"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/seventv/api/data/model"
@@ -199,13 +199,13 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest().SetDetail(fmt.Sprintf("Bad emote upload type '%s'", fileType.MIME.Value))
 	}
 
-	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("raw.%s", fileType.Extension))
+	filekey := r.Ctx.Inst().S3.ComposeKey("emote", id.Hex(), fmt.Sprintf("input.%s", fileType.Extension))
 
 	version := structures.EmoteVersion{
 		Name:        args.Name,
 		Description: args.Description,
-		ImageFiles:  []structures.EmoteFile{},
-		InputFile: structures.EmoteFile{
+		ImageFiles:  []structures.ImageFile{},
+		InputFile: structures.ImageFile{
 			Name:         "original",
 			ContentType:  fileType.MIME.Value,
 			Key:          filekey,
@@ -287,8 +287,8 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if err := r.Ctx.Inst().S3.UploadFile(
 		ctx,
-		&s3manager.UploadInput{
-			Body:         bytes.NewBuffer(body),
+		&awss3.PutObjectInput{
+			Body:         aws.ReadSeekCloser(bytes.NewReader(body)),
 			Key:          aws.String(filekey),
 			ACL:          s3.AclPrivate,
 			Bucket:       aws.String(r.Ctx.Config().S3.InternalBucket),
@@ -317,11 +317,9 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 			Key:    filekey,
 		},
 		Output: task.TaskOutput{
-			Prefix:               r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
-			Bucket:               r.Ctx.Config().S3.PublicBucket,
-			ACL:                  *s3.AclPublicRead,
-			CacheControl:         *s3.DefaultCacheControl,
-			ExcludeFileExtension: true,
+			Prefix:       r.Ctx.Inst().S3.ComposeKey("emote", id.Hex()),
+			Bucket:       r.Ctx.Config().S3.PublicBucket,
+			CacheControl: *s3.DefaultCacheControl,
 		},
 		SmallestMaxWidth:  96,
 		SmallestMaxHeight: 32,

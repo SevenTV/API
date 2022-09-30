@@ -87,10 +87,22 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 	pipeline := mongo.Pipeline{
 		{{
 			Key: "$match",
-			Value: bson.M{"avatar_id": bson.M{
-				"$exists": true,
-				"$not":    bson.M{"$in": bson.A{"", nil}},
-			}},
+			Value: bson.M{
+				"$or": bson.A{
+					bson.M{
+						"avatar.id": bson.M{
+							"$exists": true,
+							"$not":    nil,
+						},
+					},
+					bson.M{
+						"avatar_id": bson.M{
+							"$exists": true,
+							"$not":    bson.M{"$in": bson.A{"", nil}},
+						},
+					},
+				},
+			},
 		}},
 		{{
 			Key: "$group",
@@ -179,7 +191,24 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			continue
 		}
 
-		result[key] = fmt.Sprintf("https://%s/%s", r.Ctx.Config().CdnURL, r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID))
+		ref := ""
+
+		if u.Avatar != nil {
+			var img structures.ImageFile
+
+			for _, im := range u.Avatar.ImageFiles {
+				if im.Name == "3x.webp" { // hardcode to 3x for this endpoint
+					img = im
+					break
+				}
+			}
+
+			ref = img.Key
+		} else {
+			ref = r.Ctx.Inst().S3.ComposeKey("pp", u.ID.Hex(), u.AvatarID)
+		}
+
+		result[key] = fmt.Sprintf("https://%s/%s/", r.Ctx.Config().CdnURL, ref)
 	}
 
 	b, _ := json.Marshal(result)
