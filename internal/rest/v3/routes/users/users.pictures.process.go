@@ -132,8 +132,25 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 		return err
 	}
 
-	if actor.Avatar != nil && actor.Avatar.ID != aid && actor.Avatar.PendingID != nil && *actor.Avatar.PendingID != aid {
+	if actor.Avatar != nil && actor.Avatar.ID != aid && actor.Avatar.PendingID != nil && *actor.Avatar.PendingID != aid && time.Since(actor.Avatar.PendingID.Timestamp()) < time.Minute*5 {
 		l.Error("avatar was changed while processing")
+		return nil
+	}
+
+	if evt.State == task.ResultStateFailed {
+		l.Errorw("task failed",
+			"error", evt.ImageOutputs,
+		)
+
+		if _, err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
+			"_id": metadata.UserID,
+		}, bson.M{
+			"$unset": bson.M{"avatar.pending_id": 1},
+		}); err != nil {
+			l.Errorw("failed to update user", "error", err)
+			return err
+		}
+
 		return nil
 	}
 
