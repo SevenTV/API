@@ -48,13 +48,13 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 	allowAnim := s.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
 
 	avatarURL := ""
-	if s.AvatarID != "" && allowAnim {
-		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
-	} else if s.Avatar != nil && s.Avatar.ID.IsZero() {
+
+	if s.Avatar != nil && !s.Avatar.ID.IsZero() {
 		var (
 			staticURL   string
 			animatedURL string
 		)
+
 		for _, file := range s.Avatar.ImageFiles {
 			if file.FrameCount == 0 {
 				continue
@@ -75,6 +75,8 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 		} else {
 			avatarURL = staticURL
 		}
+	} else if s.AvatarID != "" && allowAnim {
+		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
 	} else {
 		for _, con := range s.Connections {
 			switch con.Platform {

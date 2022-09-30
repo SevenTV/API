@@ -46,6 +46,12 @@ func (r *pictureUploadRoute) Config() rest.RouteConfig {
 	}
 }
 
+type pictureTaskMetadata struct {
+	UserID          primitive.ObjectID `json:"user_id"`
+	InputFileKey    string             `json:"input_file_key"`
+	InputFileBucket string             `json:"input_file_bucket"`
+}
+
 // @Summary Upload Profile Picture
 // @Description Set a new profile picture
 // @Tags users
@@ -137,7 +143,11 @@ func (r *pictureUploadRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	allowAnim := actor.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
 
-	victimIDBytes, _ := json.Marshal(victim.ID)
+	victimIDBytes, _ := json.Marshal(pictureTaskMetadata{
+		UserID:          victim.ID,
+		InputFileKey:    rawFilekey,
+		InputFileBucket: r.Ctx.Config().S3.InternalBucket,
+	})
 
 	taskData, err := json.Marshal(task.Task{
 		ID:    id.Hex(),

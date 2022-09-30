@@ -118,15 +118,15 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 		return err
 	}
 
-	var uid primitive.ObjectID
-	if err := json.Unmarshal(evt.Metadata, &uid); err != nil {
+	var metadata pictureTaskMetadata
+	if err := json.Unmarshal(evt.Metadata, &metadata); err != nil {
 		l.Errorw("failed to parse metadata")
 		return err
 	}
 
 	// Find the user that triggered this job
 	// Fetch the full data about the actor
-	actor, err := ppl.Ctx.Inst().Loaders.UserByID().Load(uid)
+	actor, err := ppl.Ctx.Inst().Loaders.UserByID().Load(metadata.UserID)
 	if err != nil {
 		l.Errorw("failed to fetch actor")
 		return err
@@ -138,6 +138,9 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}
 
 	inputFile := jobImageToStructImage(evt.ImageInput)
+	inputFile.Name = "input"
+	inputFile.Key = metadata.InputFileKey
+	inputFile.Bucket = metadata.InputFileBucket
 
 	imagesFiles := make([]structures.ImageFile, len(evt.ImageOutputs))
 	for i, im := range evt.ImageOutputs {
@@ -145,7 +148,7 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	}
 
 	if _, err := ppl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
-		"_id": uid,
+		"_id": metadata.UserID,
 	}, bson.M{
 		"$set": bson.M{"avatar": structures.UserAvatar{
 			ID:         aid,
@@ -162,6 +165,9 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 	if actor.Avatar != nil && actor.Avatar.ID != aid {
 		// Delete the old avatar
 		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+
 			for _, im := range actor.Avatar.ImageFiles {
 				if err := ppl.Ctx.Inst().S3.DeleteFile(ctx, &s3.DeleteObjectInput{
 					Bucket: aws.String(im.Bucket),
