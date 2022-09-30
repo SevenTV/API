@@ -133,7 +133,7 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 				largestAnimated = file
 			} else if file.IsStatic() && file.Width > largestStatic.Width {
 				largestStatic = file
-			} else if file.FrameCount > largestAnimated.FrameCount {
+			} else if file.Width > largestAnimated.Width {
 				largestAnimated = file
 			}
 		}
