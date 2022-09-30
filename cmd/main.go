@@ -12,6 +12,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/configure"
@@ -25,7 +26,6 @@ import (
 	"github.com/seventv/api/internal/rest"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
 	"github.com/seventv/common/redis"

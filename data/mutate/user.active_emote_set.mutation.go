@@ -3,8 +3,8 @@ package mutate
 import (
 	"context"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"

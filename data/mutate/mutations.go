@@ -3,8 +3,8 @@ package mutate
 import (
 	"sync"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/svc"

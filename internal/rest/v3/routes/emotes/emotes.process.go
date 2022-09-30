@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/common/events"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
