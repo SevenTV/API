@@ -200,9 +200,9 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 			imgFiles := u.Avatar.ImageFiles
 
 			// filter all webp images
-			for _, img = range imgFiles {
-				if img.ContentType == "image/webp" && !img.IsStatic() {
-					imgFiles[i] = img
+			for _, im := range imgFiles {
+				if im.ContentType == "image/webp" && !im.IsStatic() {
+					imgFiles[i] = im
 					i++
 				}
 			}
