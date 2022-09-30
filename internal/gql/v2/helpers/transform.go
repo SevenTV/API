@@ -121,7 +121,10 @@ func UserStructureToModel(s structures.User, cdnURL string) *model.User {
 				continue
 			}
 
-			if file.IsStatic() {
+			if file.FrameCount == 1 && !file.IsStatic() {
+				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
+				animatedURL = staticURL
+			} else if file.IsStatic() {
 				staticURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
 			} else {
 				animatedURL = fmt.Sprintf("//%s/%s", cdnURL, file.Key)
