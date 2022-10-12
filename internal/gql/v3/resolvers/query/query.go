@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -84,7 +83,7 @@ func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
 
 	result := make([]*model.Role, len(roles))
 	for i, rol := range roles {
-		result[i] = helpers.RoleStructureToModel(rol)
+		result[i] = r.Ctx.Inst().Modelizer.Role(rol).GQL()
 	}
 
 	return result, nil

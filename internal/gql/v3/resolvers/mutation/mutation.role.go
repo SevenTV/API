@@ -7,7 +7,6 @@ import (
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -27,7 +26,7 @@ func (r *Resolver) CreateRole(ctx context.Context, data model.CreateRoleInput) (
 		return nil, err
 	}
 
-	return helpers.RoleStructureToModel(rb.Role), nil
+	return r.Ctx.Inst().Modelizer.Role(rb.Role).GQL(), nil
 }
 
 func (r *Resolver) EditRole(ctx context.Context, roleID primitive.ObjectID, data model.EditRoleInput) (*model.Role, error) {
@@ -73,7 +72,7 @@ func (r *Resolver) EditRole(ctx context.Context, roleID primitive.ObjectID, data
 		return nil, err
 	}
 
-	return helpers.RoleStructureToModel(rb.Role), nil
+	return r.Ctx.Inst().Modelizer.Role(rb.Role).GQL(), nil
 }
 
 func (r *Resolver) DeleteRole(ctx context.Context, roleID primitive.ObjectID) (string, error) {

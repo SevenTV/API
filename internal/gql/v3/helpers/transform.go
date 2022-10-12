@@ -3,28 +3,12 @@ package helpers
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 )
-
-// RoleStructureToModel: Transform a role structure to a GQL model
-func RoleStructureToModel(s structures.Role) *model.Role {
-	return &model.Role{
-		ID:        s.ID,
-		Name:      s.Name,
-		Color:     int(s.Color),
-		Allowed:   strconv.Itoa(int(s.Allowed)),
-		Denied:    strconv.Itoa(int(s.Denied)),
-		Position:  int(s.Position),
-		CreatedAt: s.ID.Timestamp(),
-		Invisible: s.Invisible,
-		Members:   []*model.User{},
-	}
-}
 
 func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 	images := make([]*model.Image, 0)

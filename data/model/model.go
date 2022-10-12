@@ -14,6 +14,7 @@ type Modelizer interface {
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
+	Role(v structures.Role) RoleModel
 }
 
 type modelizer struct {

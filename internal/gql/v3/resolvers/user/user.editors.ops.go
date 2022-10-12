@@ -82,6 +82,7 @@ func (r *ResolverOps) Editors(
 
 	// Return updated editors
 	result := make([]*model.UserEditor, len(ub.User.Editors))
+
 	for i, e := range ub.User.Editors {
 		x := r.Ctx.Inst().Modelizer.UserEditor(e).GQL()
 
