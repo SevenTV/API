@@ -40,7 +40,7 @@ func (r *avatars) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
+			middleware.SetCacheControl(r.Ctx, 1200, []string{"s-maxage=1200"}),
 		},
 	}
 }

@@ -79,7 +79,7 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 	for _, e := range obj.Editors {
 		for _, u := range users {
 			if e.ID == u.ID {
-				e.User = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
+				e.User = r.Ctx.Inst().Modelizer.User(u).PartialGQL()
 				result = append(result, e)
 
 				break
@@ -104,7 +104,7 @@ func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.User
 	if err == nil {
 		for _, ed := range editables {
 			if ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
-				result = append(result, helpers.UserEditorStructureToModel(ed, r.Ctx.Config().CdnURL))
+				result = append(result, r.Ctx.Inst().Modelizer.UserEditor(ed).GQL())
 			}
 		}
 	}
@@ -251,7 +251,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int)
 
 	// Add actors to result
 	for i, l := range result {
-		result[i].Actor = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(actorMap[l.ActorID], r.Ctx.Config().CdnURL))
+		result[i].Actor = r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).PartialGQL()
 	}
 
 	return result, nil

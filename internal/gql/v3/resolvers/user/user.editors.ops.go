@@ -6,7 +6,6 @@ import (
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -84,7 +83,13 @@ func (r *ResolverOps) Editors(
 	// Return updated editors
 	result := make([]*model.UserEditor, len(ub.User.Editors))
 	for i, e := range ub.User.Editors {
-		result[i] = helpers.UserEditorStructureToModel(e, r.Ctx.Config().CdnURL)
+		x := r.Ctx.Inst().Modelizer.UserEditor(e).GQL()
+
+		if e.User != nil {
+			x.User = r.Ctx.Inst().Modelizer.User(*e.User).PartialGQL()
+		}
+
+		result[i] = x
 	}
 
 	return result, nil

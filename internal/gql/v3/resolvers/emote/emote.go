@@ -47,7 +47,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, er
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.Emote) ([]*model.Report, error) {
@@ -268,7 +268,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int
 
 	// Add actors to result
 	for i, l := range result {
-		result[i].Actor = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(actorMap[l.ActorID], r.Ctx.Config().CdnURL))
+		result[i].Actor = r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).PartialGQL()
 	}
 
 	return result, nil

@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/structures/v3"
 )
@@ -28,5 +27,5 @@ func (r *Resolver) User(ctx context.Context, obj *model.UserEditor) (*model.User
 		return nil, err
 	}
 
-	return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL)), nil
+	return r.Ctx.Inst().Modelizer.User(u).PartialGQL(), nil
 }

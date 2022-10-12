@@ -37,5 +37,5 @@ func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }

@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
@@ -135,6 +136,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 			EmoteMaxAge:   365,
 			UsageThresold: 10,
 			Limit:         250,
+			TimeTravel:    utils.PointerOf(time.Date(2022, 9, 3, 0, 0, 0, 0, time.UTC)),
 		})
 		if err2 != nil {
 			return nil, err

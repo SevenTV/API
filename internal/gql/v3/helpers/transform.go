@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -10,191 +9,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
 )
-
-var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
-
-// UserStructureToModel: Transform a user structure to a GQL mdoel
-func UserStructureToModel(s structures.User, cdnURL string) *model.User {
-	tagColor := 0
-	if role := s.GetHighestRole(); !role.ID.IsZero() {
-		tagColor = int(role.Color)
-	}
-
-	roles := make([]primitive.ObjectID, len(s.Roles))
-	sort.Slice(s.Roles, func(i, j int) bool {
-		a := s.Roles[i]
-		b := s.Roles[j]
-		return a.Position > b.Position
-	})
-
-	for i, rol := range s.Roles {
-		roles[i] = rol.ID
-	}
-
-	connections := make([]*model.UserConnection, len(s.Connections))
-	for i, v := range s.Connections {
-		connections[i] = UserConnectionStructureToModel(v)
-	}
-
-	editors := make([]*model.UserEditor, len(s.Editors))
-	for i, v := range s.Editors {
-		editors[i] = UserEditorStructureToModel(v, cdnURL)
-	}
-
-	allowAnim := s.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation)
-	avatarURL := ""
-
-	if s.Avatar != nil && !s.Avatar.ID.IsZero() {
-		files := s.Avatar.ImageFiles
-		i := 0
-
-		for _, file := range files {
-			if file.ContentType == "image/webp" {
-				files[i] = file
-				i++
-			}
-		}
-
-		files = files[:i]
-
-		var (
-			largestStatic   structures.ImageFile
-			largestAnimated structures.ImageFile
-		)
-
-		for _, file := range files {
-			if file.FrameCount == 1 && !file.IsStatic() && file.Width > largestStatic.Width {
-				largestStatic = file
-				largestAnimated = file
-			} else if file.IsStatic() && file.Width > largestStatic.Width {
-				largestStatic = file
-			} else if file.Width > largestAnimated.Width {
-				largestAnimated = file
-			}
-		}
-
-		if allowAnim {
-			avatarURL = largestAnimated.Key
-		} else {
-			avatarURL = largestStatic.Key
-		}
-
-		avatarURL = fmt.Sprintf("//%s/%s", cdnURL, avatarURL)
-	} else if s.AvatarID != "" && allowAnim {
-		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", cdnURL, s.ID.Hex(), s.AvatarID)
-	} else {
-		for _, con := range s.Connections {
-			switch con.Platform {
-			case structures.UserConnectionPlatformTwitch:
-				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
-					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
-				}
-			case structures.UserConnectionPlatformYouTube:
-				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](con); err == nil {
-					avatarURL = con.Data.ProfileImageURL
-				}
-			}
-		}
-	}
-
-	return &model.User{
-		ID:               s.ID,
-		UserType:         string(s.UserType),
-		Username:         s.Username,
-		DisplayName:      utils.Ternary(len(s.DisplayName) > 0, s.DisplayName, s.Username),
-		CreatedAt:        s.ID.Timestamp(),
-		AvatarURL:        avatarURL,
-		Biography:        s.Biography,
-		TagColor:         tagColor,
-		Editors:          editors,
-		Roles:            roles,
-		Permissions:      int(s.FinalPermission()),
-		OwnedEmotes:      []*model.Emote{},
-		Connections:      connections,
-		InboxUnreadCount: 0,
-		Reports:          []*model.Report{},
-	}
-}
-
-func UserStructureToPartialModel(m *model.User) *model.UserPartial {
-	return &model.UserPartial{
-		ID:          m.ID,
-		UserType:    m.UserType,
-		Username:    m.Username,
-		DisplayName: m.DisplayName,
-		CreatedAt:   m.ID.Timestamp(),
-		AvatarURL:   m.AvatarURL,
-		Biography:   m.Biography,
-		TagColor:    m.TagColor,
-		Roles:       m.Roles,
-		Connections: m.Connections,
-	}
-}
-
-// UserEditorStructureToModel: Transform a user editor structure to a GQL model
-func UserEditorStructureToModel(s structures.UserEditor, cdnURL string) *model.UserEditor {
-	if s.User == nil {
-		s.User = &structures.DeletedUser
-	}
-
-	return &model.UserEditor{
-		ID:          s.ID,
-		Permissions: int(s.Permissions),
-		Visible:     s.Visible,
-		AddedAt:     s.AddedAt,
-		User:        UserStructureToPartialModel(UserStructureToModel(*s.User, cdnURL)),
-	}
-}
-
-// UserConnectionStructureToModel: Transform a user connection structure to a GQL model
-func UserConnectionStructureToModel(s structures.UserConnection[bson.Raw]) *model.UserConnection {
-	var (
-		err         error
-		displayName string
-		username    string
-	)
-	// Decode the connection data
-	switch s.Platform {
-	case structures.UserConnectionPlatformTwitch:
-		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](s); err == nil {
-			displayName = s.Data.DisplayName
-			username = s.Data.Login
-		}
-	case structures.UserConnectionPlatformYouTube:
-		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](s); err == nil {
-			displayName = s.Data.Title
-			username = s.Data.ID
-		}
-	case structures.UserConnectionPlatformDiscord:
-		if s, err := structures.ConvertUserConnection[structures.UserConnectionDataDiscord](s); err == nil {
-			displayName = s.Data.Username
-			username = s.Data.Username + "#" + s.Data.Discriminator
-		}
-	}
-
-	if err != nil {
-		zap.S().Errorw("couldn't decode user connection",
-			"error", err,
-			"platform", s.Platform,
-		)
-
-		return nil
-	}
-
-	return &model.UserConnection{
-		ID:          s.ID,
-		Username:    username,
-		DisplayName: displayName,
-		Platform:    model.ConnectionPlatform(s.Platform),
-		LinkedAt:    s.LinkedAt,
-		EmoteSlots:  int(s.EmoteSlots),
-		EmoteSetID:  utils.Ternary(s.EmoteSetID.IsZero(), nil, &s.EmoteSetID),
-	}
-}
 
 // RoleStructureToModel: Transform a role structure to a GQL model
 func RoleStructureToModel(s structures.Role) *model.Role {
@@ -251,11 +66,6 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		versions = versions[0:versionCount]
 	}
 
-	owner := structures.DeletedUser
-	if s.Owner != nil {
-		owner = *s.Owner
-	}
-
 	return &model.Emote{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -265,7 +75,6 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		Animated:  animated,
 		CreatedAt: s.ID.Timestamp(),
 		OwnerID:   s.OwnerID,
-		Owner:     UserStructureToModel(owner, cdnURL),
 		Channels:  &model.UserSearchResult{},
 		Images:    images,
 		Versions:  versions,
@@ -309,11 +118,6 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 		}
 	}
 
-	var owner *model.User
-	if s.Owner != nil {
-		owner = UserStructureToModel(*s.Owner, cdnURL)
-	}
-
 	return &model.EmoteSet{
 		ID:       s.ID,
 		Name:     s.Name,
@@ -321,7 +125,6 @@ func EmoteSetStructureToModel(s structures.EmoteSet, cdnURL string) *model.Emote
 		Emotes:   emotes,
 		Capacity: int(s.Capacity),
 		OwnerID:  &s.OwnerID,
-		Owner:    owner,
 	}
 }
 
@@ -386,16 +189,10 @@ func ActiveEmoteStructureToModel(s *structures.ActiveEmote) *model.ActiveEmote {
 }
 
 func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInbox], cdnURL string) *model.InboxMessage {
-	author := structures.DeletedUser
-	if s.Author != nil {
-		author = *s.Author
-	}
-
 	return &model.InboxMessage{
 		ID:           s.ID,
 		Kind:         model.MessageKind(s.Kind.String()),
 		CreatedAt:    s.CreatedAt,
-		Author:       UserStructureToModel(author, cdnURL),
 		Read:         s.Read,
 		ReadAt:       &time.Time{},
 		Subject:      s.Data.Subject,
@@ -408,16 +205,10 @@ func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInb
 }
 
 func MessageStructureToModRequestModel(s structures.Message[structures.MessageDataModRequest], cdnURL string) *model.ModRequestMessage {
-	author := structures.DeletedUser
-	if s.Author != nil {
-		author = *s.Author
-	}
-
 	return &model.ModRequestMessage{
 		ID:         s.ID,
 		Kind:       model.MessageKind(s.Kind.String()),
 		CreatedAt:  s.CreatedAt,
-		Author:     UserStructureToModel(author, cdnURL),
 		TargetKind: int(s.Data.TargetKind),
 		TargetID:   s.Data.TargetID,
 	}

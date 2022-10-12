@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -22,7 +21,7 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.Report) (*model.User, e
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func New(r types.Resolver) generated.ReportResolver {
@@ -35,7 +34,7 @@ func (r *Resolver) Reporter(ctx context.Context, obj *model.Report) (*model.User
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.User, error) {
@@ -53,7 +52,7 @@ func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.U
 
 	result := make([]*model.User, len(users))
 	for i, v := range users {
-		result[i] = helpers.UserStructureToModel(v, r.Ctx.Config().CdnURL)
+		result[i] = r.Ctx.Inst().Modelizer.User(v).GQL()
 	}
 
 	return result, nil

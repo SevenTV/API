@@ -52,7 +52,7 @@ func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User, error) {
@@ -76,7 +76,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User
 		return nil, errors.ErrUnknownUser()
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {

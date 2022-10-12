@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 )
@@ -53,7 +52,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 			u = structures.DeletedUser
 		}
 
-		models[i] = helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL)
+		models[i] = r.Ctx.Inst().Modelizer.User(u).GQL()
 	}
 
 	results := model.UserSearchResult{
