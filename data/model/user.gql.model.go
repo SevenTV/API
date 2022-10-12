@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// GQL User
 func (xm UserModel) GQL() *model.User {
 	editors := make([]*model.UserEditor, len(xm.Editors))
 	for i, e := range xm.Editors {
@@ -37,6 +38,19 @@ func (xm UserModel) GQL() *model.User {
 	}
 }
 
+func (xm UserPartialModel) GQL() *model.UserPartial {
+	return &model.UserPartial{
+		ID:          xm.ID,
+		Type:        string(xm.UserType),
+		Username:    xm.Username,
+		DisplayName: xm.DisplayName,
+		CreatedAt:   xm.ID.Timestamp(),
+		Style:       xm.Style.GQL(),
+		Roles:       xm.RoleIDs,
+	}
+}
+
+// GQL UserEditor
 func (xm UserEditorModel) GQL() *model.UserEditor {
 	return &model.UserEditor{
 		ID:          xm.ID,
@@ -46,6 +60,7 @@ func (xm UserEditorModel) GQL() *model.UserEditor {
 	}
 }
 
+// GQL UserConnection
 func (xm UserConnectionModel) GQL() *model.UserConnection {
 	var setID *primitive.ObjectID
 	if xm.EmoteSet != nil {
@@ -63,19 +78,9 @@ func (xm UserConnectionModel) GQL() *model.UserConnection {
 	}
 }
 
-func (xm UserModel) PartialGQL() *model.UserPartial {
-	m := xm.GQL()
-
-	return &model.UserPartial{
-		ID:          m.ID,
-		Type:        m.Type,
-		Username:    m.Username,
-		DisplayName: m.DisplayName,
-		CreatedAt:   m.ID.Timestamp(),
-		AvatarURL:   m.AvatarURL,
-		Biography:   m.Biography,
-		Style:       m.Style,
-		Roles:       m.Roles,
-		Connections: m.Connections,
+// GQL UserStyle
+func (xm UserStyle) GQL() *model.UserStyle {
+	return &model.UserStyle{
+		Color: int(xm.Color),
 	}
 }

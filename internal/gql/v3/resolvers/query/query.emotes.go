@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
@@ -36,7 +35,7 @@ func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emo
 		return nil, errors.ErrUnknownEmote()
 	}
 
-	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
 }
 
 func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([]*model.EmotePartial, error) {
@@ -50,7 +49,7 @@ func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([
 	result := make([]*model.EmotePartial, len(emotes))
 
 	for i, emote := range emotes {
-		result[i] = helpers.EmoteStructureToPartialModel(helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL))
+		result[i] = r.Ctx.Inst().Modelizer.Emote(emote).ToPartial().GQL()
 	}
 
 	return result, nil
@@ -193,7 +192,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 			}
 		}
 
-		models[i] = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
+		models[i] = r.Ctx.Inst().Modelizer.Emote(e).GQL()
 	}
 
 	return &model.EmoteSearchResult{

@@ -41,6 +41,7 @@ type EmoteVersionModel struct {
 	Listed      bool                `json:"listed"`
 	Animated    bool                `json:"animated"`
 	Host        *ImageHost          `json:"host,omitempty" extensions:"x-omitempty"`
+	CreatedAt   int64               `json:"createdAt"`
 }
 
 type EmoteLifecycleModel int32

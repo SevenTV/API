@@ -12,7 +12,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -116,7 +115,7 @@ func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Em
 		return nil, errors.ErrInternalServerError()
 	}
 
-	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
 }
 
 func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params model.EmoteUpdate, reason *string) (*model.Emote, error) {
@@ -233,5 +232,5 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		return nil, err
 	}
 
-	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
 }

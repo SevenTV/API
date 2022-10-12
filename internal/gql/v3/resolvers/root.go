@@ -5,7 +5,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/resolvers/ban"
 	"github.com/seventv/api/internal/gql/v3/resolvers/cosmetics"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emote"
-	emoteversion "github.com/seventv/api/internal/gql/v3/resolvers/emote-version"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emoteset"
 	activeemote "github.com/seventv/api/internal/gql/v3/resolvers/emoteset/active-emote"
 	"github.com/seventv/api/internal/gql/v3/resolvers/mutation"
@@ -48,10 +47,6 @@ func (r *Resolver) CosmeticOps() generated.CosmeticOpsResolver {
 
 func (r *Resolver) EmoteOps() generated.EmoteOpsResolver {
 	return emote.NewOps(r.Resolver)
-}
-
-func (r *Resolver) EmoteVersion() generated.EmoteVersionResolver {
-	return emoteversion.New(r.Resolver)
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver {

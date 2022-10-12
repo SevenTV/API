@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,7 +15,7 @@ func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID) (*model.
 		return nil, err
 	}
 
-	return helpers.EmoteSetStructureToModel(set, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.EmoteSet(set).GQL(), nil
 }
 
 func (r *Resolver) NamedEmoteSet(ctx context.Context, name model.EmoteSetName) (*model.EmoteSet, error) {
@@ -45,5 +44,5 @@ func (r *Resolver) NamedEmoteSet(ctx context.Context, name model.EmoteSetName) (
 		return nil, err
 	}
 
-	return helpers.EmoteSetStructureToModel(set, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.EmoteSet(set).GQL(), nil
 }

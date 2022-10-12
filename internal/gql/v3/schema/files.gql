@@ -15,6 +15,11 @@ enum ImageFormat {
   PNG
 }
 
+type ImageHost {
+  url: String!
+  files: [Image!]!
+}
+
 type Archive {
   name: String!
   content_type: String!

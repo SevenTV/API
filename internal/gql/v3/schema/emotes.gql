@@ -35,14 +35,14 @@ type Emote {
   created_at: Time!
 
   owner_id: ObjectID!
-  owner: User @goField(forceResolver: true)
+  owner: UserPartial @goField(forceResolver: true)
 
   channels(page: Int, limit: Int): UserSearchResult!
     @goField(forceResolver: true)
   common_names: [EmoteCommonName!]! @goField(forceResolver: true)
   trending: Int @goField(forceResolver: true)
 
-  images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
+  host: ImageHost!
   versions: [EmoteVersion!]!
   activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
   listed: Boolean!
@@ -61,9 +61,8 @@ type EmotePartial {
   animated: Boolean!
   created_at: Time!
   owner_id: ObjectID!
-  owner: User @goField(forceResolver: true)
-  images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
-  versions: [EmoteVersion!]!
+  owner: UserPartial @goField(forceResolver: true)
+  host: ImageHost!
   listed: Boolean!
 }
 
@@ -79,10 +78,7 @@ type EmoteVersion {
   name: String!
   description: String!
   created_at: Time!
-  started_at: Time!
-  completed_at: Time!
-  images(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
-  archive: Archive!
+  host: ImageHost!
   lifecycle: Int!
   error: String
   listed: Boolean!

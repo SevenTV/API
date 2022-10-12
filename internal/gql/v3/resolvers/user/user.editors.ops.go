@@ -87,7 +87,7 @@ func (r *ResolverOps) Editors(
 		x := r.Ctx.Inst().Modelizer.UserEditor(e).GQL()
 
 		if e.User != nil {
-			x.User = r.Ctx.Inst().Modelizer.User(*e.User).PartialGQL()
+			x.User = r.Ctx.Inst().Modelizer.User(*e.User).ToPartial().GQL()
 		}
 
 		result[i] = x

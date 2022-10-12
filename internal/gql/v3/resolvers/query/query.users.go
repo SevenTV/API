@@ -25,7 +25,7 @@ func (r *Resolver) UsersByID(ctx context.Context, list []primitive.ObjectID) ([]
 	result := make([]*model.UserPartial, len(users))
 
 	for i, user := range users {
-		result[i] = r.Ctx.Inst().Modelizer.User(user).PartialGQL()
+		result[i] = r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	return result, nil
@@ -77,7 +77,7 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 
 	result := make([]*model.UserPartial, len(users))
 	for i, u := range users {
-		result[i] = r.Ctx.Inst().Modelizer.User(u).PartialGQL()
+		result[i] = r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL()
 	}
 
 	return result, err

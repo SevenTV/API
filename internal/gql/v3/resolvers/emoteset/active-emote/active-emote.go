@@ -31,5 +31,5 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.ActiveEmote) (*model.Us
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).PartialGQL(), nil
+	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
 }

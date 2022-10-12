@@ -10,7 +10,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -111,12 +110,12 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		}
 	}()
 
-	setModel := helpers.EmoteSetStructureToModel(b.EmoteSet, r.Ctx.Config().CdnURL)
+	setModel := r.Ctx.Inst().Modelizer.EmoteSet(b.EmoteSet).GQL()
 	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
 
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {
-			setModel.Emotes[i].Emote = helpers.EmoteStructureToModel(e, r.Ctx.Config().CdnURL)
+			setModel.Emotes[i].Emote = r.Ctx.Inst().Modelizer.Emote(e).GQL()
 		}
 	}
 
@@ -178,5 +177,5 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteSetOps, data m
 		return nil, err
 	}
 
-	return helpers.EmoteSetStructureToModel(esb.EmoteSet, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.EmoteSet(esb.EmoteSet).GQL(), nil
 }

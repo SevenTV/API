@@ -20,7 +20,7 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 			return nil
 		}
 
-		return r.Ctx.Inst().Modelizer.User(user).PartialGQL()
+		return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	ch := make(chan *model.UserPartial, 1)
@@ -54,7 +54,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) 
 			return nil
 		}
 
-		return r.Ctx.Inst().Modelizer.User(user).PartialGQL()
+		return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	ch := make(chan *model.UserPartial, 1)

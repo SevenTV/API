@@ -27,5 +27,5 @@ func (r *Resolver) User(ctx context.Context, obj *model.UserEditor) (*model.User
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(u).PartialGQL(), nil
+	return r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL(), nil
 }

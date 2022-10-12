@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -23,5 +22,5 @@ func (r *Resolver) Emote(ctx context.Context, obj *model.UserEmote) (*model.Emot
 		return nil, err
 	}
 
-	return helpers.EmoteStructureToModel(emote, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
 }
