@@ -115,7 +115,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {
-			setModel.Emotes[i].Emote = r.Ctx.Inst().Modelizer.Emote(e).GQL()
+			setModel.Emotes[i].Emote = r.Ctx.Inst().Modelizer.Emote(e).ToPartial().GQL()
 		}
 	}
 

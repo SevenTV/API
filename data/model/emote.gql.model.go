@@ -16,6 +16,10 @@ func (xm EmoteModel) GQL() *model.Emote {
 
 	for i, v := range xm.Versions {
 		versions[i] = v.GQL()
+
+		if v.ID == xm.ID {
+			versions[i].Host = xm.Host.GQL()
+		}
 	}
 
 	if xm.Owner != nil {
@@ -68,12 +72,20 @@ func (xm EmotePartialModel) GQL() *model.EmotePartial {
 }
 
 func (xm EmoteVersionModel) GQL() *model.EmoteVersion {
+	host := &model.ImageHost{
+		URL:   "",
+		Files: []*model.Image{},
+	}
+	if xm.Host != nil {
+		host = xm.Host.GQL()
+	}
+
 	return &model.EmoteVersion{
 		ID:          xm.ID,
 		Name:        xm.Name,
 		Description: xm.Description,
 		CreatedAt:   time.UnixMilli(xm.CreatedAt),
-		Host:        xm.Host.GQL(),
+		Host:        host,
 		Lifecycle:   int(xm.Lifecycle),
 		Listed:      xm.Listed,
 	}

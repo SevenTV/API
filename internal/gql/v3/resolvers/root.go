@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/resolvers/emote"
 	"github.com/seventv/api/internal/gql/v3/resolvers/emoteset"
 	activeemote "github.com/seventv/api/internal/gql/v3/resolvers/emoteset/active-emote"
+	imagehost "github.com/seventv/api/internal/gql/v3/resolvers/image-host"
 	"github.com/seventv/api/internal/gql/v3/resolvers/mutation"
 	"github.com/seventv/api/internal/gql/v3/resolvers/query"
 	"github.com/seventv/api/internal/gql/v3/resolvers/report"
@@ -31,6 +32,10 @@ func New(r types.Resolver) generated.ResolverRoot {
 
 func (r *Resolver) Ban() generated.BanResolver {
 	return ban.New(r.Resolver)
+}
+
+func (r *Resolver) ImageHost() generated.ImageHostResolver {
+	return imagehost.New(r.Resolver)
 }
 
 func (r *Resolver) Emote() generated.EmoteResolver {

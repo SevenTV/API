@@ -146,7 +146,6 @@ type emoteCommonName struct {
 }
 */
 
-// Trending implements generated.EmoteResolver
 func (r *Resolver) Trending(ctx context.Context, obj *model.Emote) (*int, error) {
 	k := r.Ctx.Inst().Redis.ComposeKey("api-gql", "trending-emotes")
 

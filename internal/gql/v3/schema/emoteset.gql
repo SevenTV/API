@@ -42,7 +42,7 @@ type ActiveEmote {
   name: String!
   flags: Int!
   timestamp: Time!
-  emote: Emote
+  emote: EmotePartial! @goField(forceResolver: true)
   actor: UserPartial @goField(forceResolver: true)
 }
 
