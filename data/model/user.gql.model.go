@@ -44,6 +44,7 @@ func (xm UserPartialModel) GQL() *model.UserPartial {
 		Type:        string(xm.UserType),
 		Username:    xm.Username,
 		DisplayName: xm.DisplayName,
+		AvatarURL:   xm.AvatarURL,
 		CreatedAt:   xm.ID.Timestamp(),
 		Style:       xm.Style.GQL(),
 		Roles:       xm.RoleIDs,

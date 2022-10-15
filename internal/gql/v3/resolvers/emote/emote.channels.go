@@ -45,14 +45,14 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 		return nil, err
 	}
 
-	models := make([]*model.User, len(users))
+	models := make([]*model.UserPartial, len(users))
 
 	for i, u := range users {
 		if u.ID.IsZero() {
 			u = structures.DeletedUser
 		}
 
-		models[i] = r.Ctx.Inst().Modelizer.User(u).GQL()
+		models[i] = r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL()
 	}
 
 	results := model.UserSearchResult{

@@ -33,6 +33,7 @@ func (xm EmoteModel) GQL() *model.Emote {
 		ID:        xm.ID,
 		Name:      xm.Name,
 		Flags:     int(xm.Flags),
+		Listed:    xm.Listed,
 		Lifecycle: int(xm.Lifecycle),
 		Tags:      xm.Tags,
 		Animated:  xm.Animated,
@@ -41,7 +42,6 @@ func (xm EmoteModel) GQL() *model.Emote {
 		Owner:     owner,
 		Host:      xm.Host.GQL(),
 		Versions:  versions,
-		Listed:    xm.Listed,
 	}
 }
 
@@ -62,6 +62,7 @@ func (xm EmotePartialModel) GQL() *model.EmotePartial {
 		ID:        xm.ID,
 		Name:      xm.Name,
 		Flags:     int(xm.Flags),
+		Listed:    xm.Listed,
 		Lifecycle: int(xm.Lifecycle),
 		Tags:      xm.Tags,
 		Animated:  xm.Animated,
