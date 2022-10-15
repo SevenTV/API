@@ -221,6 +221,8 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 	if v.EmoteSet != nil {
 		s := x.EmoteSet(*v.EmoteSet)
 		set = &s
+	} else if !v.EmoteSetID.IsZero() {
+		set = utils.PointerOf(x.EmoteSet(structures.EmoteSet{ID: v.EmoteSetID}))
 	}
 
 	return UserConnectionModel{

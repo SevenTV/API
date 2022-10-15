@@ -28,7 +28,7 @@ type EmoteSet {
   emotes(limit: Int): [ActiveEmote!]! @goField(forceResolver: true)
   capacity: Int!
   owner_id: ObjectID
-  owner: User @goField(forceResolver: true)
+  owner: UserPartial @goField(forceResolver: true)
 }
 
 type EmoteSetPartial {

@@ -46,6 +46,8 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 	if v.Owner != nil {
 		u := x.User(*v.Owner).ToPartial()
 		owner = &u
+	} else if !v.OwnerID.IsZero() {
+		owner = &UserPartialModel{ID: v.OwnerID}
 	}
 
 	if v.Tags == nil {
