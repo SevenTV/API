@@ -34,7 +34,7 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.ActiveEmote) (*model.Us
 	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
 }
 
-func (r *Resolver) Emote(ctx context.Context, obj *model.ActiveEmote) (*model.EmotePartial, error) {
+func (r *Resolver) Data(ctx context.Context, obj *model.ActiveEmote) (*model.EmotePartial, error) {
 	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(obj.ID)
 	if err != nil {
 		if errors.Compare(err, errors.ErrUnknownEmote()) {
