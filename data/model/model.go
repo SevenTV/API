@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/seventv/common/structures/v3"
@@ -14,6 +15,9 @@ type Modelizer interface {
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
+	Role(v structures.Role) RoleModel
+	InboxMessage(v structures.Message[structures.MessageDataInbox]) InboxMessageModel
+	ModRequestMessage(v structures.Message[structures.MessageDataModRequest]) ModRequestMessageModel
 }
 
 type modelizer struct {
@@ -56,11 +60,11 @@ const (
 )
 
 func (x *modelizer) Image(v structures.ImageFile) ImageFile {
-	format := strings.Split(v.ContentType, "/")[1]
-	format = strings.ToUpper(format)
+	ext := strings.Split(v.ContentType, "/")[1]
+	format := strings.ToUpper(ext)
 
 	return ImageFile{
-		Name:       v.Name,
+		Name:       fmt.Sprintf("%s.%s", v.Name, ext),
 		StaticName: strings.Replace(v.Name, ".", "_static.", 1),
 		Format:     ImageFormat(format),
 		Width:      v.Width,

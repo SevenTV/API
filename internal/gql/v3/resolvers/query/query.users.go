@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
@@ -26,7 +25,7 @@ func (r *Resolver) UsersByID(ctx context.Context, list []primitive.ObjectID) ([]
 	result := make([]*model.UserPartial, len(users))
 
 	for i, user := range users {
-		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
+		result[i] = r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	return result, nil
@@ -78,7 +77,7 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 
 	result := make([]*model.UserPartial, len(users))
 	for i, u := range users {
-		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
+		result[i] = r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL()
 	}
 
 	return result, err
@@ -94,5 +93,5 @@ func (r *Resolver) UserByConnection(ctx context.Context, platform model.Connecti
 		return nil, errors.ErrUnknownUser()
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }

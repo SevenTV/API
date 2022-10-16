@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -17,7 +16,7 @@ func New(r types.Resolver) generated.EmoteSetResolver {
 	return &Resolver{r}
 }
 
-func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.User, error) {
+func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.UserPartial, error) {
 	if obj.OwnerID == nil {
 		return nil, nil
 	}
@@ -27,7 +26,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.User,
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
 }
 
 func (*Resolver) Emotes(ctx context.Context, obj *model.EmoteSet, limit *int) ([]*model.ActiveEmote, error) {

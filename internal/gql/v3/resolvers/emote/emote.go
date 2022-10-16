@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -29,11 +28,7 @@ func New(r types.Resolver) generated.EmoteResolver {
 	return &Resolver{r, &sync.Mutex{}}
 }
 
-func (r *Resolver) Images(ctx context.Context, obj *model.Emote, format []model.ImageFormat) ([]*model.Image, error) {
-	return helpers.FilterImages(obj.Images, format), nil
-}
-
-func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, error) {
+func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.UserPartial, error) {
 	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
 		return obj.Owner, nil
 	}
@@ -47,7 +42,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.User, er
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.Emote) ([]*model.Report, error) {
@@ -151,7 +146,6 @@ type emoteCommonName struct {
 }
 */
 
-// Trending implements generated.EmoteResolver
 func (r *Resolver) Trending(ctx context.Context, obj *model.Emote) (*int, error) {
 	k := r.Ctx.Inst().Redis.ComposeKey("api-gql", "trending-emotes")
 
@@ -268,7 +262,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int
 
 	// Add actors to result
 	for i, l := range result {
-		result[i].Actor = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(actorMap[l.ActorID], r.Ctx.Config().CdnURL))
+		result[i].Actor = r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).ToPartial().GQL()
 	}
 
 	return result, nil

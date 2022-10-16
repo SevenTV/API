@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 )
 
@@ -23,7 +22,7 @@ func (r *Resolver) Victim(ctx context.Context, obj *model.Ban) (*model.User, err
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) Actor(ctx context.Context, obj *model.Ban) (*model.User, error) {
@@ -32,5 +31,5 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.Ban) (*model.User, erro
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 )
@@ -32,5 +31,18 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.ActiveEmote) (*model.Us
 		return nil, err
 	}
 
-	return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL)), nil
+	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
+}
+
+func (r *Resolver) Data(ctx context.Context, obj *model.ActiveEmote) (*model.EmotePartial, error) {
+	emote, err := r.Ctx.Inst().Loaders.EmoteByID().Load(obj.ID)
+	if err != nil {
+		if errors.Compare(err, errors.ErrUnknownEmote()) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return r.Ctx.Inst().Modelizer.Emote(emote).ToPartial().GQL(), nil
 }

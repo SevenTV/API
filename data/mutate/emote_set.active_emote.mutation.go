@@ -225,7 +225,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Actor: m.modelizer.User(actor),
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
-						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes))),
+						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes)) - 1),
 						Type:  events.ChangeFieldTypeObject,
 						Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
 							ID:        tgt.ID,

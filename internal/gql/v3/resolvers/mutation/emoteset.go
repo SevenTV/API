@@ -6,7 +6,6 @@ import (
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -45,5 +44,5 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, userID primitive.ObjectID
 		return nil, err
 	}
 
-	return helpers.EmoteSetStructureToModel(emoteSet, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.EmoteSet(emoteSet).GQL(), nil
 }

@@ -41,6 +41,7 @@ type EmoteVersionModel struct {
 	Listed      bool                `json:"listed"`
 	Animated    bool                `json:"animated"`
 	Host        *ImageHost          `json:"host,omitempty" extensions:"x-omitempty"`
+	CreatedAt   int64               `json:"createdAt"`
 }
 
 type EmoteLifecycleModel int32
@@ -170,5 +171,6 @@ func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
 			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
 			Files: files,
 		},
+		CreatedAt: v.CreatedAt.UnixMilli(),
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -52,7 +51,7 @@ func (r *Resolver) Actor(ctx context.Context) (*model.User, error) {
 		return nil, err
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User, error) {
@@ -76,7 +75,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID) (*model.User
 		return nil, errors.ErrUnknownUser()
 	}
 
-	return helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
 }
 
 func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
@@ -84,7 +83,7 @@ func (r *Resolver) Roles(ctx context.Context) ([]*model.Role, error) {
 
 	result := make([]*model.Role, len(roles))
 	for i, rol := range roles {
-		result[i] = helpers.RoleStructureToModel(rol)
+		result[i] = r.Ctx.Inst().Modelizer.Role(rol).GQL()
 	}
 
 	return result, nil

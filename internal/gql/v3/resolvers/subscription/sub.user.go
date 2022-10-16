@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -21,7 +20,7 @@ func (r *Resolver) CurrentUser(ctx context.Context, init *bool) (<-chan *model.U
 			return nil
 		}
 
-		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
+		return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	ch := make(chan *model.UserPartial, 1)
@@ -55,7 +54,7 @@ func (r *Resolver) User(ctx context.Context, id primitive.ObjectID, init *bool) 
 			return nil
 		}
 
-		return helpers.UserStructureToPartialModel(helpers.UserStructureToModel(user, r.Ctx.Config().CdnURL))
+		return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL()
 	}
 
 	ch := make(chan *model.UserPartial, 1)

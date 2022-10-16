@@ -1,7 +1,6 @@
 type Image {
   name: String!
   format: ImageFormat!
-  url: String!
   width: Int!
   height: Int!
   frame_count: Int!
@@ -13,6 +12,11 @@ enum ImageFormat {
   WEBP
   GIF
   PNG
+}
+
+type ImageHost {
+  url: String!
+  files(formats: [ImageFormat!]): [Image!]! @goField(forceResolver: true)
 }
 
 type Archive {

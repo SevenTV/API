@@ -35,20 +35,19 @@ type UserOps {
 
 type User {
   id: ObjectID!
-  user_type: String!
+  type: String!
   username: String!
   display_name: String!
   created_at: Time!
   avatar_url: String!
   biography: String!
-  tag_color: Int!
+  style: UserStyle!
 
   editors: [UserEditor!]! @goField(forceResolver: true)
   editor_of: [UserEditor!]! @goField(forceResolver: true)
   cosmetics: [UserCosmetic!]! @goField(forceResolver: true)
 
   roles: [ObjectID!]!
-  permissions: Int!
 
   emote_sets: [EmoteSet!]! @goField(forceResolver: true)
   owned_emotes: [Emote!]! @goField(forceResolver: true)
@@ -65,13 +64,13 @@ type User {
 
 type UserPartial {
   id: ObjectID!
-  user_type: String!
+  type: String!
   username: String!
   display_name: String!
   created_at: Time!
   avatar_url: String!
   biography: String!
-  tag_color: Int!
+  style: UserStyle!
   roles: [ObjectID!]!
   connections(type: [ConnectionPlatform!]): [UserConnection]!
   emote_sets: [EmoteSetPartial!]! @goField(forceResolver: true)
@@ -94,12 +93,17 @@ type UserEmote {
 
 type UserConnection {
   id: String!
+  platform: ConnectionPlatform!
   username: String!
   display_name: String!
-  platform: ConnectionPlatform!
   linked_at: Time!
-  emote_slots: Int!
+  emote_capacity: Int!
   emote_set_id: ObjectID
+}
+
+type UserStyle {
+  color: Int!
+  paint: CosmeticPaint
 }
 
 type UserCosmetic {
@@ -132,5 +136,5 @@ input UserCosmeticUpdate {
 
 type UserSearchResult {
   total: Int!
-  items: [User!]!
+  items: [UserPartial!]!
 }

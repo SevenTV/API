@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -165,7 +164,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		return nil, err
 	}
 
-	result := helpers.UserStructureToModel(b.User, r.Ctx.Config().CdnURL)
+	result := r.Ctx.Inst().Modelizer.User(b.User).GQL()
 	events.Publish(r.Ctx, "users", b.User.ID)
 
 	return result.Connections, nil

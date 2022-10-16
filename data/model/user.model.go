@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"regexp"
+	"sort"
 
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -13,16 +14,17 @@ import (
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
 type UserModel struct {
-	ID                primitive.ObjectID    `json:"id"`
-	UserType          UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
-	Username          string                `json:"username"`
-	ProfilePictureURL string                `json:"profile_picture_url,omitempty"`
-	DisplayName       string                `json:"display_name"`
-	Style             UserStyle             `json:"style"`
-	Biography         string                `json:"biography,omitempty" extensions:"x-omitempty"`
-	Editors           []UserEditorModel     `json:"editors,omitempty"`
-	RoleIDs           []primitive.ObjectID  `json:"roles"`
-	Connections       []UserConnectionModel `json:"connections"`
+	ID          primitive.ObjectID    `json:"id"`
+	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username    string                `json:"username"`
+	DisplayName string                `json:"display_name"`
+	CreatedAt   int64                 `json:"createdAt,omitempty"`
+	AvatarURL   string                `json:"avatar_url,omitempty"`
+	Biography   string                `json:"biography,omitempty" extensions:"x-omitempty"`
+	Style       UserStyle             `json:"style"`
+	Editors     []UserEditorModel     `json:"editors,omitempty"`
+	RoleIDs     []primitive.ObjectID  `json:"roles"`
+	Connections []UserConnectionModel `json:"connections"`
 }
 
 type UserPartialModel struct {
@@ -30,6 +32,7 @@ type UserPartialModel struct {
 	UserType    UserTypeModel        `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string               `json:"username"`
 	DisplayName string               `json:"display_name"`
+	AvatarURL   string               `json:"avatar_url,omitempty"`
 	Style       UserStyle            `json:"style"`
 	RoleIDs     []primitive.ObjectID `json:"roles"`
 }
@@ -48,28 +51,76 @@ var (
 )
 
 func (x *modelizer) User(v structures.User) UserModel {
-	connections := make([]UserConnectionModel, len(v.Connections))
+	var (
+		connections = make([]UserConnectionModel, len(v.Connections))
+		editors     = make([]UserEditorModel, len(v.Editors))
+		avatarURL   string
+	)
+
 	for i, c := range v.Connections {
 		connections[i] = x.UserConnection(c)
-	}
 
-	editors := make([]UserEditorModel, len(v.Editors))
-	for i, e := range v.Editors {
-		editors[i] = x.UserEditor(e)
-	}
-
-	profilePictureURL := ""
-	if v.AvatarID != "" {
-		profilePictureURL = fmt.Sprintf("//%s/pp/%s/%s", x.cdnURL, v.ID.Hex(), v.AvatarID)
-	} else {
-		for _, con := range v.Connections {
-			if con.Platform == structures.UserConnectionPlatformTwitch {
-				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](con); err == nil {
-					profilePictureURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
+		if avatarURL == "" {
+			switch c.Platform {
+			case structures.UserConnectionPlatformTwitch:
+				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](c); err == nil {
+					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
+				}
+			case structures.UserConnectionPlatformYouTube:
+				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](c); err == nil {
+					avatarURL = con.Data.ProfileImageURL
 				}
 			}
 		}
 	}
+
+	if v.Avatar != nil && !v.Avatar.ID.IsZero() {
+		files := v.Avatar.ImageFiles
+		i := 0
+
+		for _, file := range files {
+			if file.ContentType == "image/webp" {
+				files[i] = file
+				i++
+			}
+		}
+
+		files = files[:i]
+
+		var (
+			largestStatic   structures.ImageFile
+			largestAnimated structures.ImageFile
+		)
+
+		for _, file := range files {
+			if file.FrameCount == 1 && !file.IsStatic() && file.Width > largestStatic.Width {
+				largestStatic = file
+				largestAnimated = file
+			} else if file.IsStatic() && file.Width > largestStatic.Width {
+				largestStatic = file
+			} else if file.Width > largestAnimated.Width {
+				largestAnimated = file
+			}
+		}
+
+		if v.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
+			avatarURL = largestAnimated.Key
+		} else {
+			avatarURL = largestStatic.Key
+		}
+
+		avatarURL = fmt.Sprintf("//%s/%s", x.cdnURL, avatarURL)
+	} else if v.AvatarID != "" {
+		avatarURL = fmt.Sprintf("//%s/pp/%s/%s", x.cdnURL, v.ID.Hex(), v.AvatarID)
+	}
+
+	for i, e := range v.Editors {
+		editors[i] = x.UserEditor(e)
+	}
+
+	sort.Slice(v.Roles, func(i, j int) bool {
+		return v.Roles[i].Position > v.Roles[j].Position
+	})
 
 	roleIDs := make([]primitive.ObjectID, len(v.Roles))
 	for i, r := range v.Roles {
@@ -82,16 +133,17 @@ func (x *modelizer) User(v structures.User) UserModel {
 	}
 
 	return UserModel{
-		ID:                v.ID,
-		UserType:          UserTypeModel(v.UserType),
-		Username:          v.Username,
-		DisplayName:       utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
-		Style:             style,
-		ProfilePictureURL: profilePictureURL,
-		Biography:         v.Biography,
-		Editors:           editors,
-		RoleIDs:           roleIDs,
-		Connections:       connections,
+		ID:          v.ID,
+		UserType:    UserTypeModel(v.UserType),
+		Username:    v.Username,
+		DisplayName: utils.Ternary(v.DisplayName != "", v.DisplayName, v.Username),
+		CreatedAt:   v.ID.Timestamp().UnixMilli(),
+		Style:       style,
+		AvatarURL:   avatarURL,
+		Biography:   v.Biography,
+		Editors:     editors,
+		RoleIDs:     roleIDs,
+		Connections: connections,
 	}
 }
 
@@ -100,6 +152,8 @@ func (um UserModel) ToPartial() UserPartialModel {
 		ID:          um.ID,
 		UserType:    um.UserType,
 		Username:    um.Username,
+		AvatarURL:   um.AvatarURL,
+		Style:       um.Style,
 		DisplayName: um.DisplayName,
 		RoleIDs:     um.RoleIDs,
 	}
@@ -170,6 +224,8 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 	if v.EmoteSet != nil {
 		s := x.EmoteSet(*v.EmoteSet)
 		set = &s
+	} else if !v.EmoteSetID.IsZero() {
+		set = utils.PointerOf(x.EmoteSet(structures.EmoteSet{ID: v.EmoteSetID}))
 	}
 
 	return UserConnectionModel{
