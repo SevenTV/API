@@ -171,5 +171,6 @@ func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
 			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
 			Files: files,
 		},
+		CreatedAt: v.CreatedAt.UnixMilli(),
 	}
 }
