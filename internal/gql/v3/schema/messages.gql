@@ -23,7 +23,7 @@ interface Message {
   id: ObjectID!
   kind: MessageKind!
   created_at: Time!
-  author: User!
+  author_id: ObjectID
   read: Boolean!
   read_at: Time
 }
@@ -32,7 +32,7 @@ type InboxMessage implements Message {
   id: ObjectID!
   kind: MessageKind!
   created_at: Time!
-  author: User!
+  author_id: ObjectID
   read: Boolean!
   read_at: Time
 
@@ -48,7 +48,7 @@ type ModRequestMessage implements Message {
   id: ObjectID!
   kind: MessageKind!
   created_at: Time!
-  author: User!
+  author_id: ObjectID
   read: Boolean!
   read_at: Time
 

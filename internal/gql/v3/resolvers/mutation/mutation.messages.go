@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -147,7 +146,7 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 		return nil, err
 	}
 
-	return helpers.MessageStructureToInboxModel(inb, r.Ctx.Config().CdnURL), nil
+	return r.Ctx.Inst().Modelizer.InboxMessage(inb).GQL(), nil
 }
 
 func (r *Resolver) DismissVoidTargetModRequests(ctx context.Context, objectKind int) (int, error) {

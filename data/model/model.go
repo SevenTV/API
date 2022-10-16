@@ -16,6 +16,8 @@ type Modelizer interface {
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 	Role(v structures.Role) RoleModel
+	InboxMessage(v structures.Message[structures.MessageDataInbox]) InboxMessageModel
+	ModRequestMessage(v structures.Message[structures.MessageDataModRequest]) ModRequestMessageModel
 }
 
 type modelizer struct {

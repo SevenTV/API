@@ -1,38 +1,10 @@
 package helpers
 
 import (
-	"time"
-
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 )
-
-func MessageStructureToInboxModel(s structures.Message[structures.MessageDataInbox], cdnURL string) *model.InboxMessage {
-	return &model.InboxMessage{
-		ID:           s.ID,
-		Kind:         model.MessageKind(s.Kind.String()),
-		CreatedAt:    s.CreatedAt,
-		Read:         s.Read,
-		ReadAt:       &time.Time{},
-		Subject:      s.Data.Subject,
-		Content:      s.Data.Content,
-		Important:    s.Data.Important,
-		Starred:      s.Data.Starred,
-		Pinned:       s.Data.Pinned,
-		Placeholders: utils.Ternary(s.Data.Placeholders == nil, map[string]string{}, s.Data.Placeholders),
-	}
-}
-
-func MessageStructureToModRequestModel(s structures.Message[structures.MessageDataModRequest], cdnURL string) *model.ModRequestMessage {
-	return &model.ModRequestMessage{
-		ID:         s.ID,
-		Kind:       model.MessageKind(s.Kind.String()),
-		CreatedAt:  s.CreatedAt,
-		TargetKind: int(s.Data.TargetKind),
-		TargetID:   s.Data.TargetID,
-	}
-}
 
 func ReportStructureToModel(s structures.Report) *model.Report {
 	assignees := make([]*model.User, len(s.AssigneeIDs))
