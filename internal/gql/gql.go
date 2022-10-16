@@ -113,7 +113,7 @@ func New(gCtx global.Context) error {
 		WriteTimeout:       time.Second * 10,
 		CloseOnShutdown:    true,
 		Name:               "7TV - GQL",
-		ReadBufferSize:     int(32 * 1024),       // 32KB
+		ReadBufferSize:     int(1000 * 1024),     // 32KB
 		MaxRequestBodySize: int(6 * 1024 * 1024), // 6MB
 	}
 
