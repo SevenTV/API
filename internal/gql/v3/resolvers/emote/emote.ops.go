@@ -193,7 +193,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		}
 		// Edit flags
 		if params.Flags != nil {
-			f := structures.EmoteFlag(*params.Flags)
+			f := structures.BitField[structures.EmoteFlag](structures.EmoteFlag(*params.Flags))
 			eb.SetFlags(f)
 		}
 

@@ -113,7 +113,7 @@ type EmoteSetMutationSetEmoteItem struct {
 	Action structures.ListItemAction
 	ID     primitive.ObjectID
 	Name   string
-	Flags  structures.ActiveEmoteFlag
+	Flags  structures.BitField[structures.ActiveEmoteFlag]
 
 	emote *structures.Emote
 }
