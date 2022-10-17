@@ -42,9 +42,10 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 				for i, v := range keys {
 					if x, ok := m[v]; ok {
 						ver, _ := x.GetVersion(v)
-						if ver.ID.IsZero() || ver.IsUnavailable() {
+						if ver.ID.IsZero() {
 							continue
 						}
+
 						x.ID = v
 						items[i] = x
 					}
