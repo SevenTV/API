@@ -45,6 +45,8 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 
 	if v.Owner != nil {
 		u := x.User(*v.Owner).ToPartial()
+		u.Connections = nil // clear the connections field of emote set owners as it's not needed here
+
 		owner = &u
 	} else if !v.OwnerID.IsZero() {
 		owner = &UserPartialModel{ID: v.OwnerID}
@@ -71,6 +73,12 @@ func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
 	var data *EmotePartialModel
 
 	if v.Emote != nil {
+		// TODO: This is a workaround due to active emote flags not being implemented
+		// this mirrors the emote's flags to the value in the active emote
+		if v.Emote.Flags.Has(structures.EmoteFlagsZeroWidth) {
+			v.Flags = v.Flags.Set(structures.ActiveEmoteFlagZeroWidth)
+		}
+
 		e := x.Emote(*v.Emote).ToPartial()
 		data = &e
 	}

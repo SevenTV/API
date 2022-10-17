@@ -30,11 +30,11 @@ func EmoteStructureToModel(s structures.Emote, cdnURL string) *model.Emote {
 		vis |= int(v2structures.EmoteVisibilityUnlisted)
 	}
 
-	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsZeroWidth)) {
+	if s.Flags.Has(structures.EmoteFlagsZeroWidth) {
 		vis |= int(v2structures.EmoteVisibilityZeroWidth)
 	}
 
-	if utils.BitField.HasBits(int64(s.Flags), int64(structures.EmoteFlagsPrivate)) {
+	if s.Flags.Has(structures.EmoteFlagsPrivate) {
 		vis |= int(v2structures.EmoteVisibilityPrivate)
 	}
 

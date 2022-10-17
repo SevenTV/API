@@ -71,7 +71,7 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 			em.Name = emote.Name
 		}
 
-		zw := emote.Emote.Flags&structures.EmoteFlagsZeroWidth != 0
+		zw := emote.Emote.Flags.Value()&structures.EmoteFlagsZeroWidth != 0
 		if zw && !utils.BitField.HasBits(int64(obj.Permissions), int64(structures.RolePermissionFeatureZeroWidthEmoteType)) {
 			continue // omit zero-width if unprivileged
 		}
@@ -107,7 +107,7 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 		}
 
 		if e.Emote != nil {
-			zw := e.Emote.Flags&structures.EmoteFlagsZeroWidth != 0
+			zw := e.Emote.Flags.Value()&structures.EmoteFlagsZeroWidth != 0
 			if zw && !utils.BitField.HasBits(int64(obj.Permissions), int64(structures.RolePermissionFeatureZeroWidthEmoteType)) {
 				continue // omit zero-width if unprivileged
 			}

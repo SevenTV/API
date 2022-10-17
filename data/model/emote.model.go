@@ -104,6 +104,8 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 
 	if v.Owner != nil {
 		u := x.User(*v.Owner).ToPartial()
+		u.Connections = nil // clear the connections field of emote owners as it's not needed here
+
 		owner = &u
 	}
 

@@ -59,7 +59,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 
 	if opt.Visibility != nil {
 		vis := int64(*opt.Visibility)
-		flags := emote.Flags
+		flags := emote.Flags.Value()
 
 		readModRequests := func() error {
 			// Fetch mod request
@@ -137,7 +137,7 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 			flags |= structures.EmoteFlagsPrivate
 		}
 
-		eb.SetFlags(flags)
+		eb.SetFlags(structures.BitField[structures.EmoteFlag](flags))
 	}
 
 	if err = r.Ctx.Inst().Mutate.EditEmote(ctx, eb, mutate.EmoteEditOptions{

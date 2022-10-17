@@ -39,6 +39,11 @@ func (xm UserModel) GQL() *model.User {
 }
 
 func (xm UserPartialModel) GQL() *model.UserPartial {
+	connections := make([]*model.UserConnection, len(xm.Connections))
+	for i, c := range xm.Connections {
+		connections[i] = c.GQL()
+	}
+
 	return &model.UserPartial{
 		ID:          xm.ID,
 		Type:        string(xm.UserType),
@@ -48,6 +53,7 @@ func (xm UserPartialModel) GQL() *model.UserPartial {
 		CreatedAt:   xm.ID.Timestamp(),
 		Style:       xm.Style.GQL(),
 		Roles:       xm.RoleIDs,
+		Connections: connections,
 	}
 }
 

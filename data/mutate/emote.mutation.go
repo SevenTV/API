@@ -216,7 +216,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					structures.EmoteFlagsContentTwitchDisallowed,
 				}
 				for _, flag := range privilegedBits {
-					if f&flag != init.Flags&flag {
+					if f.Has(flag) {
 						return errors.ErrInsufficientPrivilege().SetDetail("Not allowed to modify flag %s", flag.String())
 					}
 				}

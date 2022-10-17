@@ -24,17 +24,18 @@ type UserModel struct {
 	Style       UserStyle             `json:"style"`
 	Editors     []UserEditorModel     `json:"editors,omitempty"`
 	RoleIDs     []primitive.ObjectID  `json:"roles"`
-	Connections []UserConnectionModel `json:"connections"`
+	Connections []UserConnectionModel `json:"connections,omitempty"`
 }
 
 type UserPartialModel struct {
-	ID          primitive.ObjectID   `json:"id"`
-	UserType    UserTypeModel        `json:"type,omitempty" enums:",BOT,SYSTEM"`
-	Username    string               `json:"username"`
-	DisplayName string               `json:"display_name"`
-	AvatarURL   string               `json:"avatar_url,omitempty"`
-	Style       UserStyle            `json:"style"`
-	RoleIDs     []primitive.ObjectID `json:"roles"`
+	ID          primitive.ObjectID    `json:"id"`
+	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username    string                `json:"username"`
+	DisplayName string                `json:"display_name"`
+	AvatarURL   string                `json:"avatar_url,omitempty"`
+	Style       UserStyle             `json:"style"`
+	RoleIDs     []primitive.ObjectID  `json:"roles"`
+	Connections []UserConnectionModel `json:"connections"`
 }
 
 type UserStyle struct {
@@ -156,6 +157,7 @@ func (um UserModel) ToPartial() UserPartialModel {
 		Style:       um.Style,
 		DisplayName: um.DisplayName,
 		RoleIDs:     um.RoleIDs,
+		Connections: um.Connections,
 	}
 }
 

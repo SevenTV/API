@@ -146,7 +146,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		// ADD EMOTE
 		case structures.ListItemActionAdd:
 			// Handle emote privacy
-			if utils.BitField.HasBits(int64(tgt.emote.Flags), int64(structures.EmoteFlagsPrivate)) {
+			if tgt.emote.Flags.Has(structures.EmoteFlagsPrivate) {
 				usable := false
 				// Usable if actor has Bypass Privacy permission
 				if actor.HasPermission(structures.RolePermissionBypassPrivacy) {
@@ -172,12 +172,12 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				if !usable {
 					return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
 						"EMOTE_ID": tgt.ID.Hex(),
-					}).SetDetail("emote is private")
+					}).SetDetail("Private Emote")
 				}
 			}
 
 			// Check zero-width permission
-			if set.Owner == nil || tgt.emote.Flags&structures.EmoteFlagsZeroWidth != 0 && !set.Owner.HasPermission(structures.RolePermissionFeatureZeroWidthEmoteType) {
+			if set.Owner == nil || tgt.emote.Flags.Value()&structures.EmoteFlagsZeroWidth != 0 && !set.Owner.HasPermission(structures.RolePermissionFeatureZeroWidthEmoteType) {
 				return errors.ErrInsufficientPrivilege().SetDetail("You must be a subscriber to use zero-width emotes")
 			}
 

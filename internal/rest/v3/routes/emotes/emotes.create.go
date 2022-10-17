@@ -19,7 +19,6 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc/s3"
-	"github.com/seventv/common/utils"
 	"github.com/seventv/image-processor/go/container"
 	"github.com/seventv/image-processor/go/task"
 	messagequeue "github.com/seventv/message-queue/go"
@@ -114,7 +113,7 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	var (
 		name  string
 		tags  []string
-		flags structures.EmoteFlag
+		flags structures.BitField[structures.EmoteFlag]
 	)
 
 	// these validations are all "free" as in we can do them before we download the file they try to upload.
@@ -137,11 +136,11 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 	// Validate: Flags
 	{
 		if args.Flags != 0 {
-			if utils.BitField.HasBits(int64(args.Flags), int64(structures.EmoteFlagsPrivate)) {
-				flags |= structures.EmoteFlagsPrivate
+			if args.Flags.Has(structures.EmoteFlagsPrivate) {
+				flags.Set(structures.EmoteFlagsPrivate)
 			}
-			if utils.BitField.HasBits(int64(args.Flags), int64(structures.EmoteFlagsZeroWidth)) {
-				flags |= structures.EmoteFlagsZeroWidth
+			if args.Flags.Has(structures.EmoteFlagsZeroWidth) {
+				flags.Set(structures.EmoteFlagsZeroWidth)
 			}
 		}
 	}
@@ -376,12 +375,12 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 }
 
 type createData struct {
-	Name        string               `json:"name"`
-	Description string               `json:"description"`
-	ParentID    *primitive.ObjectID  `json:"parent_id"`
-	Diverged    bool                 `json:"diverged"`
-	Tags        []string             `json:"tags"`
-	Flags       structures.EmoteFlag `json:"flags"`
+	Name        string                                    `json:"name"`
+	Description string                                    `json:"description"`
+	ParentID    *primitive.ObjectID                       `json:"parent_id"`
+	Diverged    bool                                      `json:"diverged"`
+	Tags        []string                                  `json:"tags"`
+	Flags       structures.BitField[structures.EmoteFlag] `json:"flags"`
 }
 
 var (
