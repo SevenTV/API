@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID) (<-chan *model.ChangeMap, error) {
-	ch := r.subscribeNext(ctx, events.EventTypeUpdateEmoteSet, id)
+	ch := r.subscribe(ctx, events.EventTypeUpdateEmoteSet, id)
 
 	return ch, nil
 }
