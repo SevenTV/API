@@ -121,8 +121,8 @@ data:
   config.yaml: |
     level: info
 
-    website_url: https://next.7tv.dev
-    website_old_url: https://7tv.dev
+    website_url: https://7tv.dev
+    website_old_url: https://old.7tv.dev
     cdn_url: cdn.7tv.dev
 
     http:
