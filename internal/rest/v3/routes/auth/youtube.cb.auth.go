@@ -166,7 +166,7 @@ func (r *youtubeCallback) Handler(ctx *rest.Ctx) rest.APIError {
 	firstChannel := ytList[0]
 
 	ucb := structures.NewUserConnectionBuilder(structures.UserConnection[structures.UserConnectionDataYoutube]{
-		EmoteSlots: 250,
+		EmoteSlots: 300,
 	}).
 		SetID(firstChannel.ID).
 		SetPlatform(structures.UserConnectionPlatformYouTube).

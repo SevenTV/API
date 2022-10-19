@@ -61,7 +61,7 @@ func (r *Resolver) AddChannelEmote(ctx context.Context, channelIDArg, emoteIDArg
 		esb.EmoteSet.Emotes = []structures.ActiveEmote{}
 		esb.SetOwnerID(target.ID).
 			SetName(fmt.Sprintf("%s's Emotes", target.DisplayName)).
-			SetCapacity(250)
+			SetCapacity(300)
 
 		if err = r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, esb, mutate.EmoteSetMutationOptions{
 			Actor: actor,

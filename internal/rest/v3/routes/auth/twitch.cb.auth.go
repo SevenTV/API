@@ -200,7 +200,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 					ExpiresAt:    time.Now().Add(time.Second * time.Duration(grant.ExpiresIn)),
 				})
 			} else {
-				ucb.UserConnection.EmoteSlots = 250
+				ucb.UserConnection.EmoteSlots = 300
 				ub.AddConnection(ucb.UserConnection.ToRaw())
 			}
 
