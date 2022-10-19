@@ -164,7 +164,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		}}).Decode(&ub.User)
 		if err == mongo.ErrNoDocuments {
 			// User doesn't yet exist: create it
-			ucb.UserConnection.EmoteSlots = 250
+			ucb.UserConnection.EmoteSlots = 300
 			ub.SetUsername(twUser.Login).
 				SetDisplayName(twUser.DisplayName).
 				SetEmail(twUser.Email).
