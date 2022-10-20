@@ -208,7 +208,10 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
-		Proxies map[int]string `mapstructure:"proxies" json:"proxies"`
+		ProxiedEndpoint struct {
+			URL         string `mapstructure:"url" json:"url"`
+			BypassToken string `mapstructure:"bypass_token" json:"bypass_token"`
+		} `mapstructure:"proxied_endpoint" json:"proxied_endpoint"`
 
 		Cookie struct {
 			Domain string `mapstructure:"domain" json:"domain"`

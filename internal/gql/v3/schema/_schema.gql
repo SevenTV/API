@@ -66,5 +66,5 @@ type ChangeField {
 }
 
 extend type Query {
-  proxy_url(id: Int!): String!
+  proxied_endpoint(id: Int!, user_id: ObjectID): String!
 }
