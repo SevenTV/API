@@ -21,6 +21,16 @@ type Resolver struct {
 	types.Resolver
 }
 
+// ProxyURL implements generated.QueryResolver
+func (r *Resolver) ProxyURL(ctx context.Context, id int) (string, error) {
+	p, ok := r.Ctx.Config().Http.Proxies[id]
+	if !ok {
+		return "", errors.ErrInvalidRequest()
+	}
+
+	return p, nil
+}
+
 func New(r types.Resolver) generated.QueryResolver {
 	return &Resolver{r}
 }

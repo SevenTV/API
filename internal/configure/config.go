@@ -208,6 +208,8 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
+		Proxies map[int]string `mapstructure:"proxies" json:"proxies"`
+
 		Cookie struct {
 			Domain string `mapstructure:"domain" json:"domain"`
 			Secure bool   `mapstructure:"secure" json:"secure"`
