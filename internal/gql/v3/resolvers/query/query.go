@@ -2,6 +2,9 @@ package query
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -12,6 +15,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -22,13 +26,69 @@ type Resolver struct {
 }
 
 // ProxyURL implements generated.QueryResolver
-func (r *Resolver) ProxyURL(ctx context.Context, id int) (string, error) {
-	p, ok := r.Ctx.Config().Http.Proxies[id]
-	if !ok {
+func (r *Resolver) ProxiedEndpoint(ctx context.Context, id int, userID *primitive.ObjectID) (string, error) {
+	actor := auth.For(ctx)
+	if actor.ID.IsZero() {
+		return "", errors.ErrUnauthorized()
+	}
+
+	e := r.Ctx.Config().Http.ProxiedEndpoint
+	if e.URL == "" || e.BypassToken == "" {
 		return "", errors.ErrInvalidRequest()
 	}
 
-	return p, nil
+	if userID != nil {
+		editors, err := r.Ctx.Inst().Query.UserEditorOf(ctx, *userID)
+		if err != nil {
+			return "", err
+		}
+
+		found := primitive.NilObjectID
+
+		for _, editor := range editors {
+			if editor.ID == actor.ID {
+				found = editor.ID
+				break
+			}
+		}
+
+		if !found.IsZero() {
+			return "", errors.ErrUnauthorized()
+		}
+	} else {
+		userID = &actor.ID
+	}
+
+	user, err := r.Ctx.Inst().Loaders.UserByID().Load(*userID)
+	if err != nil {
+		return "", err
+	}
+
+	tw, _, err := user.Connections.Twitch()
+	if err != nil {
+		return "", errors.ErrInvalidRequest().SetDetail("Lack of Twitch connection")
+	}
+
+	url := fmt.Sprintf("%s/?7tv-bypass=%s&channel=%s&id=%s", e.URL, e.BypassToken, tw.Data.Login, tw.ID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", errors.ErrInternalServerError()
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", errors.ErrInternalServerError()
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", errors.ErrInternalServerError()
+	}
+
+	return utils.B2S(body), nil
 }
 
 func New(r types.Resolver) generated.QueryResolver {
