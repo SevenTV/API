@@ -88,6 +88,16 @@ func (r *Resolver) ProxiedEndpoint(ctx context.Context, id int, userID *primitiv
 		return "", errors.ErrInternalServerError()
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		zap.S().Errorw("Failed to get proxied endpoint",
+			"status", resp.StatusCode,
+			"url", url,
+			"body", utils.B2S(body),
+		)
+
+		return "", errors.ErrInternalServerError()
+	}
+
 	return utils.B2S(body), nil
 }
 
