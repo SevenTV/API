@@ -1,10 +1,12 @@
 package users
 
 import (
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/common/errors"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type userRoute struct {
@@ -44,5 +46,21 @@ func (r *userRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.From(err)
 	}
 
-	return ctx.JSON(rest.OK, r.Ctx.Inst().Modelizer.User(user))
+	result := r.Ctx.Inst().Modelizer.User(user)
+
+	sets, err := r.Ctx.Inst().Loaders.EmoteSetByUserID().Load(user.ID)
+	if err != nil {
+		return errors.From(err)
+	} else if len(sets) > 0 {
+		result.EmoteSets = make([]model.EmoteSetPartialModel, len(sets))
+
+		for i, set := range sets {
+			set.OwnerID = primitive.NilObjectID
+			set.Emotes = nil
+
+			result.EmoteSets[i] = r.Ctx.Inst().Modelizer.EmoteSet(set).ToPartial()
+		}
+	}
+
+	return ctx.JSON(rest.OK, result)
 }

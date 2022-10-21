@@ -79,10 +79,6 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 	versions := make([]EmoteVersionModel, len(v.Versions))
 
 	for i, ver := range v.Versions {
-		if ver.IsUnavailable() {
-			continue
-		}
-
 		files := append(ver.GetFiles("image/avif", true), ver.GetFiles("image/webp", true)...)
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Width < files[j].Width
@@ -99,6 +95,10 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 			listed = ver.State.Listed
 			animated = ver.Animated
 			images = vimages
+		}
+
+		if ver.IsUnavailable() {
+			continue
 		}
 
 		versions[i] = x.EmoteVersion(ver)

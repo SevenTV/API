@@ -14,17 +14,18 @@ import (
 var twitchPictureSizeRegExp = regexp.MustCompile("([0-9]{2,3})x([0-9]{2,3})")
 
 type UserModel struct {
-	ID          primitive.ObjectID    `json:"id"`
-	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
-	Username    string                `json:"username"`
-	DisplayName string                `json:"display_name"`
-	CreatedAt   int64                 `json:"createdAt,omitempty"`
-	AvatarURL   string                `json:"avatar_url,omitempty"`
-	Biography   string                `json:"biography,omitempty" extensions:"x-omitempty"`
-	Style       UserStyle             `json:"style"`
-	Editors     []UserEditorModel     `json:"editors,omitempty"`
-	RoleIDs     []primitive.ObjectID  `json:"roles"`
-	Connections []UserConnectionModel `json:"connections,omitempty"`
+	ID          primitive.ObjectID     `json:"id"`
+	UserType    UserTypeModel          `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username    string                 `json:"username"`
+	DisplayName string                 `json:"display_name"`
+	CreatedAt   int64                  `json:"createdAt,omitempty"`
+	AvatarURL   string                 `json:"avatar_url,omitempty"`
+	Biography   string                 `json:"biography,omitempty" extensions:"x-omitempty"`
+	Style       UserStyle              `json:"style"`
+	EmoteSets   []EmoteSetPartialModel `json:"emote_sets,omitempty" extensions:"x-omitempty"`
+	Editors     []UserEditorModel      `json:"editors,omitempty"`
+	RoleIDs     []primitive.ObjectID   `json:"roles"`
+	Connections []UserConnectionModel  `json:"connections,omitempty"`
 }
 
 type UserPartialModel struct {

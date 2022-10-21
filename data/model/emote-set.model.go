@@ -17,6 +17,14 @@ type EmoteSetModel struct {
 	Owner      *UserPartialModel   `json:"owner" extensions:"x-nullable"`
 }
 
+type EmoteSetPartialModel struct {
+	ID       primitive.ObjectID `json:"id"`
+	Name     string             `json:"name"`
+	Tags     []string           `json:"tags"`
+	Capacity int32              `json:"capacity"`
+	Owner    *UserPartialModel  `json:"owner,omitempty" extensions:"x-nullable, x-omitempty"`
+}
+
 type ActiveEmoteModel struct {
 	ID        primitive.ObjectID   `json:"id"`
 	Name      string               `json:"name"`
@@ -66,6 +74,16 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 		Capacity:   v.Capacity,
 		ParentID:   v.ParentID,
 		Owner:      owner,
+	}
+}
+
+func (esm EmoteSetModel) ToPartial() EmoteSetPartialModel {
+	return EmoteSetPartialModel{
+		ID:       esm.ID,
+		Name:     esm.Name,
+		Tags:     esm.Tags,
+		Capacity: esm.Capacity,
+		Owner:    esm.Owner,
 	}
 }
 
