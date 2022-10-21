@@ -79,15 +79,19 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 	versions := make([]EmoteVersionModel, len(v.Versions))
 
 	for i, ver := range v.Versions {
-		files := append(ver.GetFiles("image/avif", true), ver.GetFiles("image/webp", true)...)
-		sort.Slice(files, func(i, j int) bool {
-			return files[i].Width < files[j].Width
-		})
+		vimages := make([]ImageFile, 0)
 
-		vimages := make([]ImageFile, len(files))
+		if ver.State.Lifecycle == structures.EmoteLifecycleLive {
+			files := append(ver.GetFiles("image/avif", true), ver.GetFiles("image/webp", true)...)
+			sort.Slice(files, func(i, j int) bool {
+				return files[i].Width < files[j].Width
+			})
 
-		for i, fi := range files {
-			vimages[i] = x.Image(fi)
+			vimages = make([]ImageFile, len(files))
+
+			for i, fi := range files {
+				vimages[i] = x.Image(fi)
+			}
 		}
 
 		if ver.ID == v.ID {
