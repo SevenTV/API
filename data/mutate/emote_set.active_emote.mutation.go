@@ -134,6 +134,8 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			continue
 		}
 
+		initName := tgt.emote.Name
+
 		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name)
 		tgt.emote.Name = tgt.Name
 
@@ -141,6 +143,8 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		if err := tgt.emote.Validator().Name(); err != nil && tgt.Action != structures.ListItemActionRemove {
 			return err
 		}
+
+		tgt.emote.Name = initName
 
 		switch tgt.Action {
 		// ADD EMOTE
@@ -308,6 +312,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 									Flags:     tgt.Flags,
 									Timestamp: ae.Timestamp,
 									ActorID:   actor.ID,
+									Emote:     tgt.emote,
 								}),
 							}},
 						},
