@@ -196,6 +196,6 @@ var (
 )
 
 var sortOrderMap = map[string]int32{
-	string(SortOrderDescending): 1,
-	string(SortOrderAscending):  -1,
+	string(SortOrderDescending): -1,
+	string(SortOrderAscending):  1,
 }

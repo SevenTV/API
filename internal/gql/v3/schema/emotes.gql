@@ -71,6 +71,10 @@ input EmoteSearchFilter {
   case_sensitive: Boolean
   exact_match: Boolean
   ignore_tags: Boolean
+  animated: Boolean
+  zero_width: Boolean
+  authentic: Boolean
+  aspect_ratio: String
 }
 
 type EmoteVersion {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -162,6 +163,78 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 
 		result = emotes
 	default:
+		extraDoc := bson.M{}
+
+		// Flag fitlers
+		flags := structures.BitField[structures.EmoteFlag](0)
+
+		if filter.ZeroWidth != nil && *filter.ZeroWidth {
+			flags = flags.Set(structures.EmoteFlagsZeroWidth)
+		}
+
+		if filter.Authentic != nil && *filter.Authentic {
+			flags = flags.Set(structures.EmoteFlagsAuthentic)
+		}
+
+		if flags.Value() != 0 {
+			extraDoc["flags"] = flags
+		}
+
+		// Aspect ratio filter
+		if filter.AspectRatio != nil && *filter.AspectRatio != "" {
+			sp := strings.Split(*filter.AspectRatio, ":")
+			if len(sp) < 2 {
+				return nil, errors.ErrInvalidRequest().SetDetail("Invalid format for aspect ratio")
+			}
+
+			// Parse the aspect ratio
+			r1, er1 := strconv.ParseFloat(sp[0], 32)
+			r2, er2 := strconv.ParseFloat(sp[1], 32)
+
+			// Parse tolerance
+			var tolerance uint8
+
+			if len(sp) >= 3 {
+				t, err := strconv.ParseUint(sp[2], 10, 8)
+				if err != nil || t > 100 {
+					return nil, errors.ErrInvalidRequest().SetDetail("Invalid format for aspect ratio (bad tolerance value)")
+				}
+
+				tolerance = uint8(t)
+			}
+
+			if er1 != nil || er2 != nil {
+				return nil, errors.ErrInvalidRequest().SetDetail("Invalid format for aspect ratio (could not parse int)")
+			}
+
+			// Calculate the width / height values
+			wMin := math.Floor(float64(128) * (r1))
+			w := bson.M{
+				"$gte": wMin * (1 - float64(tolerance)/100),
+				"$lte": wMin * ((float64(tolerance) / 100) + 1),
+			}
+
+			hMin := math.Floor(float64(128) * (r2))
+			h := bson.M{
+				"$gte": hMin * (1 - float64(tolerance)/100),
+				"$lte": hMin * ((float64(tolerance) / 100) + 1),
+			}
+
+			extraDoc["versions.image_files"] = bson.M{
+				"$elemMatch": bson.M{
+					"name":         "4x",
+					"content_type": "image/webp",
+					"width":        w,
+					"height":       h,
+				},
+			}
+		}
+
+		// Animated
+		if filter.Animated != nil && *filter.Animated {
+			extraDoc["versions.animated"] = true
+		}
+
 		result, totalCount, err = r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
 			Actor: &actor,
 			Query: queryValue,
@@ -172,6 +245,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 				CaseSensitive: filter.CaseSensitive,
 				ExactMatch:    filter.ExactMatch,
 				IgnoreTags:    filter.IgnoreTags,
+				Document:      extraDoc,
 			},
 		})
 	}
