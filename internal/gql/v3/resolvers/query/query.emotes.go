@@ -95,7 +95,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	// Retrieve sorting options
 	sortopt := &model.Sort{
 		Value: "popularity",
-		Order: model.SortOrderAscending,
+		Order: model.SortOrderDescending,
 	}
 	if sortArg != nil {
 		sortopt = sortArg
