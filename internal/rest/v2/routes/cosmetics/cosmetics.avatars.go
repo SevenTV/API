@@ -17,16 +17,12 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
 type avatars struct {
 	Ctx global.Context
-}
-
-type aggregatedAvatarsResult struct {
-	Users           []structures.User                  `bson:"users"`
-	RoleEntilements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }
 
 func newAvatars(gCtx global.Context) rest.Route {
@@ -84,58 +80,22 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		return ctx.JSON(rest.OK, result)
 	}
 
-	pipeline := mongo.Pipeline{
-		{{
-			Key: "$match",
-			Value: bson.M{
-				"$or": bson.A{
-					bson.M{
-						"avatar.id": bson.M{
-							"$exists": true,
-							"$not":    bson.M{"$in": bson.A{nil}},
-						},
-					},
-					bson.M{
-						"avatar_id": bson.M{
-							"$exists": true,
-							"$not":    bson.M{"$in": bson.A{"", nil}},
-						},
-					},
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(ctx, bson.M{
+		"$or": bson.A{
+			bson.M{
+				"avatar.id": bson.M{
+					"$exists": true,
+					"$not":    bson.M{"$in": bson.A{nil}},
 				},
 			},
-		}},
-		{{
-			Key: "$group",
-			Value: bson.M{
-				"_id":   nil,
-				"users": bson.M{"$push": "$$ROOT"},
+			bson.M{
+				"avatar_id": bson.M{
+					"$exists": true,
+					"$not":    bson.M{"$in": bson.A{"", nil}},
+				},
 			},
-		}},
-		// Lookup entitlements
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "users._id",
-				ForeignField: "user_id",
-				As:           "role_entitlements",
-			},
-		}},
-		{{
-			Key: "$set",
-			Value: bson.M{
-				"role_entitlements": bson.M{"$filter": bson.M{
-					"input": "$role_entitlements",
-					"as":    "e",
-					"cond": bson.M{
-						"$eq": bson.A{"$$e.kind", structures.EntitlementKindRole},
-					},
-				}},
-			},
-		}},
-	}
-
-	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, pipeline)
+		},
+	})
 	if err != nil {
 		zap.S().Errorw("mongo, failed to spawn aggregation for user avatars",
 			"error", err,
@@ -144,12 +104,43 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	v := &aggregatedAvatarsResult{}
+	users := []structures.User{}
+	userIDs := []primitive.ObjectID{}
 
-	cur.Next(ctx)
+	for cur.Next(ctx) {
+		u := structures.User{}
 
-	if err = cur.Decode(v); err != nil {
-		zap.S().Errorw("mongo, failed to decode aggregated avatars data",
+		if err := cur.Decode(&u); err != nil {
+			zap.S().Errorw("mongo, failed to decode user",
+				"error", err,
+			)
+
+			continue
+		}
+
+		users = append(users, u)
+		userIDs = append(userIDs, u.ID)
+	}
+
+	// Find entitlements
+	entitlements := []structures.Entitlement[bson.Raw]{}
+
+	cur, err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Find(ctx, bson.M{
+		"user_id": bson.M{
+			"$in": userIDs,
+		},
+		"kind": structures.EntitlementKindRole,
+	})
+	if err != nil {
+		zap.S().Errorw("mongo, failed to spawn aggregation for user avatars (entitlements)",
+			"error", err,
+		)
+
+		return errors.ErrInternalServerError().SetDetail(err.Error())
+	}
+
+	if err := cur.All(ctx, &entitlements); err != nil {
+		zap.S().Errorw("mongo, failed to decode entitlements",
 			"error", err,
 		)
 
@@ -159,7 +150,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 	// Compose the result
 	qb := r.Ctx.Inst().Query.NewBinder(ctx)
 
-	userMap, err := qb.MapUsers(v.Users, v.RoleEntilements...)
+	userMap, err := qb.MapUsers(users, entitlements...)
 	if err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}
