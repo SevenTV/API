@@ -125,7 +125,7 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		},
 		Upgrader: websocket.FastHTTPUpgrader{
 			CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
-				return true
+				return gCtx.Config().Http.WebSocket
 			},
 		},
 	}

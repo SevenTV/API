@@ -203,6 +203,7 @@ type Config struct {
 	Http struct {
 		Addr          string `mapstructure:"addr" json:"addr"`
 		VersionSuffix string `mapstructure:"version_suffix" json:"version_suffix"`
+		WebSocket     bool   `mapstructure:"websocket" json:"websocket"`
 		Ports         struct {
 			GQL  int `mapstructure:"gql" json:"gql"`
 			REST int `mapstructure:"rest" json:"rest"`
