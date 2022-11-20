@@ -132,6 +132,7 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 	return func(ctx *fasthttp.RequestCtx) {
 		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
+		lCtx = context.WithValue(lCtx, helpers.ClientIP, ctx.UserValue(string(helpers.ClientIP)))
 
 		if ok := checkLimit(ctx); !ok {
 			return
@@ -139,7 +140,6 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 
 		if wsTransport.Supports(ctx) {
 			lCtx = context.WithValue(lCtx, helpers.RateLimitFunc, rateLimitFuncWS)
-			lCtx = context.WithValue(lCtx, helpers.ClientIP, ctx.UserValue(string(helpers.ClientIP)))
 
 			wsTransport.Do(ctx, lCtx, exec)
 		} else {

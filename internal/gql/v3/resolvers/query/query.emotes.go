@@ -6,10 +6,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
+	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/query"
@@ -56,6 +58,13 @@ func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([
 }
 
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
+	// Rate limit
+	if ok := r.Ctx.Inst().Limiter.Test(ctx, "search-emotes", 10, time.Second, limiter.TestOptions{
+		Incr: 1,
+	}); !ok {
+		return nil, errors.ErrRateLimited()
+	}
+
 	actor := auth.For(ctx)
 
 	// Define limit (how many emotes can be returned in a single query)
@@ -124,12 +133,10 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	switch cat {
-	case model.EmoteSearchCategoryTrendingDay, model.EmoteSearchCategoryTrendingWeek, model.EmoteSearchCategoryTrendingMonth:
+	case model.EmoteSearchCategoryTrendingDay:
 		ids, useMap, err2 := r.emoteCategoryTrending(ctx, trendingCategoryOptions{
 			Days: map[model.EmoteSearchCategory]uint32{
-				model.EmoteSearchCategoryTrendingDay:   1,
-				model.EmoteSearchCategoryTrendingWeek:  7,
-				model.EmoteSearchCategoryTrendingMonth: 30,
+				model.EmoteSearchCategoryTrendingDay: 1,
 			}[cat],
 			UserMinAge:    7,
 			EmoteMaxAge:   365,
