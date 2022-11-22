@@ -2,16 +2,21 @@ package limiter
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"sync"
 	"time"
 
 	"github.com/seventv/api/internal/gql/v3/auth"
+	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/redis"
+	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 )
 
 type Instance interface {
 	AwaitMutation(ctx context.Context) func()
+	Test(ctx context.Context, bucket string, limit int64, dur time.Duration, opt TestOptions) bool
 
 	ScriptOk(ctx context.Context) bool
 	LoadScript(ctx context.Context) error
@@ -74,11 +79,7 @@ func (inst *limiterInst) LoadScript(ctx context.Context) error {
 		
 		local ttl = redis.call("TTL", key)
 		
-		if count > limit then
-			return {redis.call("DECRBY", key, by), ttl, 1}
-		end
-		
-		return {count, ttl, 0}
+		return {count, ttl}
 		
 `).Result()
 	if err != nil {
@@ -107,4 +108,73 @@ func (inst *limiterInst) AwaitMutation(ctx context.Context) func() {
 			zap.S().Errorw("limiter, failed to release mutex", "key", k, "error", err)
 		}
 	}
+}
+
+func (inst *limiterInst) Test(ctx context.Context, bucket string, limit int64, dur time.Duration, opt TestOptions) bool {
+	identifier := ""
+
+	actor := auth.For(ctx)
+	if !actor.ID.IsZero() {
+		identifier = actor.ID.Hex()
+	} else {
+		ip := ctx.Value(helpers.ClientIP)
+
+		switch v := ip.(type) {
+		case string:
+			identifier = v
+		default:
+			identifier = "any"
+		}
+	}
+
+	h := sha256.New()
+	h.Write(utils.S2B(identifier))
+	h.Write(utils.S2B(bucket))
+
+	k := inst.redis.ComposeKey("api-global", "rl", hex.EncodeToString(h.Sum(nil)))
+
+	rem := limit
+
+	if res, err := inst.redis.RawClient().EvalSha(
+		ctx,
+		inst.GetScript(),
+		[]string{},
+		k.String(),
+		dur.Seconds(),
+		limit,
+		utils.Ternary(opt.Incr > 0, opt.Incr, 1),
+	).Result(); err != nil {
+		zap.S().Errorw("limiter, failed to test", "key", k, "error", err)
+
+		return true
+	} else {
+		a := make([]int64, 3)
+
+		result := []any{}
+		switch t := res.(type) {
+		case []any:
+			result = t
+		}
+
+		for i, v := range result {
+			var val int64
+			switch t := v.(type) {
+			case int64:
+				val = t
+			}
+			a[i] = val
+		}
+
+		rem -= a[0]
+	}
+
+	if rem <= 0 {
+		return false
+	}
+
+	return true
+}
+
+type TestOptions struct {
+	Incr uint32
 }

@@ -321,6 +321,14 @@ func (c *wsConnection) subscribe(start time.Time, msg *message) {
 		return
 	}
 
+	if rc.Operation.Operation != "subscription" {
+		c.sendError(msg.id, &gqlerror.Error{Message: "only subscriptions are allowed"})
+
+		c.complete(msg.id)
+
+		return
+	}
+
 	ctx = graphql.WithOperationContext(ctx, rc)
 
 	if c.initPayload != nil {
