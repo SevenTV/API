@@ -20,12 +20,14 @@ func (q *Query) Roles(ctx context.Context, filter bson.M) ([]structures.Role, er
 	defer mtx.Unlock()
 
 	hs := "all"
+
 	if len(filter) > 0 {
 		f, _ := json.Marshal(filter)
 		h := sha256.New()
 		h.Write(f)
 		hs = hex.EncodeToString(h.Sum((nil)))
 	}
+
 	k := q.key(fmt.Sprintf("roles:%s", hs))
 	result := []structures.Role{}
 
@@ -46,6 +48,7 @@ func (q *Query) Roles(ctx context.Context, filter bson.M) ([]structures.Role, er
 	if err = q.setInMemCache(ctx, k, &result, time.Second*10); err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 

@@ -134,6 +134,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 	}
 
 	emoteMap := make(map[primitive.ObjectID]structures.Emote)
+
 	for _, emote := range emotes {
 		owner := userMap[emote.OwnerID]
 		if !owner.ID.IsZero() {
@@ -151,6 +152,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 		if !owner.ID.IsZero() {
 			set.Owner = &owner
 		}
+
 		for indEmotes, ae := range set.Emotes {
 			emote, ok := emoteMap[ae.ID]
 
@@ -244,6 +246,7 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 			}},
 		},
 	))
+
 	if err != nil {
 		return nil, err
 	}
@@ -264,19 +267,23 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 
 		// Map emotes bound to the set
 		qb := &QueryBinder{ctx, q}
+
 		userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
 		if err != nil {
 			return nil, err
 		}
 
 		emoteMap := make(map[primitive.ObjectID]structures.Emote)
+
 		for _, emote := range v.Emotes {
 			if _, ok := bans.NoOwnership[emote.OwnerID]; ok {
 				continue
 			}
+
 			if _, ok := bans.MemoryHole[emote.OwnerID]; ok {
 				emote.OwnerID = primitive.NilObjectID
 			}
+
 			for _, ver := range emote.Versions {
 				emote.ID = ver.ID
 
@@ -306,10 +313,13 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 					set.Emotes[idx].Actor = &actor
 				}
 			}
+
 			v.Sets[idx] = set
 		}
+
 		items[v.UserID] = v.Sets
 	}
+
 	return items, multierror.Append(err, cur.Close(ctx)).ErrorOrNil()
 }
 

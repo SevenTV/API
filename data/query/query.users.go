@@ -75,29 +75,35 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	}
 
 	// Get roles
-	roles, _ := q.Roles(ctx, bson.M{})
 	roleMap := make(map[primitive.ObjectID]structures.Role)
+	roles, _ := q.Roles(ctx, bson.M{})
+
 	for _, role := range roles {
 		roleMap[role.ID] = role
 	}
 
 	// Map all objects
 	cur.Next(ctx)
+
 	v := &aggregatedUsersResult{}
 	if err = cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return r.setError(errors.ErrNoItems())
 		}
+
 		return r.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
 	qb := &QueryBinder{ctx, q}
+
 	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
 	if err != nil {
 		return r.setError(err)
 	}
+
 	for _, u := range userMap {
 		items = append(items, u)
 	}
+
 	return r.setItems(items)
 }

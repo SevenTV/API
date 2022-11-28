@@ -26,12 +26,14 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) (*BanQueryResult,
 
 	// Define cache key
 	hs := "all"
+
 	if len(filter) > 0 {
 		f, _ := json.Marshal(filter)
 		h := sha256.New()
 		h.Write(f)
 		hs = hex.EncodeToString(h.Sum(nil))
 	}
+
 	k := q.key(fmt.Sprintf("bans:%s", hs))
 	filter["expire_at"] = bson.M{"$gt": time.Now()}
 
@@ -46,18 +48,22 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) (*BanQueryResult,
 	formatResult := func() *BanQueryResult {
 		for _, g := range bans {
 			victimID := g.UserID
+
 			for _, ban := range g.Bans {
 				r.All = append(r.All, ban)
 
 				if ban.Effects.Has(structures.BanEffectNoPermissions) {
 					r.NoPermissions[victimID] = ban
 				}
+
 				if ban.Effects.Has(structures.BanEffectNoAuth) {
 					r.NoAuth[victimID] = ban
 				}
+
 				if ban.Effects.Has(structures.BanEffectNoOwnership) {
 					r.NoOwnership[victimID] = ban
 				}
+
 				if ban.Effects.Has(structures.BanEffectMemoryHole) {
 					r.MemoryHole[victimID] = ban
 				}
@@ -95,6 +101,7 @@ func (q *Query) Bans(ctx context.Context, opt BanQueryOptions) (*BanQueryResult,
 	if err = q.setInMemCache(ctx, k, &bans, time.Second*1); err != nil {
 		return r, err
 	}
+
 	return formatResult(), nil
 }
 
@@ -127,10 +134,12 @@ type BanMap map[primitive.ObjectID]structures.Ban
 func (bm BanMap) KeySlice() []primitive.ObjectID {
 	v := make([]primitive.ObjectID, len(bm))
 	ind := 0
+
 	for k := range bm {
 		v[ind] = k
 		ind++
 	}
+
 	return v
 }
 

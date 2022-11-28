@@ -27,17 +27,21 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 
 	paginate := mongo.Pipeline{}
 	search := len(opts) > 0 && opts[0].Page != 0
+
 	if search {
 		opt := opts[0]
 		sort := bson.M{"_id": -1}
+
 		if len(opt.Sort) > 0 {
 			sort = opt.Sort
 		}
+
 		paginate = append(paginate, []bson.D{
 			{{Key: "$sort", Value: sort}},
 			{{Key: "$skip", Value: (opt.Page - 1) * opt.Limit}},
 			{{Key: "$limit", Value: opt.Limit}},
 		}...)
+
 		if opt.Query != "" {
 			filter["$expr"] = bson.M{
 				"$gt": bson.A{
@@ -133,6 +137,7 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 			},
 		))
 		result := make(map[string]int, 1)
+
 		if err == nil {
 			if ok := cur.Next(ctx); ok {
 				if err = cur.Decode(&result); err != nil {
@@ -141,15 +146,18 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 					)
 				}
 			}
+
 			_ = cur.Close(ctx)
 		}
+
 		totalCount = result["count"]
 		_ = q.redis.SetEX(ctx, queryKey, totalCount, time.Hour)
 	}
 
 	// Get roles
-	roles, _ := q.Roles(ctx, bson.M{})
 	roleMap := make(map[primitive.ObjectID]structures.Role)
+	roles, _ := q.Roles(ctx, bson.M{})
+
 	for _, role := range roles {
 		roleMap[role.ID] = role
 	}
@@ -158,12 +166,14 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 	if ok := cur.Next(ctx); !ok {
 		return items, 0, nil // nothing found!
 	}
+
 	v := &aggregatedUsersResult{}
 	if err = cur.Decode(v); err != nil {
 		return items, 0, err
 	}
 
 	qb := &QueryBinder{ctx, q}
+
 	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
 	if err != nil {
 		return nil, 0, err

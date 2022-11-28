@@ -25,6 +25,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	// Ping redis for a cached value
 	rKey := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:active_sets", emoteID.Hex()))
 	asv, err := q.redis.Get(ctx, rKey)
+
 	if err == nil && asv != "" {
 		if err = json.Unmarshal(utils.S2B(asv), &setIDs); err != nil {
 			return nil, 0, err
@@ -68,8 +69,10 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 
 	doneCh := make(chan struct{})
 	count := int64(0)
+
 	go func() { // Get the total channel count
 		defer close(doneCh)
+
 		k := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:channel_count", emoteID.Hex()))
 
 		count, err = q.redis.RawClient().Get(ctx, k.String()).Int64()
@@ -88,6 +91,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			})
 		}
 	}()
+
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
@@ -145,17 +149,22 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	if err != nil {
 		return nil, count, err
 	}
+
 	v := &aggregatedEmoteChannelsResult{}
+
 	cur.Next(ctx)
+
 	if err := cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return nil, count, errors.ErrNoItems()
 		}
+
 		return nil, count, err
 	}
 
 	qb := &QueryBinder{ctx, q}
 	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+
 	if err != nil {
 		return nil, 0, err
 	}

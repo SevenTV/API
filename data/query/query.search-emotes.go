@@ -69,6 +69,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			"$in": bans.NoOwnership.KeySlice(),
 		}}},
 	}
+
 	if len(filter.Document) > 0 {
 		for k, v := range filter.Document {
 			match = append(match, bson.E{Key: k, Value: v})
@@ -80,6 +81,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	privileged := int(1)
 	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 		privileged = 0
+
 		match = append(match, bson.E{
 			Key:   "versions.state.listed",
 			Value: true,
@@ -93,6 +95,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	h := sha256.New()
 	h.Write(utils.S2B(query))
 	h.Write([]byte{byte(privileged)})
+
 	if len(filter.Document) > 0 {
 		optBytes, _ := json.Marshal(filter.Document)
 		h.Write(optBytes)
@@ -109,6 +112,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			"$search":        query,
 			"$caseSensitive": filter.CaseSensitive != nil && *filter.CaseSensitive,
 		}})
+
 		pipeline = append(pipeline, []bson.D{
 			{{Key: "$match", Value: match}},
 			{{Key: "$sort", Value: bson.M{"score": bson.M{"$meta": "textScore"}}}},
@@ -171,6 +175,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	if countErr == redis.Nil {
 		wg.Add(1)
+
 		go func() { // Run a separate pipeline to return the total count that could be paginated
 			defer func() {
 				mtx.Unlock()
@@ -187,8 +192,10 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 				}),
 			)
 			result := make(map[string]int, 1)
+
 			if err == nil {
 				cur.Next(ctx)
+
 				if err = cur.Decode(&result); err != nil {
 					if err != io.EOF {
 						zap.S().Errorw("mongo, couldn't count",
@@ -196,12 +203,14 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 						)
 					}
 				}
+
 				_ = cur.Close(ctx)
 			}
 
 			// Return total count & cache
 			totalCount = result["count"]
 			dur := utils.Ternary(query == "", time.Hour*4, time.Hour*2)
+
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
 				zap.S().Errorw("redis, failed to save total list count of emotes() gql query",
 					"error", err,
@@ -264,12 +273,15 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			}},
 		},
 	))
+
 	if err != nil {
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	v := &aggregatedEmotesResult{}
+
 	cur.Next(ctx)
+
 	if err = cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return nil, 0, errors.ErrNoItems()
@@ -280,6 +292,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
+
 	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 	if err != nil {
 		return nil, 0, err

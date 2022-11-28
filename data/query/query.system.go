@@ -22,11 +22,11 @@ func (q *Query) GlobalEmoteSet(ctx context.Context) (structures.EmoteSet, error)
 		return set, nil
 	}
 
-	var err error
 	sys, err := q.mongo.System(ctx)
 	if err != nil {
 		return set, err
 	}
+
 	set, err = q.EmoteSets(ctx, bson.M{"_id": sys.EmoteSetID}).First()
 	if err != nil {
 		return set, err

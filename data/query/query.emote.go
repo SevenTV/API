@@ -79,16 +79,19 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 	}
 
 	cur.Next(ctx)
+
 	v := &aggregatedEmotesResult{}
 	if err = cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return qr.setError(errors.ErrNoItems())
 		}
+
 		return qr.setItems(items).setError(err)
 	}
 
 	// Map all objects
 	qb := &QueryBinder{ctx, q}
+
 	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
 	if err != nil {
 		return qr.setError(err)
@@ -102,8 +105,10 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 			owner := ownerMap[e.OwnerID]
 			e.Owner = &owner
 		}
+
 		items = append(items, e)
 	}
+
 	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
 		qr.setError(err)
 	}

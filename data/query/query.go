@@ -50,13 +50,18 @@ func (q *Query) getFromMemCache(ctx context.Context, key redis.Key, i interface{
 		s   string
 		err error
 	)
+
 	v, ok := q.c.Get(key.String())
 
 	if ok {
-		s = v.(string)
+		switch t := v.(type) {
+		case string:
+			s = t
+		}
 	} else {
 		s, err = q.redis.Get(ctx, key)
 	}
+
 	if len(s) > 0 {
 		if err := multierror.Append(err, json.Unmarshal(utils.S2B(s), i)).ErrorOrNil(); err != nil {
 			if err != redis.Nil {
@@ -65,11 +70,13 @@ func (q *Query) getFromMemCache(ctx context.Context, key redis.Key, i interface{
 					"key", key,
 				)
 			}
+
 			return false
 		} else {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -86,13 +93,17 @@ func (q *Query) setInMemCache(ctx context.Context, key redis.Key, i interface{},
 			return err
 		}
 	}
+
 	return nil
 }
 
 type QueryResult[T QueriableType] struct {
+	// nolint:structcheck
 	items []T
+	// nolint:structcheck
 	total int64
-	err   error
+	// nolint:structcheck
+	err error
 }
 
 type QueriableType interface {
@@ -124,6 +135,7 @@ func (qr *QueryResult[T]) First() (T, error) {
 	if qr.err != nil {
 		return dT, qr.err
 	}
+
 	if len(qr.items) == 0 {
 		return dT, errors.ErrNoItems()
 	}
@@ -137,6 +149,7 @@ func (qr *QueryResult[T]) Index(pos int) (T, error) {
 	if qr.err != nil {
 		return dT, qr.err
 	}
+
 	if pos > len(qr.items)-1 {
 		return dT, errors.ErrNoItems()
 	}
@@ -150,6 +163,7 @@ func (qr *QueryResult[T]) Last() (T, error) {
 	if qr.err != nil {
 		return dT, qr.err
 	}
+
 	if len(qr.items) == 0 {
 		return dT, errors.ErrNoItems()
 	}

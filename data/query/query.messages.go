@@ -17,6 +17,7 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 	qr := &QueryResult[structures.Message[bson.Raw]]{}
 	actor := opt.Actor
 	user := opt.User
+
 	if user == nil {
 		return qr.setError(errors.ErrInternalServerError().SetDetail("no user passed to Inbox query"))
 	}
@@ -48,12 +49,15 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 	if err != nil {
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
+
 	messageIDs := []primitive.ObjectID{}
+
 	for cur.Next(ctx) {
 		msg := &structures.MessageRead{}
 		if err = cur.Decode(msg); err != nil {
 			continue
 		}
+
 		messageIDs = append(messageIDs, msg.MessageID)
 	}
 
@@ -84,14 +88,18 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			targets[structures.ObjectKindEmote] = false
 		}
+
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
 			targets[structures.ObjectKindEmoteSet] = false
 		}
+
 		if !actor.HasPermission(structures.RolePermissionManageReports) {
 			targets[structures.ObjectKindReport] = false
 		}
 	}
+
 	targetsAry := []structures.ObjectKind{}
+
 	for k, ok := range targets {
 		if ok {
 			targetsAry = append(targetsAry, k)
@@ -200,11 +208,14 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	}
 
 	v := &aggregatedMessagesResult{}
+
 	cur.Next(ctx)
+
 	if err := cur.Decode(v); err != nil {
 		if err == io.EOF {
 			return qr.setError(errors.ErrNoItems().SetDetail("No messages"))
 		}
+
 		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
 
