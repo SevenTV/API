@@ -54,8 +54,8 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 	}
 
 	// Get the connection
-	conn, connInd := ub.GetConnection(opt.Platform, opt.ConnectionID)
-	if conn == nil {
+	conn, connInd := ub.GetConnection("", opt.ConnectionID)
+	if conn == nil || connInd < 0 {
 		return errors.ErrUnknownUserConnection()
 	}
 
@@ -92,12 +92,20 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 					Key:    "connections",
 					Index:  utils.PointerOf(int32(connInd)),
 					Nested: true,
-					Value: []events.ChangeField{{
-						Key:      "emote_set",
-						Type:     events.ChangeFieldTypeObject,
-						OldValue: utils.Ternary(oldSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(oldSet))),
-						Value:    utils.Ternary(newSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(newSet))),
-					}},
+					Value: []events.ChangeField{
+						{
+							Key:      "emote_set",
+							Type:     events.ChangeFieldTypeObject,
+							OldValue: utils.Ternary(oldSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(oldSet))),
+							Value:    utils.Ternary(newSet.ID.IsZero(), nil, utils.PointerOf(m.modelizer.EmoteSet(newSet))),
+						},
+						{
+							Key:      "emote_set_id",
+							Type:     events.ChangeFieldTypeString,
+							OldValue: utils.Ternary(oldSet.ID.IsZero(), nil, utils.PointerOf(oldSet.ID.Hex())),
+							Value:    utils.Ternary(newSet.ID.IsZero(), nil, utils.PointerOf(newSet.ID.Hex())),
+						},
+					},
 				},
 			},
 		}, events.EventCondition{

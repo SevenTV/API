@@ -72,7 +72,6 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 		Privileged: v.Privileged,
 		Emotes:     emotes,
 		Capacity:   v.Capacity,
-		ParentID:   v.ParentID,
 		Owner:      owner,
 	}
 }
