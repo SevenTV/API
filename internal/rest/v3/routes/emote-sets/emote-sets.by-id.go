@@ -8,6 +8,9 @@ import (
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type emoteSetByIDRoute struct {
@@ -64,6 +67,42 @@ func (r *emoteSetByIDRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		return errors.From(err)
+	}
+
+	// Set relations
+	userIDs := make(utils.Set[primitive.ObjectID])
+	userIDs.Add(set.OwnerID)
+
+	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+
+		userIDs.Add(emote.OwnerID)
+	}
+
+	users, _ := r.Ctx.Inst().Loaders.UserByID().LoadAll(userIDs.Values())
+
+	userMap := map[primitive.ObjectID]structures.User{}
+	for _, user := range users {
+		userMap[user.ID] = user
+	}
+
+	set.Owner = utils.PointerOf(userMap[set.OwnerID])
+
+	for i, ae := range set.Emotes {
+		e := utils.PointerOf(emoteMap[ae.ID])
+
+		if u, ok := userMap[e.OwnerID]; ok {
+			e.Owner = &u
+		}
+
+		set.Emotes[i].Emote = e
 	}
 
 	if set.ID.IsZero() {
