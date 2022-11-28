@@ -1,5 +1,6 @@
 extend type Query {
   emoteSet(id: ObjectID!): EmoteSet!
+  emoteSetsByID(list: [ObjectID!]!): [EmoteSet!]!
   namedEmoteSet(name: EmoteSetName!): EmoteSet!
 }
 
