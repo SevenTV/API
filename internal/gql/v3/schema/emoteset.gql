@@ -28,6 +28,7 @@ type EmoteSet {
   tags: [String!]!
   emotes(limit: Int): [ActiveEmote!]! @goField(forceResolver: true)
   capacity: Int!
+  origins: [EmoteSetOrigin!]!
   owner_id: ObjectID
   owner: UserPartial @goField(forceResolver: true)
 }
@@ -45,6 +46,13 @@ type ActiveEmote {
   timestamp: Time!
   data: EmotePartial! @goField(forceResolver: true)
   actor: UserPartial @goField(forceResolver: true)
+  origin_id: ObjectID
+}
+
+type EmoteSetOrigin {
+  id: ObjectID!
+  weight: Int!
+  slices: [Int!]
 }
 
 input CreateEmoteSetInput {

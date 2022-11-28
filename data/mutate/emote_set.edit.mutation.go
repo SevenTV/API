@@ -121,6 +121,24 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		alb.AddChanges(structures.NewAuditChange("capacity").WriteSingleValues(init.Capacity, esb.EmoteSet.Capacity))
 	}
 
+	// Origins
+	for i, o := range esb.EmoteSet.Origins {
+		var old structures.EmoteSetOrigin
+		if len(init.Origins) >= i {
+			old = init.Origins[i]
+		}
+
+		// no old item, this is an add
+		if old.ID.IsZero() {
+			// validate slices
+			for i, sl := range o.Slices {
+				if sl <= o.Slices[i-1] {
+					return errors.ErrInvalidRequest().SetDetail("Invalid slices for origin %d", i)
+				}
+			}
+		}
+	}
+
 	if len(changeFields) > 0 {
 		// Update the document
 		if err := m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOneAndUpdate(

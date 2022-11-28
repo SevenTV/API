@@ -43,5 +43,6 @@ func (xm ActiveEmoteModel) GQL() *model.ActiveEmote {
 		Flags:     int(xm.Flags),
 		Timestamp: time.UnixMilli(xm.Timestamp),
 		Actor:     &model.UserPartial{ID: actorID},
+		OriginID:  xm.OriginID,
 	}
 }

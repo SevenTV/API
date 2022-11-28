@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -13,6 +14,7 @@ type EmoteSetModel struct {
 	Privileged bool                `json:"privileged"`
 	Emotes     []ActiveEmoteModel  `json:"emotes,omitempty" extensions:"x-omitempty"`
 	Capacity   int32               `json:"capacity"`
+	Origins    []EmoteSetOrigin    `json:"origins,omitempty" extensions:"x-omitempty"`
 	ParentID   *primitive.ObjectID `json:"parent_id,omitempty"`
 	Owner      *UserPartialModel   `json:"owner" extensions:"x-nullable"`
 }
@@ -32,6 +34,7 @@ type ActiveEmoteModel struct {
 	Timestamp int64                `json:"timestamp"`
 	ActorID   *primitive.ObjectID  `json:"actor_id" extensions:"x-nullable"`
 	Data      *EmotePartialModel   `json:"data,omitempty" extensions:"x-nullable"`
+	OriginID  *primitive.ObjectID  `json:"origin_id,omitempty" extensions:"x-omitempty"`
 }
 
 type ActiveEmoteFlagModel int32
@@ -42,6 +45,12 @@ const (
 	ActiveEmoteFlagModelOverrideTwitchSubscriber ActiveEmoteFlagModel = 1 << 17 // 131072 - Overrides Twitch Subscriber emotes with the same name
 	ActiveEmoteFlagModelOverrideBetterTTV        ActiveEmoteFlagModel = 1 << 18 // 262144 - Overrides BetterTTV emotes with the same name
 )
+
+type EmoteSetOrigin struct {
+	ID     primitive.ObjectID `json:"id"`
+	Weight int32              `json:"weight"`
+	Slices []uint32           `json:"slices"`
+}
 
 func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 	emotes := make([]ActiveEmoteModel, len(v.Emotes))
@@ -112,5 +121,6 @@ func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
 		Timestamp: v.Timestamp.UnixMilli(),
 		ActorID:   actorID,
 		Data:      data,
+		OriginID:  utils.Ternary(v.Origin.ID.IsZero(), nil, &v.Origin.ID),
 	}
 }
