@@ -63,6 +63,13 @@ input CreateEmoteSetInput {
 input UpdateEmoteSetInput {
   name: String
   capacity: Int
+  origins: [EmoteSetOriginInput!]
+}
+
+input EmoteSetOriginInput {
+  id: ObjectID!
+  weight: Int!
+  slices: [Int!]
 }
 
 enum EmoteSetName {

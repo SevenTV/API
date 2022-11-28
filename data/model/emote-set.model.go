@@ -7,16 +7,15 @@ import (
 )
 
 type EmoteSetModel struct {
-	ID         primitive.ObjectID  `json:"id"`
-	Name       string              `json:"name"`
-	Tags       []string            `json:"tags"`
-	Immutable  bool                `json:"immutable"`
-	Privileged bool                `json:"privileged"`
-	Emotes     []ActiveEmoteModel  `json:"emotes,omitempty" extensions:"x-omitempty"`
-	Capacity   int32               `json:"capacity"`
-	Origins    []EmoteSetOrigin    `json:"origins,omitempty" extensions:"x-omitempty"`
-	ParentID   *primitive.ObjectID `json:"parent_id,omitempty"`
-	Owner      *UserPartialModel   `json:"owner" extensions:"x-nullable"`
+	ID         primitive.ObjectID `json:"id"`
+	Name       string             `json:"name"`
+	Tags       []string           `json:"tags"`
+	Immutable  bool               `json:"immutable"`
+	Privileged bool               `json:"privileged"`
+	Emotes     []ActiveEmoteModel `json:"emotes,omitempty" extensions:"x-omitempty"`
+	Capacity   int32              `json:"capacity"`
+	Origins    []EmoteSetOrigin   `json:"origins,omitempty" extensions:"x-omitempty"`
+	Owner      *UserPartialModel  `json:"owner" extensions:"x-nullable"`
 }
 
 type EmoteSetPartialModel struct {
@@ -81,7 +80,10 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 		Privileged: v.Privileged,
 		Emotes:     emotes,
 		Capacity:   v.Capacity,
-		Owner:      owner,
+		Origins: utils.Map(v.Origins, func(v structures.EmoteSetOrigin) EmoteSetOrigin {
+			return x.EmoteSetOrigin(v)
+		}),
+		Owner: owner,
 	}
 }
 
@@ -122,5 +124,13 @@ func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
 		ActorID:   actorID,
 		Data:      data,
 		OriginID:  utils.Ternary(v.Origin.ID.IsZero(), nil, &v.Origin.ID),
+	}
+}
+
+func (x *modelizer) EmoteSetOrigin(v structures.EmoteSetOrigin) EmoteSetOrigin {
+	return EmoteSetOrigin{
+		ID:     v.ID,
+		Weight: v.Weight,
+		Slices: v.Slices,
 	}
 }

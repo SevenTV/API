@@ -13,6 +13,7 @@ import (
 	"github.com/seventv/api/internal/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -168,6 +169,21 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteSetOps, data m
 
 	if data.Capacity != nil {
 		esb.SetCapacity(int32(*data.Capacity))
+	}
+
+	if data.Origins != nil {
+		esb.SetOrigins(utils.Map(data.Origins, func(x *model.EmoteSetOriginInput) structures.EmoteSetOrigin {
+			s := make([]uint32, len(x.Slices))
+			for i, v := range x.Slices {
+				s[i] = uint32(v)
+			}
+
+			return structures.EmoteSetOrigin{
+				ID:     x.ID,
+				Weight: int32(x.Weight),
+				Slices: s,
+			}
+		}))
 	}
 
 	// Do update
