@@ -7,6 +7,9 @@ import (
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/common/errors"
 	v2structures "github.com/seventv/common/structures/v2"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type globals struct {
@@ -43,7 +46,21 @@ func (r *globals) Handler(ctx *rest.Ctx) errors.APIError {
 
 	result := make([]*model.Emote, len(es.Emotes))
 
+	emoteIDs := utils.Map(es.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+	}
+
 	for i, ae := range es.Emotes {
+		e := utils.PointerOf(emoteMap[ae.ID])
+		ae.Emote = e
+
 		if ae.Emote == nil {
 			continue
 		}
