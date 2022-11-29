@@ -87,6 +87,12 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 			}
 		}
+
+		// Fetch set owner
+		owner, err := m.loaders.UserByID().Load(set.OwnerID)
+		if err == nil {
+			set.Owner = &owner
+		}
 	}
 
 	// The actor must have access to the emote set

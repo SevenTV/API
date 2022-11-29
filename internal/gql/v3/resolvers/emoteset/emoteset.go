@@ -29,9 +29,20 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.UserP
 	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
 }
 
-func (*Resolver) Emotes(ctx context.Context, obj *model.EmoteSet, limit *int) ([]*model.ActiveEmote, error) {
-	emotes := make([]*model.ActiveEmote, len(obj.Emotes))
-	copy(emotes, obj.Emotes)
+func (*Resolver) Emotes(ctx context.Context, obj *model.EmoteSet, limit *int, origins *bool) ([]*model.ActiveEmote, error) {
+	// remove foreign emotes?
+	cut := len(obj.Emotes)
+
+	if origins != nil && !*origins {
+		for i, e := range obj.Emotes {
+			if !e.OriginID.IsZero() {
+				cut = i
+			}
+		}
+	}
+
+	emotes := make([]*model.ActiveEmote, cut)
+	copy(emotes, obj.Emotes[:cut])
 
 	if limit != nil && *limit < len(emotes) {
 		emotes = emotes[:*limit]

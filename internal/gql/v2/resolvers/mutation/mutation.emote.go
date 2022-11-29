@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/seventv/api/data/mutate"
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/gql/v2/gen/model"
 	"github.com/seventv/api/internal/gql/v2/helpers"
@@ -11,7 +12,6 @@ import (
 	"github.com/seventv/common/errors"
 	v2structures "github.com/seventv/common/structures/v2"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

@@ -79,7 +79,7 @@ func (r *Resolver) CreateReport(ctx context.Context, data model.CreateReportInpu
 	// Check if the user has reached the limit of active reports
 	if count, _ := r.Ctx.Inst().Mongo.Collection(mongo.CollectionName("reports")).CountDocuments(ctx, bson.M{
 		"actor_id": actor.ID,
-		"status": structures.ReportStatusOpen,
+		"status":   structures.ReportStatusOpen,
 	}); count > REPORT_ALLOWED_ACTIVE_PER_USER {
 		return nil, errors.ErrInvalidRequest().SetDetail("You have too many open reports!")
 	}

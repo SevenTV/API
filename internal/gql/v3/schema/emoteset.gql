@@ -1,5 +1,6 @@
 extend type Query {
   emoteSet(id: ObjectID!): EmoteSet!
+  emoteSetsByID(list: [ObjectID!]!): [EmoteSet!]!
   namedEmoteSet(name: EmoteSetName!): EmoteSet!
 }
 
@@ -25,8 +26,11 @@ type EmoteSet {
   id: ObjectID!
   name: String!
   tags: [String!]!
-  emotes(limit: Int): [ActiveEmote!]! @goField(forceResolver: true)
+  emotes(limit: Int, origins: Boolean): [ActiveEmote!]!
+    @goField(forceResolver: true)
+  emote_count: Int!
   capacity: Int!
+  origins: [EmoteSetOrigin!]!
   owner_id: ObjectID
   owner: UserPartial @goField(forceResolver: true)
 }
@@ -44,6 +48,13 @@ type ActiveEmote {
   timestamp: Time!
   data: EmotePartial! @goField(forceResolver: true)
   actor: UserPartial @goField(forceResolver: true)
+  origin_id: ObjectID
+}
+
+type EmoteSetOrigin {
+  id: ObjectID!
+  weight: Int!
+  slices: [Int!]
 }
 
 input CreateEmoteSetInput {
@@ -54,6 +65,13 @@ input CreateEmoteSetInput {
 input UpdateEmoteSetInput {
   name: String
   capacity: Int
+  origins: [EmoteSetOriginInput!]
+}
+
+input EmoteSetOriginInput {
+  id: ObjectID!
+  weight: Int!
+  slices: [Int!]
 }
 
 enum EmoteSetName {

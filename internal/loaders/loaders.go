@@ -3,11 +3,11 @@ package loaders
 import (
 	"context"
 
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

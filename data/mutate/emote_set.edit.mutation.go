@@ -121,6 +121,20 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		alb.AddChanges(structures.NewAuditChange("capacity").WriteSingleValues(init.Capacity, esb.EmoteSet.Capacity))
 	}
 
+	// Origins
+	if esb.Update.Has("$set", "origins") {
+		changeFields = append(changeFields, events.ChangeField{
+			Key:      "origins",
+			Type:     events.ChangeFieldTypeObject,
+			OldValue: init.Origins,
+			Value:    esb.EmoteSet.Origins,
+		})
+	}
+
+	if len(esb.EmoteSet.Origins) > 5 {
+		return errors.ErrInvalidRequest().SetDetail("Origin Limit Reached (3)")
+	}
+
 	if len(changeFields) > 0 {
 		// Update the document
 		if err := m.mongo.Collection(mongo.CollectionNameEmoteSets).FindOneAndUpdate(

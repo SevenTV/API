@@ -3,12 +3,12 @@ package user
 import (
 	"strings"
 
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/rest/middleware"
 	"github.com/seventv/api/internal/rest/rest"
 	"github.com/seventv/api/internal/rest/v2/model"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

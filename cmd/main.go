@@ -15,6 +15,7 @@ import (
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/gql"
@@ -29,7 +30,6 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/mongo/indexing"
 	"github.com/seventv/common/redis"
-	"github.com/seventv/common/structures/v3/query"
 	"github.com/seventv/common/svc"
 	"github.com/seventv/common/svc/s3"
 	"github.com/seventv/compactdisc"
@@ -188,9 +188,12 @@ func main() {
 			Website: config.WebsiteURL,
 		})
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
+		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+
 		gCtx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
 			ID:        id,
 			Mongo:     gCtx.Inst().Mongo,
+			Loaders:   gCtx.Inst().Loaders,
 			Redis:     gCtx.Inst().Redis,
 			S3:        gCtx.Inst().S3,
 			Modelizer: gCtx.Inst().Modelizer,
@@ -200,7 +203,6 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
 		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
 			APIKey: config.Platforms.YouTube.APIKey,
 		})

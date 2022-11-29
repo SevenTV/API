@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -16,6 +17,20 @@ func (r *Resolver) EmoteSet(ctx context.Context, id primitive.ObjectID) (*model.
 	}
 
 	return r.Ctx.Inst().Modelizer.EmoteSet(set).GQL(), nil
+}
+
+func (r *Resolver) EmoteSetsByID(ctx context.Context, ids []primitive.ObjectID) ([]*model.EmoteSet, error) {
+	sets, errs := r.Ctx.Inst().Loaders.EmoteSetByID().LoadAll(ids)
+	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.EmoteSet, len(sets))
+	for i, v := range sets {
+		result[i] = r.Ctx.Inst().Modelizer.EmoteSet(v).GQL()
+	}
+
+	return result, nil
 }
 
 func (r *Resolver) NamedEmoteSet(ctx context.Context, name model.EmoteSetName) (*model.EmoteSet, error) {

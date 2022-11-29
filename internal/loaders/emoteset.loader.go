@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -22,7 +23,9 @@ func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
 			models := make([]structures.EmoteSet, len(keys))
 			errs := make([]error, len(keys))
 
-			result := x.query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": keys}})
+			result := x.query.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": keys}}, query.QueryEmoteSetsOptions{
+				FetchOrigins: true,
+			})
 			if result.Empty() {
 				return models, errs
 			}
