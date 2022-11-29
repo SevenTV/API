@@ -80,9 +80,23 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 		}
 	}
 
+	users, err := q.Users(ctx, bson.M{"_id": bson.M{"$in": userIDs.Values()}}).Items()
+	if err != nil {
+		zap.S().Errorw("mongo, failed to query users", "error", err)
+	}
+
+	userMap := make(map[primitive.ObjectID]structures.User)
+	for _, user := range users {
+		userMap[user.ID] = user
+	}
+
 	for _, set := range sets {
 		emoteMap := make(map[primitive.ObjectID]int)
 		emoteNameMap := make(map[string]int)
+
+		if u, ok := userMap[set.Set.OwnerID]; ok {
+			set.Set.Owner = &u
+		}
 
 		emotes := make([]structures.ActiveEmote, len(set.Set.Emotes))
 		copy(emotes, set.Set.Emotes)
