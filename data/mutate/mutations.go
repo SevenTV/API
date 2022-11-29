@@ -5,6 +5,7 @@ import (
 
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
+	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/svc"
@@ -15,6 +16,7 @@ import (
 type Mutate struct {
 	id        svc.AppIdentity
 	mongo     mongo.Instance
+	loaders   loaders.Instance
 	redis     redis.Instance
 	s3        s3.Instance
 	modelizer model.Modelizer
@@ -27,6 +29,7 @@ func New(opt InstanceOptions) *Mutate {
 	return &Mutate{
 		id:        opt.ID,
 		mongo:     opt.Mongo,
+		loaders:   opt.Loaders,
 		redis:     opt.Redis,
 		s3:        opt.S3,
 		modelizer: opt.Modelizer,
@@ -39,6 +42,7 @@ func New(opt InstanceOptions) *Mutate {
 type InstanceOptions struct {
 	ID        svc.AppIdentity
 	Mongo     mongo.Instance
+	Loaders   loaders.Instance
 	Redis     redis.Instance
 	S3        s3.Instance
 	Modelizer model.Modelizer

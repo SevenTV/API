@@ -188,9 +188,12 @@ func main() {
 			Website: config.WebsiteURL,
 		})
 		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
+		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+
 		gCtx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
 			ID:        id,
 			Mongo:     gCtx.Inst().Mongo,
+			Loaders:   gCtx.Inst().Loaders,
 			Redis:     gCtx.Inst().Redis,
 			S3:        gCtx.Inst().S3,
 			Modelizer: gCtx.Inst().Modelizer,
@@ -200,7 +203,6 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
 		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
 			APIKey: config.Platforms.YouTube.APIKey,
 		})
