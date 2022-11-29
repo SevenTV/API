@@ -26,7 +26,8 @@ type EmoteSet {
   id: ObjectID!
   name: String!
   tags: [String!]!
-  emotes(limit: Int, origins: Boolean): [ActiveEmote!]! @goField(forceResolver: true)
+  emotes(limit: Int, origins: Boolean): [ActiveEmote!]!
+    @goField(forceResolver: true)
   emote_count: Int!
   capacity: Int!
   origins: [EmoteSetOrigin!]!
