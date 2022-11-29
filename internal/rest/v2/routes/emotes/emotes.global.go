@@ -26,7 +26,7 @@ func (r *globals) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 10800, nil),
+			middleware.SetCacheControl(r.Ctx, 1800, nil),
 		},
 	}
 }
