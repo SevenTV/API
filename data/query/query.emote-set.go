@@ -104,6 +104,8 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 					break
 				}
 
+				ae.Origin = origin
+
 				if ix, ok := emoteMap[ae.ID]; ok {
 					emotes[ix] = ae
 				} else if ix, ok := emoteNameMap[ae.Name]; ok {
