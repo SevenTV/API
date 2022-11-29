@@ -44,7 +44,7 @@ func (r *globals) Handler(ctx *rest.Ctx) errors.APIError {
 		return errors.From(err)
 	}
 
-	result := make([]*model.Emote, len(es.Emotes))
+	result := make([]model.Emote, len(es.Emotes))
 
 	emoteIDs := utils.Map(es.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
 		return a.ID
@@ -67,7 +67,7 @@ func (r *globals) Handler(ctx *rest.Ctx) errors.APIError {
 
 		ae.Emote.Name = ae.Name
 
-		result[i] = model.NewEmote(*ae.Emote, r.Ctx.Config().CdnURL)
+		result[i] = *model.NewEmote(*ae.Emote, r.Ctx.Config().CdnURL)
 		result[i].Visibility |= v2structures.EmoteVisibilityGlobal
 	}
 
