@@ -23,11 +23,12 @@ func (xm EmoteSetModel) GQL() *model.EmoteSet {
 	}
 
 	return &model.EmoteSet{
-		ID:       xm.ID,
-		Name:     xm.Name,
-		Tags:     xm.Tags,
-		Emotes:   emotes,
-		Capacity: int(xm.Capacity),
+		ID:         xm.ID,
+		Name:       xm.Name,
+		Tags:       xm.Tags,
+		Emotes:     emotes,
+		EmoteCount: int(xm.EmoteCount),
+		Capacity:   int(xm.Capacity),
 		Origins: utils.Map(xm.Origins, func(v EmoteSetOrigin) *model.EmoteSetOrigin {
 			return v.GQL()
 		}),

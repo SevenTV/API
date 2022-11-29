@@ -13,6 +13,7 @@ type EmoteSetModel struct {
 	Immutable  bool               `json:"immutable"`
 	Privileged bool               `json:"privileged"`
 	Emotes     []ActiveEmoteModel `json:"emotes,omitempty" extensions:"x-omitempty"`
+	EmoteCount int                `json:"emote_count,omitempty" extensions:"x-omitempty"`
 	Capacity   int32              `json:"capacity"`
 	Origins    []EmoteSetOrigin   `json:"origins,omitempty" extensions:"x-omitempty"`
 	Owner      *UserPartialModel  `json:"owner" extensions:"x-nullable"`
@@ -79,6 +80,7 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 		Immutable:  v.Immutable,
 		Privileged: v.Privileged,
 		Emotes:     emotes,
+		EmoteCount: len(emotes),
 		Capacity:   v.Capacity,
 		Origins: utils.Map(v.Origins, func(v structures.EmoteSetOrigin) EmoteSetOrigin {
 			return x.EmoteSetOrigin(v)

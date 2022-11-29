@@ -15,23 +15,30 @@ import (
 	"go.uber.org/zap"
 )
 
-func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[structures.EmoteSet] {
+func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmoteSetsOptions) *QueryResult[structures.EmoteSet] {
 	qr := &QueryResult[structures.EmoteSet]{}
 	items := []structures.EmoteSet{}
 
+	opt := QueryEmoteSetsOptions{}
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+
 	// Fetch Emote Sets
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, mongo.Pipeline{
-		{{Key: "$match", Value: filter}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameEmoteSets,
-				LocalField:   "origins.id",
-				ForeignField: "_id",
-				As:           "origin_sets",
-			},
-		}},
-		{{
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, aggregations.Combine(
+		mongo.Pipeline{{{Key: "$match", Value: filter}}},
+		utils.Ternary(opt.FetchOrigins, mongo.Pipeline{
+			{{
+				Key: "$lookup",
+				Value: mongo.Lookup{
+					From:         mongo.CollectionNameEmoteSets,
+					LocalField:   "origins.id",
+					ForeignField: "_id",
+					As:           "origin_sets",
+				},
+			}},
+		}, mongo.Pipeline{}),
+		mongo.Pipeline{{{
 			Key: "$project",
 			Value: bson.M{
 				"set": "$$ROOT",
@@ -46,8 +53,8 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M) *QueryResult[struc
 						}},
 					},
 				}},
-		}},
-	})
+		}}},
+	))
 	if err != nil {
 		zap.S().Errorw("mongo, failed to query emote sets", "error", err)
 
@@ -190,6 +197,10 @@ type aggregatedSetWithOrigins struct {
 	OriginSets map[primitive.ObjectID]structures.EmoteSet `bson:"origin_sets"`
 }
 
+type QueryEmoteSetsOptions struct {
+	FetchOrigins bool
+}
+
 func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive.ObjectID][]structures.EmoteSet, error) {
 	items := make(map[primitive.ObjectID][]structures.EmoteSet)
 
@@ -227,7 +238,7 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 
 		sets, err := q.EmoteSets(ctx, bson.M{
 			"_id": bson.M{"$in": v.Sets},
-		}).Items()
+		}, QueryEmoteSetsOptions{FetchOrigins: true}).Items()
 		if err != nil {
 			continue
 		}
