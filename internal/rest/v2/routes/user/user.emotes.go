@@ -96,25 +96,40 @@ func (r *emotes) Handler(ctx *rest.Ctx) errors.APIError {
 		con = tw.ToRaw()
 	}
 
-	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(con.EmoteSetID)
+	set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(con.EmoteSetID)
 	if err != nil {
 		return errors.From(err)
 	}
 
+	// Set relations
+	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+	}
+
 	result := []*model.Emote{}
 
-	for _, e := range emoteSet.Emotes {
-		if e.Emote == nil {
+	for _, ae := range set.Emotes {
+		e := utils.PointerOf(emoteMap[ae.ID])
+		ae.Emote = e
+
+		if ae.Emote == nil {
 			continue
 		}
 
-		v := e.Emote.GetLatestVersion(false)
+		v := ae.Emote.GetLatestVersion(false)
 		if v.ID.IsZero() || v.IsUnavailable() || v.IsProcessing() {
 			continue
 		}
 
-		e.Emote.Name = e.Name
-		result = append(result, model.NewEmote(*e.Emote, r.Ctx.Config().CdnURL))
+		ae.Emote.Name = e.Name
+		result = append(result, model.NewEmote(*ae.Emote, r.Ctx.Config().CdnURL))
 	}
 
 	return ctx.JSON(rest.OK, result)

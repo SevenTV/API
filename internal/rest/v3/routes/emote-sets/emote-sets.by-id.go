@@ -70,9 +70,6 @@ func (r *emoteSetByIDRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	}
 
 	// Set relations
-	userIDs := make(utils.Set[primitive.ObjectID])
-	userIDs.Add(set.OwnerID)
-
 	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
 		return a.ID
 	})
@@ -82,25 +79,15 @@ func (r *emoteSetByIDRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	emoteMap := map[primitive.ObjectID]structures.Emote{}
 	for _, emote := range emotes {
 		emoteMap[emote.ID] = emote
-
-		userIDs.Add(emote.OwnerID)
 	}
 
-	users, _ := r.Ctx.Inst().Loaders.UserByID().LoadAll(userIDs.Values())
-
-	userMap := map[primitive.ObjectID]structures.User{}
-	for _, user := range users {
-		userMap[user.ID] = user
+	setOwner, _ := r.Ctx.Inst().Loaders.UserByID().Load(set.OwnerID)
+	if !setOwner.ID.IsZero() {
+		set.Owner = &setOwner
 	}
-
-	set.Owner = utils.PointerOf(userMap[set.OwnerID])
 
 	for i, ae := range set.Emotes {
 		e := utils.PointerOf(emoteMap[ae.ID])
-
-		if u, ok := userMap[e.OwnerID]; ok {
-			e.Owner = &u
-		}
 
 		set.Emotes[i].Emote = e
 	}

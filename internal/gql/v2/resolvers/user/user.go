@@ -48,15 +48,32 @@ func (r *Resolver) Emotes(ctx context.Context, obj *model.User) ([]*model.Emote,
 		return []*model.Emote{}, nil
 	}
 
-	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		// send empty slice if no emote set
 		return []*model.Emote{}, nil
 	}
 
+	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+	}
+
 	arr := []*model.Emote{}
 
-	for _, emote := range emoteSet.Emotes {
+	for _, emote := range set.Emotes {
+		if em, ok := emoteMap[emote.ID]; !ok {
+			continue
+		} else {
+			emote.Emote = &em
+		}
+
 		ver, _ := emote.Emote.GetVersion(emote.ID)
 
 		if ver.State.Lifecycle < structures.EmoteLifecycleLive {
@@ -90,7 +107,7 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 
 	result := []string{}
 
-	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		if errors.Compare(err, errors.ErrUnknownEmoteSet()) {
 			return result, nil
@@ -99,7 +116,24 @@ func (r *Resolver) EmoteIds(ctx context.Context, obj *model.User) ([]string, err
 		return result, err
 	}
 
-	for _, e := range emoteSet.Emotes {
+	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+	}
+
+	for _, e := range set.Emotes {
+		if em, ok := emoteMap[e.ID]; !ok {
+			continue
+		} else {
+			e.Emote = &em
+		}
+
 		ver, _ := e.Emote.GetVersion(e.ID)
 
 		if ver.State.Lifecycle < structures.EmoteLifecycleLive {
@@ -127,13 +161,30 @@ func (r *Resolver) EmoteAliases(ctx context.Context, obj *model.User) ([][]strin
 
 	result := [][]string{}
 
-	emoteSet, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
+	set, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(setID)
 	if err != nil {
 		// send empty slice if no emote set
 		return [][]string{}, nil
 	}
 
-	for _, e := range emoteSet.Emotes {
+	emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
+		return a.ID
+	})
+
+	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
+
+	emoteMap := map[primitive.ObjectID]structures.Emote{}
+	for _, emote := range emotes {
+		emoteMap[emote.ID] = emote
+	}
+
+	for _, e := range set.Emotes {
+		if em, ok := emoteMap[e.ID]; !ok {
+			continue
+		} else {
+			e.Emote = &em
+		}
+
 		if e.Name == e.Emote.Name {
 			continue // no original name property means no alias set
 		}
