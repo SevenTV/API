@@ -81,64 +81,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 		}
 	}
 
-	// Fetch users
-	cur, err = q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
-		{{
-			Key: "$match",
-			Value: bson.M{
-				"_id": bson.M{"$in": userIDs.Values()},
-			},
-		}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "_id",
-				ForeignField: "user_id",
-				As:           "role_entitlements",
-			},
-		}},
-		{{
-			Key: "$set",
-			Value: bson.M{
-				"entitlements": bson.M{
-					"$filter": bson.M{
-						"input": "$role_entitlements",
-						"as":    "ent",
-						"cond": bson.M{
-							"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
-						},
-					},
-				},
-			},
-		}},
-	})
-	if err != nil {
-		zap.S().Errorw("mongo, failed to query relational users of emote sets", "error", err)
-
-		return qr.setError(errors.ErrInternalServerError())
-	}
-
-	users := []structures.User{}
-	if err = cur.All(ctx, &users); err != nil {
-		zap.S().Errorw("mongo, failed to fetch relational users of emote sets", "error", err)
-
-		return qr.setError(errors.ErrInternalServerError())
-	}
-
-	qb := &QueryBinder{ctx, q}
-
-	userMap, err := qb.MapUsers(users)
-	if err != nil {
-		return qr.setError(err)
-	}
-
 	for _, set := range sets {
-		owner := userMap[set.Set.OwnerID]
-		if !owner.ID.IsZero() {
-			set.Set.Owner = &owner
-		}
-
 		emoteMap := make(map[string]structures.ActiveEmote)
 		for _, ae := range set.Set.Emotes {
 			emoteMap[ae.Name] = ae
