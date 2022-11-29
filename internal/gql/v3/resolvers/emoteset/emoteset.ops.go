@@ -130,7 +130,7 @@ func (r *ResolverOps) Delete(ctx context.Context, obj *model.EmoteSetOps) (bool,
 	}
 
 	// Get the emote set
-	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(obj.ID)
+	es, err := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": obj.ID}).First()
 	if err != nil {
 		return false, err
 	}
@@ -155,7 +155,7 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteSetOps, data m
 	}
 
 	// Get the emote set
-	es, err := r.Ctx.Inst().Loaders.EmoteSetByID().Load(obj.ID)
+	es, err := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": obj.ID}).First()
 	if err != nil {
 		return nil, err
 	}

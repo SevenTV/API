@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"sort"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/common/errors"
@@ -82,9 +81,15 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 	}
 
 	for _, set := range sets {
-		emoteMap := make(map[string]structures.ActiveEmote)
-		for _, ae := range set.Set.Emotes {
-			emoteMap[ae.Name] = ae
+		emoteMap := make(map[primitive.ObjectID]int)
+		emoteNameMap := make(map[string]int)
+
+		emotes := make([]structures.ActiveEmote, len(set.Set.Emotes))
+		copy(emotes, set.Set.Emotes)
+
+		for i, ae := range emotes {
+			emoteMap[ae.ID] = i
+			emoteNameMap[ae.Name] = i
 		}
 
 		// Apply emotes from origins
@@ -94,40 +99,23 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 				continue // set wasn't found
 			}
 
-			startAt := len(emoteMap)
-
-			// resize emotes slice
-			for pos, ae := range subset.Emotes {
-				i := startAt + pos
-
-				// overcapacity:
-				// reduce slice size and add no more emotes
-				if i > int(set.Set.Capacity) {
+			for _, ae := range subset.Emotes {
+				if len(emotes) >= int(set.Set.Capacity) {
 					break
 				}
 
-				// test weight
-				if x, ok := emoteMap[ae.Name]; ok && (!x.Origin.ID.IsZero() && x.Origin.Weight >= ae.Origin.Weight || origin.Weight < 0) {
-					continue
+				if ix, ok := emoteMap[ae.ID]; ok {
+					emotes[ix] = ae
+				} else if ix, ok := emoteNameMap[ae.Name]; ok {
+					emotes[ix] = ae
+				} else {
+					emotes = append(emotes, ae)
 				}
-
-				ae.Origin = origin
-				emoteMap[ae.Name] = ae
 			}
+
+			// resize emotes slice
+			set.Set.Emotes = emotes
 		}
-
-		set.Set.Emotes = make([]structures.ActiveEmote, len(emoteMap))
-
-		i := -1
-		for _, emote := range emoteMap {
-			i++
-
-			set.Set.Emotes[i] = emote
-		}
-
-		sort.Slice(set.Set.Emotes, func(i, j int) bool {
-			return set.Set.Emotes[i].Timestamp.After(set.Set.Emotes[j].Timestamp)
-		})
 
 		items = append(items, set.Set)
 	}
