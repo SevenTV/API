@@ -18,7 +18,6 @@ import (
 	"github.com/seventv/common/structures/v3/aggregations"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -230,47 +229,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		mongo.Pipeline{
 			{{Key: "$skip", Value: (page - 1) * limit}},
 			{{Key: "$limit", Value: limit}},
-			{{
-				Key: "$group",
-				Value: bson.M{
-					"_id": nil,
-					"emotes": bson.M{
-						"$push": "$$ROOT",
-					},
-				},
-			}},
-			{{
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameUsers,
-					LocalField:   "emotes.owner_id",
-					ForeignField: "_id",
-					As:           "emote_owners",
-				},
-			}},
-			{{
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameEntitlements,
-					LocalField:   "emotes.owner_id",
-					ForeignField: "user_id",
-					As:           "role_entitlements",
-				},
-			}},
-			{{
-				Key: "$set",
-				Value: bson.M{
-					"role_entitlements": bson.M{
-						"$filter": bson.M{
-							"input": "$role_entitlements",
-							"as":    "ent",
-							"cond": bson.M{
-								"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
-							},
-						},
-					},
-				},
-			}},
 		},
 	))
 
@@ -278,39 +236,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	v := &aggregatedEmotesResult{}
-
-	cur.Next(ctx)
-
-	if err = cur.Decode(v); err != nil {
-		if err == io.EOF {
-			return nil, 0, errors.ErrNoItems()
-		}
-
-		return nil, 0, err
-	}
-
-	// Map all objects
-	qb := &QueryBinder{ctx, q}
-
-	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	for _, e := range v.Emotes { // iterate over emotes
-		if e.ID.IsZero() {
-			continue
-		}
-
-		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
-			e.OwnerID = primitive.NilObjectID
-		} else {
-			owner := ownerMap[e.OwnerID]
-			e.Owner = &owner
-		}
-
-		result = append(result, e)
+	if err = cur.All(ctx, &result); err != nil {
+		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
 	// wait for total count to finish
