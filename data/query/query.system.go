@@ -27,7 +27,7 @@ func (q *Query) GlobalEmoteSet(ctx context.Context) (structures.EmoteSet, error)
 		return set, err
 	}
 
-	set, err = q.EmoteSets(ctx, bson.M{"_id": sys.EmoteSetID}).First()
+	set, err = q.EmoteSets(ctx, bson.M{"_id": sys.EmoteSetID}, QueryEmoteSetsOptions{FetchOrigins: true}).First()
 	if err != nil {
 		return set, err
 	}
