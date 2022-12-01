@@ -29,10 +29,6 @@ func New(r types.Resolver) generated.EmoteResolver {
 }
 
 func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.UserPartial, error) {
-	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
-		return obj.Owner, nil
-	}
-
 	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
 	if err != nil {
 		if errors.Compare(err, errors.ErrUnknownUser()) {

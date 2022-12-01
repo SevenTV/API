@@ -59,7 +59,7 @@ func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([
 
 func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, limitArg *int, filterArg *model.EmoteSearchFilter, sortArg *model.Sort) (*model.EmoteSearchResult, error) {
 	// Rate limit
-	if ok := r.Ctx.Inst().Limiter.Test(ctx, "search-emotes", 10, time.Second, limiter.TestOptions{
+	if ok := r.Ctx.Inst().Limiter.Test(ctx, "search-emotes", 10, time.Second*5, limiter.TestOptions{
 		Incr: 1,
 	}); !ok {
 		return nil, errors.ErrRateLimited()

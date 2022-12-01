@@ -17,6 +17,7 @@ type EmoteModel struct {
 	Listed    bool                `json:"listed"`
 	Animated  bool                `json:"animated"`
 	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
+	OwnerID   primitive.ObjectID  `json:"-"`
 	Host      ImageHost           `json:"host"`
 	Versions  []EmoteVersionModel `json:"versions"`
 }
@@ -137,6 +138,7 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		Listed:    listed,
 		Animated:  animated,
 		Owner:     owner,
+		OwnerID:   v.OwnerID,
 		Host: ImageHost{
 			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
 			Files: images,

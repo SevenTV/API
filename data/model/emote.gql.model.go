@@ -10,7 +10,6 @@ import (
 func (xm EmoteModel) GQL() *model.Emote {
 	var (
 		versions = make([]*model.EmoteVersion, len(xm.Versions))
-		ownerID  primitive.ObjectID
 		owner    *model.UserPartial
 	)
 
@@ -25,7 +24,6 @@ func (xm EmoteModel) GQL() *model.Emote {
 	if xm.Owner != nil {
 		u := *xm.Owner
 
-		ownerID = u.ID
 		owner = u.GQL()
 	}
 
@@ -38,7 +36,7 @@ func (xm EmoteModel) GQL() *model.Emote {
 		Tags:      xm.Tags,
 		Animated:  xm.Animated,
 		CreatedAt: xm.ID.Timestamp(),
-		OwnerID:   ownerID,
+		OwnerID:   xm.OwnerID,
 		Owner:     owner,
 		Host:      xm.Host.GQL(),
 		Versions:  versions,
