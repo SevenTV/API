@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/seventv/api/data/query"
@@ -12,7 +11,6 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -75,29 +73,5 @@ func (r *Resolver) User(ctx context.Context, identifier string) (*model.User, er
 }
 
 func (r *Resolver) SearchUsers(ctx context.Context, queryArg string, page *int, limit *int) ([]*model.UserPartial, error) {
-	actor := auth.For(ctx)
-	if actor.ID.IsZero() || !actor.HasPermission(structures.RolePermissionManageUsers) {
-		return nil, errors.ErrInsufficientPrivilege()
-	}
-
-	users, totalCount, err := r.Ctx.Inst().Query.SearchUsers(ctx, bson.M{}, query.UserSearchOptions{
-		Page:  1,
-		Limit: 250,
-		Query: queryArg,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*model.UserPartial, len(users))
-	for i, u := range users {
-		result[i] = helpers.UserStructureToPartialModel(helpers.UserStructureToModel(u, r.Ctx.Config().CdnURL))
-	}
-
-	rctx, _ := ctx.Value(helpers.RequestCtxKey).(*fasthttp.RequestCtx)
-	if rctx != nil {
-		rctx.Response.Header.Set("X-Collection-Size", strconv.Itoa(totalCount))
-	}
-
-	return result, nil
+	return nil, errors.ErrInsufficientPrivilege().SetDetail("This endpoint is no longer available. Please use V3")
 }

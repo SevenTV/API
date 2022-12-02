@@ -2,13 +2,16 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/gql/v3/auth"
 	"github.com/seventv/api/internal/gql/v3/gen/model"
+	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -32,6 +35,13 @@ func (r *Resolver) UsersByID(ctx context.Context, list []primitive.ObjectID) ([]
 }
 
 func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, limitArg *int) ([]*model.UserPartial, error) {
+	// Rate limit
+	if ok := r.Ctx.Inst().Limiter.Test(ctx, "search-users", 10, time.Second*5, limiter.TestOptions{
+		Incr: 1,
+	}); !ok {
+		return nil, errors.ErrRateLimited()
+	}
+
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -44,9 +54,8 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 		return nil, errors.ErrInvalidRequest().SetDetail("query must be at least 2 characters long")
 	}
 
-	page := 1
 	if pageArg != nil {
-		page = *pageArg
+		page := *pageArg
 
 		// Disallow unprivileged users from paginating
 		// This measure is to prevent scraping
@@ -55,25 +64,32 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 		}
 	}
 
-	limit := 10
+	limit := 25
 	if limitArg != nil {
 		limit = *limitArg
 
-		if !isManager && limit > 10 {
-			return nil, errors.ErrInsufficientPrivilege().SetDetail("limit cannot be higher than 10")
+		if !isManager && limit > 20 {
+			return nil, errors.ErrInsufficientPrivilege().SetDetail("limit cannot be higher than 25")
 		} else if limit > 500 {
 			return nil, errors.ErrInsufficientPrivilege().SetDetail("limit cannot be higher than 500")
 		}
 	}
 
-	users, _, err := r.Ctx.Inst().Query.SearchUsers(ctx, bson.M{}, query.UserSearchOptions{
-		Page:  page,
+	searchResult, err := r.Ctx.Inst().Query.SearchUsers(ctx, bson.M{}, query.UserSearchOptions{
 		Limit: limit,
 		Query: queryArg,
 		Sort: map[string]interface{}{
-			"state.role_position": -1,
+			"state.role_position":         -1,
+			"connections.data.view_count": -1,
 		},
 	})
+
+	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(utils.Map(searchResult, func(v structures.User) primitive.ObjectID {
+		return v.ID
+	}))
+	if err := multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
+		return nil, err
+	}
 
 	result := make([]*model.UserPartial, len(users))
 	for i, u := range users {
