@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/api/internal/svc/limiter"
+	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
 	"github.com/seventv/common/mongo"
@@ -26,6 +27,7 @@ type Instances struct {
 	Limiter      limiter.Instance
 	YouTube      youtube.Instance
 	Loaders      loaders.Instance
+	Presences    presences.Instance
 	Modelizer    model.Modelizer
 	CD           compactdisc.Instance
 

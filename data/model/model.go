@@ -73,3 +73,7 @@ func (x *modelizer) Image(v structures.ImageFile) ImageFile {
 		Size:       v.Size,
 	}
 }
+
+type MutationResponse struct {
+	OK bool `json:"ok"`
+}

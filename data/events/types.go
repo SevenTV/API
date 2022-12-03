@@ -59,6 +59,10 @@ type ChangeMap struct {
 	ID primitive.ObjectID `json:"id"`
 	// The type of the object
 	Kind structures.ObjectKind `json:"kind"`
+	// Contextual is whether or not this event is only relating
+	// to the specific source conditions and not indicative of a
+	// genuine creation, deletion, or update to the object
+	Contextual bool `json:"contextual,omitempty"`
 	// The user who made changes to the object
 	Actor model.UserModel `json:"actor"`
 	// A list of added fields

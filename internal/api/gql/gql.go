@@ -93,12 +93,16 @@ func New(gCtx global.Context) error {
 					)
 				}
 			}()
-			// CORS - TODO WE SHOULD LIKELY RESTRICT THIS
+
+			reqHost := utils.B2S(ctx.Request.Header.Peek("Origin"))
+
 			ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
 			ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 			ctx.Response.Header.Set("Access-Control-Expose-Headers", "X-Collection-Size")
-			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
-			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+			ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
+
+			// cache cors
+			ctx.Response.Header.Set("Access-Control-Max-Age", "7200")
 
 			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
 			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)

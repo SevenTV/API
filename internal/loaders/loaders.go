@@ -9,6 +9,7 @@ import (
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -18,10 +19,13 @@ type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
 	UserByConnectionID(structures.UserConnectionPlatform) UserByConnectionID
+
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
 	EmoteSetByID() EmoteSetLoaderByID
 	EmoteSetByUserID() BatchEmoteSetLoaderByID
+
+	PresenceByActorID() PresenceLoaderByActorID
 }
 
 type inst struct {
@@ -35,9 +39,11 @@ type inst struct {
 	emoteByOwnerID BatchEmoteLoaderByID
 
 	// Emote Set Loaders
-	emoteSetByID EmoteSetLoaderByID
-
+	emoteSetByID     EmoteSetLoaderByID
 	emoteSetByUserID BatchEmoteSetLoaderByID
+
+	// Presence Loaders
+	presenceByActorID PresenceLoaderByActorID
 
 	// inst
 	mongo mongo.Instance
@@ -63,6 +69,8 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.emoteByOwnerID = batchEmoteLoader(ctx, l, "owner_id")
 	l.emoteSetByID = emoteSetByID(ctx, l)
 	l.emoteSetByUserID = emoteSetByUserID(ctx, l)
+
+	l.presenceByActorID = presenceLoader(ctx, l)
 
 	return &l
 }
@@ -101,12 +109,19 @@ func (l *inst) EmoteByOwnerID() BatchEmoteLoaderByID {
 	return l.emoteByOwnerID
 }
 
+func (l *inst) PresenceByActorID() PresenceLoaderByActorID {
+	return l.presenceByActorID
+}
+
 type (
-	UserLoaderByID          = *dataloader.DataLoader[primitive.ObjectID, structures.User]
-	UserLoaderByUsername    = *dataloader.DataLoader[string, structures.User]
-	UserByConnectionID      = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByID       = *dataloader.DataLoader[primitive.ObjectID, structures.User]
+	UserLoaderByUsername = *dataloader.DataLoader[string, structures.User]
+	UserByConnectionID   = *dataloader.DataLoader[string, structures.User]
+
 	EmoteLoaderByID         = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
 	BatchEmoteLoaderByID    = *dataloader.DataLoader[primitive.ObjectID, []structures.Emote]
 	EmoteSetLoaderByID      = *dataloader.DataLoader[primitive.ObjectID, structures.EmoteSet]
 	BatchEmoteSetLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.EmoteSet]
+
+	PresenceLoaderByActorID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
 )
