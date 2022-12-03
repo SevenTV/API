@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/seventv/api/internal/gql/v3/gen/model"
+	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

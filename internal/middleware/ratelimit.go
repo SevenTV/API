@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"

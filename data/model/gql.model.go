@@ -1,6 +1,6 @@
 package model
 
-import "github.com/seventv/api/internal/gql/v3/gen/model"
+import "github.com/seventv/api/internal/api/gql/v3/gen/model"
 
 func (xm ImageFile) GQL() *model.Image {
 	return &model.Image{
