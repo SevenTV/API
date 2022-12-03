@@ -264,6 +264,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user.id}/presence": {
+            "post": {
+                "description": "Update user presence",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User Presence",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the user",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.MutationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{user.id}/profile-picture": {
             "put": {
                 "description": "Set a new profile picture",
@@ -622,6 +651,14 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "model.MutationResponse": {
+            "type": "object",
+            "properties": {
+                "ok": {
+                    "type": "boolean"
                 }
             }
         },
