@@ -10,7 +10,6 @@ import (
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
-	"go.uber.org/zap"
 )
 
 type userPresenceWriteRoute struct {
@@ -76,10 +75,9 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			ConnectionID: pd.ConnectionID,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
+			IP:        ctx.RemoteIP().String(),
 		}); err != nil {
-			zap.S().Errorw("failed to write channel presence", "error", err)
-
-			return errors.ErrInternalServerError()
+			return errors.From(err)
 		}
 	}
 

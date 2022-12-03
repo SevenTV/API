@@ -12,6 +12,7 @@ import (
 )
 
 type Instance interface {
+	// ChannelPresence returns a PresenceManager for the given actorID, with only Channel presence data.
 	ChannelPresence(ctx context.Context, actorID primitive.ObjectID) PresenceManager[structures.UserPresenceDataChannel]
 }
 
@@ -32,7 +33,6 @@ type Options struct {
 	Loaders loaders.Instance
 }
 
-// ChannelPresence returns a PresenceManager for the given actorID, with only Channel presence data.
 func (p *inst) ChannelPresence(ctx context.Context, actorID primitive.ObjectID) PresenceManager[structures.UserPresenceDataChannel] {
 	presences, _ := p.loaders.PresenceByActorID().Load(actorID)
 
@@ -46,6 +46,7 @@ func (p *inst) ChannelPresence(ctx context.Context, actorID primitive.ObjectID) 
 	}
 }
 
+// filterPresenceList filters the given presence list by the given kind.
 func filterPresenceList[T structures.UserPresenceData](items []structures.UserPresence[bson.Raw], kind structures.UserPresenceKind) []structures.UserPresence[T] {
 	var (
 		pos int
