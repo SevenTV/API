@@ -1,5 +1,5 @@
 # Ignore docs
-internal/rest/v*/docs/*
+internal/api/rest/v*/docs/*
 .vscode/
 
 # Ignore build outputs
