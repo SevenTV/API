@@ -112,10 +112,10 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 					maxCapacity = c.EmoteSlots
 				}
 			}
-		}
 
-		if maxCapacity > 0 && esb.EmoteSet.Capacity > maxCapacity {
-			return errors.ErrInsufficientPrivilege().SetDetail("Capacity cannot be higher than %d", maxCapacity)
+			if esb.EmoteSet.Capacity > maxCapacity {
+				return errors.ErrInsufficientPrivilege().SetDetail("Capacity cannot be higher than %d", maxCapacity)
+			}
 		}
 
 		changeFields = append(changeFields, events.ChangeField{
