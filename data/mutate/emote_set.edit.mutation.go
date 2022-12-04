@@ -43,6 +43,11 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		}
 	}
 
+	// Find emote set's owner
+	setOwner, _ := m.loaders.UserByID().Load(esb.EmoteSet.OwnerID)
+
+	esb.EmoteSet.Owner = &setOwner
+
 	alb := structures.NewAuditLogBuilder(structures.AuditLog{}).
 		SetKind(structures.AuditLogKindUpdateEmoteSet).
 		SetActor(actor.ID).
@@ -101,13 +106,15 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	if init.Capacity != esb.EmoteSet.Capacity {
 		var maxCapacity int32
 
-		for _, c := range esb.EmoteSet.Owner.Connections {
-			if c.EmoteSlots > maxCapacity {
-				maxCapacity = c.EmoteSlots
+		if esb.EmoteSet.Owner != nil {
+			for _, c := range esb.EmoteSet.Owner.Connections {
+				if c.EmoteSlots > maxCapacity {
+					maxCapacity = c.EmoteSlots
+				}
 			}
 		}
 
-		if esb.EmoteSet.Capacity > maxCapacity {
+		if maxCapacity > 0 && esb.EmoteSet.Capacity > maxCapacity {
 			return errors.ErrInsufficientPrivilege().SetDetail("Capacity cannot be higher than %d", maxCapacity)
 		}
 
