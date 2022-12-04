@@ -72,7 +72,7 @@ type UserPartial {
   biography: String!
   style: UserStyle!
   roles: [ObjectID!]!
-  connections(type: [ConnectionPlatform!]): [UserConnection]!
+  connections(type: [ConnectionPlatform!]): [UserConnectionPartial!]!
   emote_sets: [EmoteSetPartial!]! @goField(forceResolver: true)
 }
 
@@ -92,6 +92,16 @@ type UserEmote {
 }
 
 type UserConnection {
+  id: String!
+  platform: ConnectionPlatform!
+  username: String!
+  display_name: String!
+  linked_at: Time!
+  emote_capacity: Int!
+  emote_set_id: ObjectID
+}
+
+type UserConnectionPartial {
   id: String!
   platform: ConnectionPlatform!
   username: String!

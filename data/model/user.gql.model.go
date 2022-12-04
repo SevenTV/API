@@ -39,7 +39,7 @@ func (xm UserModel) GQL() *model.User {
 }
 
 func (xm UserPartialModel) GQL() *model.UserPartial {
-	connections := make([]*model.UserConnection, len(xm.Connections))
+	connections := make([]*model.UserConnectionPartial, len(xm.Connections))
 	for i, c := range xm.Connections {
 		connections[i] = c.GQL()
 	}
@@ -82,6 +82,18 @@ func (xm UserConnectionModel) GQL() *model.UserConnection {
 		LinkedAt:      time.UnixMilli(xm.LinkedAt),
 		EmoteCapacity: int(xm.EmoteCapacity),
 		EmoteSetID:    setID,
+	}
+}
+
+// GQL UserConnectionPartial
+func (xm UserConnectionPartialModel) GQL() *model.UserConnectionPartial {
+	return &model.UserConnectionPartial{
+		ID:          xm.ID,
+		Platform:    model.ConnectionPlatform(xm.Platform),
+		Username:    xm.Username,
+		DisplayName: xm.DisplayName,
+		LinkedAt:    time.UnixMilli(xm.LinkedAt),
+		EmoteSetID:  xm.EmoteSetID,
 	}
 }
 
