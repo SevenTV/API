@@ -41,6 +41,7 @@ type UserPartialModel struct {
 type UserStyle struct {
 	Color int32               `json:"color"`
 	Paint *CosmeticPaintModel `json:"paint" extensions:"x-nullable"`
+	Badge *CosmeticBadgeModel `json:"badge" extensions:"x-nullable"`
 }
 
 type UserTypeModel string
@@ -129,8 +130,9 @@ func (x *modelizer) User(v structures.User) UserModel {
 	}
 
 	style := UserStyle{
-		Color: int32(v.GetHighestRole().Color),
+		Color: v.GetHighestRole().Color.Sum(),
 		Paint: nil,
+		Badge: nil,
 	}
 
 	return UserModel{

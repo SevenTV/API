@@ -25,7 +25,8 @@ type Instance interface {
 	EmoteSetByID() EmoteSetLoaderByID
 	EmoteSetByUserID() BatchEmoteSetLoaderByID
 
-	PresenceByActorID() PresenceLoaderByActorID
+	PresenceByActorID() PresenceLoaderByID
+	PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID
 }
 
 type inst struct {
@@ -43,7 +44,8 @@ type inst struct {
 	emoteSetByUserID BatchEmoteSetLoaderByID
 
 	// Presence Loaders
-	presenceByActorID PresenceLoaderByActorID
+	presenceByActorID             PresenceLoaderByID
+	presenceOfChannelKindByHostID ChannelPresenceLoaderByID
 
 	// inst
 	mongo mongo.Instance
@@ -70,7 +72,8 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.emoteSetByID = emoteSetByID(ctx, l)
 	l.emoteSetByUserID = emoteSetByUserID(ctx, l)
 
-	l.presenceByActorID = presenceLoader(ctx, l)
+	l.presenceByActorID = presenceLoader[bson.Raw](ctx, l, structures.UserPresenceKindUnknown, "actor_id")
+	l.presenceOfChannelKindByHostID = presenceLoader[structures.UserPresenceDataChannel](ctx, l, structures.UserPresenceKindChannel, "data.host_id")
 
 	return &l
 }
@@ -109,8 +112,12 @@ func (l *inst) EmoteByOwnerID() BatchEmoteLoaderByID {
 	return l.emoteByOwnerID
 }
 
-func (l *inst) PresenceByActorID() PresenceLoaderByActorID {
+func (l *inst) PresenceByActorID() PresenceLoaderByID {
 	return l.presenceByActorID
+}
+
+func (l *inst) PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID {
+	return l.presenceOfChannelKindByHostID
 }
 
 type (
@@ -123,5 +130,6 @@ type (
 	EmoteSetLoaderByID      = *dataloader.DataLoader[primitive.ObjectID, structures.EmoteSet]
 	BatchEmoteSetLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.EmoteSet]
 
-	PresenceLoaderByActorID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
+	PresenceLoaderByID        = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
+	ChannelPresenceLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[structures.UserPresenceDataChannel]]
 )
