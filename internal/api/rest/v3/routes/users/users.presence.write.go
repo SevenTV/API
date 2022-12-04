@@ -52,6 +52,8 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest()
 	}
 
+	clientIP, _ := ctx.UserValue(rest.ClientIP).String()
+
 	switch body.Kind {
 	case model.UserPresenceKindChannel:
 		var pd structures.UserPresenceDataChannel
@@ -75,7 +77,7 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			ConnectionID: pd.ConnectionID,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
-			IP:        ctx.RemoteIP().String(),
+			IP:        clientIP,
 		}); err != nil {
 			return errors.From(err)
 		}

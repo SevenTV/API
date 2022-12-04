@@ -666,22 +666,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "display_name": {
+                    "description": "The display name of the user on the platform.",
                     "type": "string"
                 },
                 "emote_capacity": {
+                    "description": "The maximum size of emote sets that may be bound to this connection.",
                     "type": "integer"
                 },
                 "emote_set": {
-                    "x-omitempty": true,
+                    "description": "The emote set that is linked to this connection",
+                    "x-nullable": true,
                     "$ref": "#/definitions/model.EmoteSetModel"
+                },
+                "emote_set_id": {
+                    "description": "The ID of the emote set bound to this connection.",
+                    "type": "string",
+                    "x-nullable": true
                 },
                 "id": {
                     "type": "string"
                 },
                 "linked_at": {
+                    "description": "The time when the user linked this connection",
                     "type": "integer"
                 },
                 "platform": {
+                    "description": "The service of the connection.",
                     "type": "string",
                     "enum": [
                         "TWITCH",
@@ -689,11 +699,59 @@ const docTemplate = `{
                         "DISCORD"
                     ]
                 },
+                "presences": {
+                    "description": "A list of users active in the channel",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UserPartialModel"
+                    },
+                    "x-omitempty": true
+                },
                 "user": {
+                    "description": "App data for the user",
                     "x-omitempty": true,
                     "$ref": "#/definitions/model.UserModel"
                 },
                 "username": {
+                    "description": "The username of the user on the platform.",
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserConnectionPartialModel": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "description": "The display name of the user on the platform.",
+                    "type": "string"
+                },
+                "emote_capacity": {
+                    "description": "The maximum size of emote sets that may be bound to this connection.",
+                    "type": "integer"
+                },
+                "emote_set_id": {
+                    "description": "The emote set that is linked to this connection",
+                    "type": "string",
+                    "x-nullable": true
+                },
+                "id": {
+                    "type": "string"
+                },
+                "linked_at": {
+                    "description": "The time when the user linked this connection",
+                    "type": "integer"
+                },
+                "platform": {
+                    "description": "The service of the connection.",
+                    "type": "string",
+                    "enum": [
+                        "TWITCH",
+                        "YOUTUBE",
+                        "DISCORD"
+                    ]
+                },
+                "username": {
+                    "description": "The username of the user on the platform.",
                     "type": "string"
                 }
             }
@@ -784,7 +842,7 @@ const docTemplate = `{
                 "connections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.UserConnectionModel"
+                        "$ref": "#/definitions/model.UserConnectionPartialModel"
                     }
                 },
                 "display_name": {

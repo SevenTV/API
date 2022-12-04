@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/fasthttp/router"
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/api/internal/api/rest/portal"
+	"github.com/seventv/api/internal/api/rest/rest"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
@@ -51,7 +51,7 @@ func New(gctx global.Context) error {
 				ip = ctx.RemoteIP().String()
 			}
 
-			ctx.SetUserValue(string(helpers.ClientIP), ip)
+			ctx.SetUserValue(string(rest.ClientIP), ip)
 
 			defer func() {
 				if err := recover(); err != nil {
