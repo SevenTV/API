@@ -184,6 +184,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 
 	// Update database
 	_, err = epl.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
+		"_id":         eb.Emote.ID,
 		"versions.id": id,
 	}, eb.Update)
 
