@@ -119,6 +119,7 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 
 	// Write the update to the emote lifecycle
 	if _, err := m.mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
+		"_id":         eb.Emote.ID,
 		"versions.id": eb.Emote.ID,
 	}, eb.Update); err != nil {
 		zap.S().Errorw("mongo, failed to update emote during its deletion",
