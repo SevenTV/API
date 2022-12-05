@@ -38,7 +38,7 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 	for i, st := range def.Stops {
 		stops[i] = structures.CosmeticPaintGradientStop{
 			At:    st.At,
-			Color: int32(st.Color),
+			Color: utils.Color(st.Color),
 		}
 	}
 
@@ -48,7 +48,7 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 			OffsetX: sh.XOffset,
 			OffsetY: sh.YOffset,
 			Radius:  sh.Radius,
-			Color:   int32(sh.Color),
+			Color:   utils.Color(sh.Color),
 		}
 	}
 
@@ -59,7 +59,7 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 		Name:     def.Name,
 		Data: structures.CosmeticDataPaint{
 			Function:    structures.CosmeticPaintFunction(def.Function),
-			Color:       utils.PointerOf(int32(mainColor)),
+			Color:       utils.PointerOf(utils.Color(mainColor)),
 			Stops:       stops,
 			Repeat:      def.Repeat,
 			Angle:       int32(angle),

@@ -246,9 +246,9 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 		}
 
 		if a := roleMap[ent.UserID]; a != nil {
-			roleMap[ent.UserID] = append(roleMap[ent.UserID], r.Data.ObjectReference)
+			roleMap[ent.UserID] = append(roleMap[ent.UserID], r.Data.RefID)
 		} else {
-			roleMap[ent.UserID] = []primitive.ObjectID{r.Data.ObjectReference}
+			roleMap[ent.UserID] = []primitive.ObjectID{r.Data.RefID}
 		}
 	}
 
@@ -260,7 +260,7 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 	for _, ent := range ents[structures.EntitlementKindBadge] {
 		if ok, d := readEntitled(roleMap[ent.UserID], ent); ok {
 			uc := userCosmetics[ent.UserID]
-			cos := cosMap[d.ObjectReference]
+			cos := cosMap[d.RefID]
 
 			if !uc[0].IsZero() {
 				oldCos := cosMap[uc[0]]
@@ -291,7 +291,7 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 		if ok, d := readEntitled(roleMap[ent.UserID], ent); ok {
 			uc := userCosmetics[ent.UserID]
 			if uc[1].IsZero() {
-				cos := cosMap[d.ObjectReference]
+				cos := cosMap[d.RefID]
 				cos.UserIDs = append(cos.UserIDs, ent.UserID)
 				uc[1] = cos.ID
 			}
@@ -457,7 +457,7 @@ func createPaintResponse(paint structures.Cosmetic[bson.Raw], users []structures
 	for i, stop := range data.Data.Stops {
 		stops[i] = model.CosmeticPaintGradientStop{
 			At:    stop.At,
-			Color: stop.Color,
+			Color: stop.Color.Sum(),
 		}
 	}
 
@@ -467,15 +467,20 @@ func createPaintResponse(paint structures.Cosmetic[bson.Raw], users []structures
 			OffsetX: shadow.OffsetX,
 			OffsetY: shadow.OffsetY,
 			Radius:  shadow.Radius,
-			Color:   shadow.Color,
+			Color:   shadow.Color.Sum(),
 		}
+	}
+
+	var color *int32
+	if data.Data.Color != nil {
+		color = utils.PointerOf(data.Data.Color.Sum())
 	}
 
 	return model.CosmeticPaint{
 		ID:          paint.ID.Hex(),
 		Name:        paint.Name,
 		Users:       userIDs,
-		Color:       data.Data.Color,
+		Color:       color,
 		Function:    string(data.Data.Function),
 		Stops:       stops,
 		Repeat:      data.Data.Repeat,

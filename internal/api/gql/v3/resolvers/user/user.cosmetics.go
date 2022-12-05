@@ -30,7 +30,7 @@ func (r *Resolver) Cosmetics(ctx context.Context, obj *model.User) ([]*model.Use
 	result := make([]*model.UserCosmetic, len(ents))
 	for i, ent := range ents {
 		result[i] = &model.UserCosmetic{
-			ID:       ent.Data.ObjectReference,
+			ID:       ent.Data.RefID,
 			Selected: ent.Data.Selected,
 			Kind:     model.CosmeticKind(ent.Kind),
 		}

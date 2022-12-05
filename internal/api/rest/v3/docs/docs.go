@@ -346,6 +346,23 @@ const docTemplate = `{
                 }
             }
         },
+        "model.CosmeticBadgeModel": {
+            "type": "object",
+            "properties": {
+                "host": {
+                    "$ref": "#/definitions/model.ImageHost"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "tooltip": {
+                    "type": "string"
+                }
+            }
+        },
         "model.CosmeticPaintDropShadow": {
             "type": "object",
             "properties": {
@@ -876,6 +893,10 @@ const docTemplate = `{
         "model.UserStyle": {
             "type": "object",
             "properties": {
+                "badge": {
+                    "x-nullable": true,
+                    "$ref": "#/definitions/model.CosmeticBadgeModel"
+                },
                 "color": {
                     "type": "integer"
                 },

@@ -18,7 +18,7 @@ const LoadersKey = utils.Key("dataloaders")
 type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
-	UserByConnectionID(structures.UserConnectionPlatform) UserByConnectionID
+	UserByConnectionID(structures.UserConnectionPlatform) UserLoaderByConnectionID
 
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
@@ -27,13 +27,15 @@ type Instance interface {
 
 	PresenceByActorID() PresenceLoaderByID
 	PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID
+
+	EntitlementsLoader() EntitlementsLoader
 }
 
 type inst struct {
 	// User Loaders
 	userByID           UserLoaderByID
 	userByUsername     UserLoaderByUsername
-	userByConnectionID map[structures.UserConnectionPlatform]UserByConnectionID
+	userByConnectionID map[structures.UserConnectionPlatform]UserLoaderByConnectionID
 
 	// Emote Loaders
 	emoteByID      EmoteLoaderByID
@@ -46,6 +48,9 @@ type inst struct {
 	// Presence Loaders
 	presenceByActorID             PresenceLoaderByID
 	presenceOfChannelKindByHostID ChannelPresenceLoaderByID
+
+	// Entitlements
+	entitlements EntitlementsLoader
 
 	// inst
 	mongo mongo.Instance
@@ -75,6 +80,8 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.presenceByActorID = presenceLoader[bson.Raw](ctx, l, structures.UserPresenceKindUnknown, "actor_id")
 	l.presenceOfChannelKindByHostID = presenceLoader[structures.UserPresenceDataChannel](ctx, l, structures.UserPresenceKindChannel, "data.host_id")
 
+	l.entitlements = entitlementsLoader(ctx, l)
+
 	return &l
 }
 
@@ -86,7 +93,7 @@ func (l inst) UserByUsername() UserLoaderByUsername {
 	return l.userByUsername
 }
 
-func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) UserByConnectionID {
+func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) UserLoaderByConnectionID {
 	loader, ok := l.userByConnectionID[platform]
 	if !ok {
 		return l.userByConnectionID[structures.UserConnectionPlatformTwitch]
@@ -120,10 +127,14 @@ func (l *inst) PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID {
 	return l.presenceOfChannelKindByHostID
 }
 
+func (l *inst) EntitlementsLoader() EntitlementsLoader {
+	return l.entitlements
+}
+
 type (
-	UserLoaderByID       = *dataloader.DataLoader[primitive.ObjectID, structures.User]
-	UserLoaderByUsername = *dataloader.DataLoader[string, structures.User]
-	UserByConnectionID   = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByID           = *dataloader.DataLoader[primitive.ObjectID, structures.User]
+	UserLoaderByUsername     = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByConnectionID = *dataloader.DataLoader[string, structures.User]
 
 	EmoteLoaderByID         = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
 	BatchEmoteLoaderByID    = *dataloader.DataLoader[primitive.ObjectID, []structures.Emote]
@@ -132,4 +143,6 @@ type (
 
 	PresenceLoaderByID        = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
 	ChannelPresenceLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[structures.UserPresenceDataChannel]]
+
+	EntitlementsLoader = *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult]
 )
