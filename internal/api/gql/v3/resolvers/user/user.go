@@ -255,3 +255,20 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int)
 
 	return result, nil
 }
+
+func (r *Resolver) Style(ctx context.Context, obj *model.User) (*model.UserStyle, error) {
+	ents, err := r.Ctx.Inst().Loaders.EntitlementsLoader().Load(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	paint, _ := ents.ActivePaint()
+
+	badge, _ := ents.ActiveBadge()
+
+	return &model.UserStyle{
+		Color: 0,
+		Paint: r.Ctx.Inst().Modelizer.Paint(paint).GQL(),
+		Badge: r.Ctx.Inst().Modelizer.Badge(badge).GQL(),
+	}, nil
+}

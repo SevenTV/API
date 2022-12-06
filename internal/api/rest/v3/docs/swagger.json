@@ -351,6 +351,9 @@
                 "id": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "tag": {
                     "type": "string"
                 },
@@ -408,6 +411,9 @@
                     "type": "string"
                 },
                 "image_url": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "repeat": {

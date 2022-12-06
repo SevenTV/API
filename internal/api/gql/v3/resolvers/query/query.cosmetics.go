@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -39,12 +38,12 @@ func (r *Resolver) Cosmetics(ctx context.Context, list []primitive.ObjectID) (*m
 		case structures.CosmeticKindNametagPaint:
 			c, err := structures.ConvertCosmetic[structures.CosmeticDataPaint](cosmetic)
 			if err == nil {
-				paints = append(paints, helpers.CosmeticPaintStructureToModel(c))
+				paints = append(paints, r.Ctx.Inst().Modelizer.Paint(c).GQL())
 			}
 		case structures.CosmeticKindBadge:
 			c, err := structures.ConvertCosmetic[structures.CosmeticDataBadge](cosmetic)
 			if err == nil {
-				badges = append(badges, helpers.CosmeticBadgeStructureToModel(c))
+				badges = append(badges, r.Ctx.Inst().Modelizer.Badge(c).GQL())
 			}
 		}
 	}

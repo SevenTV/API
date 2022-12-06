@@ -4,13 +4,15 @@ import (
 	"fmt"
 
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CosmeticPaintModel struct {
 	ID       primitive.ObjectID          `json:"id"`
+	Name     string                      `json:"name"`
 	Function CosmeticPaintFunction       `json:"function" enums:"LINEAR_GRADIENT,RADIAL_GRADIENT,URL"`
-	Color    int32                       `json:"color"`
+	Color    *int32                      `json:"color"`
 	Repeat   bool                        `json:"repeat"`
 	Angle    int32                       `json:"angle"`
 	Shape    string                      `json:"shape"`
@@ -41,16 +43,23 @@ type CosmeticPaintDropShadow struct {
 
 type CosmeticBadgeModel struct {
 	ID      primitive.ObjectID `json:"id"`
+	Name    string             `json:"name"`
 	Tag     string             `json:"tag"`
 	Tooltip string             `json:"tooltip"`
 	Host    ImageHost          `json:"host"`
 }
 
 func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *CosmeticPaintModel {
+	var color *int32
+	if v.Data.Color != nil {
+		color = utils.PointerOf(v.Data.Color.Sum())
+	}
+
 	return &CosmeticPaintModel{
 		ID:       v.ID,
+		Name:     v.Name,
 		Function: CosmeticPaintFunction(v.Data.Function),
-		Color:    v.Data.Color.Sum(),
+		Color:    color,
 		Repeat:   v.Data.Repeat,
 		Angle:    v.Data.Angle,
 		Shape:    v.Data.Shape,
@@ -79,6 +88,7 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *
 
 	return &CosmeticBadgeModel{
 		ID:      v.ID,
+		Name:    v.Name,
 		Tooltip: v.Data.Tooltip,
 		Host:    host,
 	}

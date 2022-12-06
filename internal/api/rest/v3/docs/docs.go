@@ -355,6 +355,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                },
                 "tag": {
                     "type": "string"
                 },
@@ -412,6 +415,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "image_url": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "repeat": {

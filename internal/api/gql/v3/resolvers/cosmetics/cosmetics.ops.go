@@ -5,7 +5,6 @@ import (
 
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/api/internal/api/gql/v3/types"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -91,5 +90,5 @@ func (r *ResolverOps) UpdatePaint(ctx context.Context, obj *model.CosmeticOps, d
 		return nil, err
 	}
 
-	return helpers.CosmeticPaintStructureToModel(result), nil
+	return r.Ctx.Inst().Modelizer.Paint(result).GQL(), nil
 }

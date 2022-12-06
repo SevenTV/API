@@ -41,7 +41,7 @@ type User {
   created_at: Time!
   avatar_url: String!
   biography: String!
-  style: UserStyle!
+  style: UserStyle! @goField(forceResolver: true)
 
   editors: [UserEditor!]! @goField(forceResolver: true)
   editor_of: [UserEditor!]! @goField(forceResolver: true)
@@ -114,6 +114,7 @@ type UserConnectionPartial {
 type UserStyle {
   color: Int!
   paint: CosmeticPaint
+  badge: CosmeticBadge
 }
 
 type UserCosmetic {

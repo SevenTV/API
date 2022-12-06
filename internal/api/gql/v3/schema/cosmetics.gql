@@ -33,7 +33,7 @@ type CosmeticBadge implements Cosmetic {
   name: String!
   tooltip: String!
   tag: String!
-  images: [Image!]!
+  host: ImageHost!
 }
 
 type CosmeticPaint implements Cosmetic {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
@@ -68,11 +69,63 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 		return r
 	}
 
+	cosmeticIDs := make(utils.Set[primitive.ObjectID])
+
+	for cur.Next(ctx) {
+		var item EntitlementQueryResult
+
+		if err := cur.Decode(&item); err != nil {
+			zap.S().Errorw("failed to decode entitlements", "error", err)
+			r.setError(err)
+
+			return r
+		}
+
+		for _, b := range item.Badges {
+			cosmeticIDs.Add(b.Data.RefID)
+		}
+
+		for _, p := range item.Paints {
+			cosmeticIDs.Add(p.Data.RefID)
+		}
+
+		items = append(items, item)
+	}
+
 	if err := cur.All(ctx, &items); err != nil {
 		zap.S().Errorw("failed to decode entitlements", "error", err)
 		r.setError(err)
 
 		return r
+	}
+
+	// Fetch references
+	cosmetics, err := q.Cosmetics(ctx, cosmeticIDs)
+	if err != nil {
+		zap.S().Errorw("failed to fetch cosmetics", "error", err)
+		r.setError(err)
+
+		return r
+	}
+
+	cosmeticMap := make(map[primitive.ObjectID]structures.Cosmetic[bson.Raw])
+	for _, c := range cosmetics {
+		cosmeticMap[c.ID] = c
+	}
+
+	// Attach references
+	for i := range items {
+		for j := range items[i].Badges {
+			x, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](cosmeticMap[items[i].Badges[j].ID])
+
+			items[i].Badges[j].Data.RefObject = &x
+		}
+
+		for j := range items[i].Paints {
+			x, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](cosmeticMap[items[i].Paints[j].Data.RefID])
+
+			items[i].Paints[j].Data.RefObject = &x
+		}
 	}
 
 	r.setItems(items)
@@ -89,6 +142,42 @@ type EntitlementQueryResult struct {
 }
 
 type EntitlementQueryResultBucket[T structures.EntitlementData] []structures.Entitlement[T]
+
+func (eqr *EntitlementQueryResult) ActivePaint() (structures.Cosmetic[structures.CosmeticDataPaint], bool) {
+	var item structures.Cosmetic[structures.CosmeticDataPaint]
+
+	for _, p := range eqr.Paints {
+		if p.Data.RefObject == nil {
+			continue
+		}
+
+		if p.Data.Selected && (!item.ID.IsZero() && p.Data.RefObject.Priority < item.Priority) {
+			continue
+		}
+
+		item = *p.Data.RefObject
+	}
+
+	return item, !item.ID.IsZero()
+}
+
+func (eqr *EntitlementQueryResult) ActiveBadge() (structures.Cosmetic[structures.CosmeticDataBadge], bool) {
+	var item structures.Cosmetic[structures.CosmeticDataBadge]
+
+	for _, b := range eqr.Badges {
+		if b.Data.RefObject == nil {
+			continue
+		}
+
+		if b.Data.Selected && (!item.ID.IsZero() && b.Data.RefObject.Priority < item.Priority) {
+			continue
+		}
+
+		item = *b.Data.RefObject
+	}
+
+	return item, !item.ID.IsZero()
+}
 
 type QueryEntitlementsOptions struct {
 	SelectedOnly bool
