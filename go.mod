@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.15
 	github.com/aws/aws-sdk-go v1.44.108
-	github.com/aws/aws-sdk-go-v2 v1.16.11
+	github.com/aws/aws-sdk-go-v2 v1.17.2
 	github.com/bugsnag/panicwrap v1.3.4
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/go-querystring v1.1.0
@@ -35,7 +35,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.18 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.4 // indirect
-	github.com/aws/smithy-go v1.12.1 // indirect
+	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bwmarrin/discordgo v0.25.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
