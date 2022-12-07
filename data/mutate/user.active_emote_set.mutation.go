@@ -66,6 +66,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 		ctx,
 		bson.M{
 			"_id":            victim.ID,
+			"username":       victim.Username,
 			"connections.id": opt.ConnectionID,
 		},
 		conn.Update,
@@ -74,6 +75,8 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 		if err == mongo.ErrNoDocuments {
 			return errors.ErrUnknownUser().SetDetail("Victim was not found and could not be updated")
 		}
+
+		zap.S().Errorw("failed to update user", "error", err)
 
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}

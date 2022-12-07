@@ -98,7 +98,8 @@ func (m *Mutate) ModifyUserEditors(ctx context.Context, ub *structures.UserBuild
 
 	// Write mutation
 	if err := m.mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
-		"_id": target.ID,
+		"_id":      target.ID,
+		"username": target.Username,
 	}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&ub.User); err != nil {
 		return errors.ErrInternalServerError().SetDetail(err.Error())
 	}

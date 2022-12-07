@@ -333,7 +333,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 	if len(eb.Update) > 0 {
 		if err := m.mongo.Collection(mongo.CollectionNameEmotes).FindOneAndUpdate(
 			ctx,
-			bson.M{"versions.id": emote.ID},
+			bson.M{"_id": emote.ID},
 			eb.Update,
 			options.FindOneAndUpdate().SetReturnDocument(options.After),
 		).Decode(emote); err != nil {
