@@ -810,7 +810,8 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.UserConnectionModel"
-                    }
+                    },
+                    "x-omitempty": true
                 },
                 "createdAt": {
                     "type": "integer"
@@ -866,7 +867,8 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.UserConnectionPartialModel"
-                    }
+                    },
+                    "x-omitempty": true
                 },
                 "display_name": {
                     "type": "string"
@@ -900,15 +902,24 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "badge": {
-                    "x-nullable": true,
+                    "x-omitempty": true,
                     "$ref": "#/definitions/model.CosmeticBadgeModel"
                 },
+                "badge_id": {
+                    "type": "string",
+                    "x-omitempty": true
+                },
                 "color": {
-                    "type": "integer"
+                    "type": "integer",
+                    "x-omitempty": true
                 },
                 "paint": {
-                    "x-nullable": true,
+                    "x-omitempty": true,
                     "$ref": "#/definitions/model.CosmeticPaintModel"
+                },
+                "paint_id": {
+                    "type": "string",
+                    "x-omitempty": true
                 }
             }
         }

@@ -18,13 +18,13 @@ type UserModel struct {
 	Username    string                 `json:"username"`
 	DisplayName string                 `json:"display_name"`
 	CreatedAt   int64                  `json:"createdAt,omitempty"`
-	AvatarURL   string                 `json:"avatar_url,omitempty"`
+	AvatarURL   string                 `json:"avatar_url"`
 	Biography   string                 `json:"biography,omitempty" extensions:"x-omitempty"`
 	Style       UserStyle              `json:"style"`
 	EmoteSets   []EmoteSetPartialModel `json:"emote_sets,omitempty" extensions:"x-omitempty"`
 	Editors     []UserEditorModel      `json:"editors,omitempty"`
 	RoleIDs     []primitive.ObjectID   `json:"roles"`
-	Connections []UserConnectionModel  `json:"connections,omitempty"`
+	Connections []UserConnectionModel  `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 
 type UserPartialModel struct {
@@ -32,16 +32,18 @@ type UserPartialModel struct {
 	UserType    UserTypeModel                `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string                       `json:"username"`
 	DisplayName string                       `json:"display_name"`
-	AvatarURL   string                       `json:"avatar_url,omitempty"`
+	AvatarURL   string                       `json:"avatar_url"`
 	Style       UserStyle                    `json:"style"`
 	RoleIDs     []primitive.ObjectID         `json:"roles"`
-	Connections []UserConnectionPartialModel `json:"connections"`
+	Connections []UserConnectionPartialModel `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 
 type UserStyle struct {
-	Color int32               `json:"color"`
-	Paint *CosmeticPaintModel `json:"paint" extensions:"x-nullable"`
-	Badge *CosmeticBadgeModel `json:"badge" extensions:"x-nullable"`
+	Color   int32               `json:"color,omitempty" extensions:"x-omitempty"`
+	PaintID *primitive.ObjectID `json:"paint_id,omitempty" extensions:"x-omitempty"`
+	Paint   *CosmeticPaintModel `json:"paint,omitempty" extensions:"x-omitempty"`
+	BadgeID *primitive.ObjectID `json:"badge_id,omitempty" extensions:"x-omitempty"`
+	Badge   *CosmeticBadgeModel `json:"badge,omitempty" extensions:"x-omitempty"`
 }
 
 type UserTypeModel string
@@ -131,8 +133,6 @@ func (x *modelizer) User(v structures.User) UserModel {
 
 	style := UserStyle{
 		Color: v.GetHighestRole().Color.Sum(),
-		Paint: nil,
-		Badge: nil,
 	}
 
 	return UserModel{

@@ -64,6 +64,20 @@ func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *
 		Angle:    v.Data.Angle,
 		Shape:    v.Data.Shape,
 		ImageURL: v.Data.ImageURL,
+		Stops: utils.Map(v.Data.Stops, func(v structures.CosmeticPaintGradientStop) CosmeticPaintGradientStop {
+			return CosmeticPaintGradientStop{
+				At:    v.At,
+				Color: v.Color.Sum(),
+			}
+		}),
+		Shadows: utils.Map(v.Data.DropShadows, func(v structures.CosmeticPaintDropShadow) CosmeticPaintDropShadow {
+			return CosmeticPaintDropShadow{
+				OffsetX: v.OffsetX,
+				OffsetY: v.OffsetY,
+				Radius:  v.Radius,
+				Color:   v.Color.Sum(),
+			}
+		}),
 	}
 }
 

@@ -15,7 +15,6 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/subscription"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/user"
 	user_editor "github.com/seventv/api/internal/api/gql/v3/resolvers/user-editor"
-	user_emote "github.com/seventv/api/internal/api/gql/v3/resolvers/user-emote"
 
 	"github.com/seventv/api/internal/api/gql/v3/types"
 )
@@ -84,10 +83,6 @@ func (r *Resolver) UserOps() generated.UserOpsResolver {
 
 func (r *Resolver) UserEditor() generated.UserEditorResolver {
 	return user_editor.New(r.Resolver)
-}
-
-func (r *Resolver) UserEmote() generated.UserEmoteResolver {
-	return user_emote.New(r.Resolver)
 }
 
 func (r *Resolver) EmoteSet() generated.EmoteSetResolver {

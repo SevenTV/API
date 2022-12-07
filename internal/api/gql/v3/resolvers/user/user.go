@@ -8,9 +8,11 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
+	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -257,18 +259,22 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int)
 }
 
 func (r *Resolver) Style(ctx context.Context, obj *model.User) (*model.UserStyle, error) {
-	ents, err := r.Ctx.Inst().Loaders.EntitlementsLoader().Load(obj.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	paint, _ := ents.ActivePaint()
-
-	badge, _ := ents.ActiveBadge()
+	badge, paint := userEntitlements(r.Ctx, obj.ID)
 
 	return &model.UserStyle{
-		Color: 0,
-		Paint: r.Ctx.Inst().Modelizer.Paint(paint).GQL(),
-		Badge: r.Ctx.Inst().Modelizer.Badge(badge).GQL(),
+		Color:   obj.Style.Color,
+		PaintID: utils.Ternary(paint.ID.IsZero(), nil, &paint.ID),
+		BadgeID: utils.Ternary(badge.ID.IsZero(), nil, &badge.ID),
+		Paint:   utils.Ternary(paint.ID.IsZero(), nil, paint),
+		Badge:   utils.Ternary(badge.ID.IsZero(), nil, badge),
 	}, nil
+}
+
+func userEntitlements(gctx global.Context, userID primitive.ObjectID) (*model.CosmeticBadge, *model.CosmeticPaint) {
+	ents, _ := gctx.Inst().Loaders.EntitlementsLoader().Load(userID)
+
+	badge, _ := ents.ActiveBadge()
+	paint, _ := ents.ActivePaint()
+
+	return gctx.Inst().Modelizer.Badge(badge).GQL(), gctx.Inst().Modelizer.Paint(paint).GQL()
 }

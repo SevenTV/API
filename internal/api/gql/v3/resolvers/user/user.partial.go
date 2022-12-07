@@ -8,6 +8,7 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/types"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -49,4 +50,16 @@ func (r *ResolverPartial) EmoteSets(ctx context.Context, obj *model.UserPartial)
 	}
 
 	return result, nil
+}
+
+func (r *ResolverPartial) Style(ctx context.Context, obj *model.UserPartial) (*model.UserStyle, error) {
+	badge, paint := userEntitlements(r.Ctx, obj.ID)
+
+	return &model.UserStyle{
+		Color:   obj.Style.Color,
+		PaintID: utils.Ternary(paint.ID.IsZero(), nil, &paint.ID),
+		BadgeID: utils.Ternary(badge.ID.IsZero(), nil, &badge.ID),
+		Paint:   utils.Ternary(paint.ID.IsZero(), nil, paint),
+		Badge:   utils.Ternary(badge.ID.IsZero(), nil, badge),
+	}, nil
 }

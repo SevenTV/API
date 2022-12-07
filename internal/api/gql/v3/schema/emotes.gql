@@ -114,12 +114,6 @@ enum ChannelEmoteListItemAction {
   REMOVE
 }
 
-input UserEmoteInput {
-  id: String!
-  channels: [String!]
-  alias: String
-}
-
 input EmoteUpdate {
   name: String
   version_name: String

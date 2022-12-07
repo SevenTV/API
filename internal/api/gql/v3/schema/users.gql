@@ -70,7 +70,7 @@ type UserPartial {
   created_at: Time!
   avatar_url: String!
   biography: String!
-  style: UserStyle!
+  style: UserStyle! @goField(forceResolver: true)
   roles: [ObjectID!]!
   connections(type: [ConnectionPlatform!]): [UserConnectionPartial!]!
   emote_sets: [EmoteSetPartial!]! @goField(forceResolver: true)
@@ -81,13 +81,6 @@ type UserEditor {
   user: UserPartial! @goField(forceResolver: true)
   permissions: Int!
   visible: Boolean!
-  added_at: Time!
-}
-
-type UserEmote {
-  emote: Emote! @goField(forceResolver: true)
-  connections: [String!]!
-  alias: String
   added_at: Time!
 }
 
@@ -113,7 +106,9 @@ type UserConnectionPartial {
 
 type UserStyle {
   color: Int!
+  paint_id: ObjectID
   paint: CosmeticPaint
+  badge_id: ObjectID
   badge: CosmeticBadge
 }
 
