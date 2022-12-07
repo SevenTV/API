@@ -38,8 +38,9 @@ dev_deps:
 generate: 
 	echo ${DOCROOT}
 
-	swag init --dir internal/rest/v3,data -g v3.go -o internal/rest/v3/docs & swag init --dir internal/rest/v2 -g v2.go -o internal/rest/v2/docs
+	swag init --dir internal/api/rest/v3,data -g v3.go -o internal/api/rest/v3/docs & swag init --dir internal/api/rest/v2 -g v2.go -o internal/api/rest/v2/docs
 	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
+	make format
 
 portal:
 	yarn --cwd ./portal 
@@ -55,12 +56,12 @@ test:
 clean:
 	rm -rf \
 		out \
-		internal/gql/v2/gen/generated/generated-gqlgen.go \
-		internal/gql/v2/gen/model/models-gqlgen.go \
-		internal/gql/v3/gen/generated/generated-gqlgen.go \
-		internal/gql/v3/gen/model/models-gqlgen.go \
-		internal/rest/v2/docs \
-		internal/rest/v3/docs \
+		internal/api/gql/v2/gen/generated/generated-gqlgen.go \
+		internal/api/gql/v2/gen/model/models-gqlgen.go \
+		internal/api/gql/v3/gen/generated/generated-gqlgen.go \
+		internal/api/gql/v3/gen/model/models-gqlgen.go \
+		internal/api/rest/v2/docs \
+		internal/api/rest/v3/docs \
 		node_modules
 
 work:

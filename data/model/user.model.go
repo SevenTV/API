@@ -7,7 +7,6 @@ import (
 
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -19,29 +18,32 @@ type UserModel struct {
 	Username    string                 `json:"username"`
 	DisplayName string                 `json:"display_name"`
 	CreatedAt   int64                  `json:"createdAt,omitempty"`
-	AvatarURL   string                 `json:"avatar_url,omitempty"`
+	AvatarURL   string                 `json:"avatar_url"`
 	Biography   string                 `json:"biography,omitempty" extensions:"x-omitempty"`
 	Style       UserStyle              `json:"style"`
 	EmoteSets   []EmoteSetPartialModel `json:"emote_sets,omitempty" extensions:"x-omitempty"`
 	Editors     []UserEditorModel      `json:"editors,omitempty"`
 	RoleIDs     []primitive.ObjectID   `json:"roles"`
-	Connections []UserConnectionModel  `json:"connections,omitempty"`
+	Connections []UserConnectionModel  `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 
 type UserPartialModel struct {
-	ID          primitive.ObjectID    `json:"id"`
-	UserType    UserTypeModel         `json:"type,omitempty" enums:",BOT,SYSTEM"`
-	Username    string                `json:"username"`
-	DisplayName string                `json:"display_name"`
-	AvatarURL   string                `json:"avatar_url,omitempty"`
-	Style       UserStyle             `json:"style"`
-	RoleIDs     []primitive.ObjectID  `json:"roles"`
-	Connections []UserConnectionModel `json:"connections"`
+	ID          primitive.ObjectID           `json:"id"`
+	UserType    UserTypeModel                `json:"type,omitempty" enums:",BOT,SYSTEM"`
+	Username    string                       `json:"username"`
+	DisplayName string                       `json:"display_name"`
+	AvatarURL   string                       `json:"avatar_url"`
+	Style       UserStyle                    `json:"style"`
+	RoleIDs     []primitive.ObjectID         `json:"roles"`
+	Connections []UserConnectionPartialModel `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 
 type UserStyle struct {
-	Color int32               `json:"color"`
-	Paint *CosmeticPaintModel `json:"paint" extensions:"x-nullable"`
+	Color   int32               `json:"color,omitempty" extensions:"x-omitempty"`
+	PaintID *primitive.ObjectID `json:"paint_id,omitempty" extensions:"x-omitempty"`
+	Paint   *CosmeticPaintModel `json:"paint,omitempty" extensions:"x-omitempty"`
+	BadgeID *primitive.ObjectID `json:"badge_id,omitempty" extensions:"x-omitempty"`
+	Badge   *CosmeticBadgeModel `json:"badge,omitempty" extensions:"x-omitempty"`
 }
 
 type UserTypeModel string
@@ -130,8 +132,7 @@ func (x *modelizer) User(v structures.User) UserModel {
 	}
 
 	style := UserStyle{
-		Color: int32(v.GetHighestRole().Color),
-		Paint: nil,
+		Color: v.GetHighestRole().Color.Sum(),
 	}
 
 	return UserModel{
@@ -150,6 +151,11 @@ func (x *modelizer) User(v structures.User) UserModel {
 }
 
 func (um UserModel) ToPartial() UserPartialModel {
+	connections := make([]UserConnectionPartialModel, len(um.Connections))
+	for i, c := range um.Connections {
+		connections[i] = c.ToPartial()
+	}
+
 	return UserPartialModel{
 		ID:          um.ID,
 		UserType:    um.UserType,
@@ -158,7 +164,7 @@ func (um UserModel) ToPartial() UserPartialModel {
 		Style:       um.Style,
 		DisplayName: um.DisplayName,
 		RoleIDs:     um.RoleIDs,
-		Connections: um.Connections,
+		Connections: connections,
 	}
 }
 
@@ -175,69 +181,5 @@ func (x *modelizer) UserEditor(v structures.UserEditor) UserEditorModel {
 		Permissions: int32(v.Permissions),
 		Visible:     v.Visible,
 		AddedAt:     v.AddedAt.UnixMilli(),
-	}
-}
-
-type UserConnectionModel struct {
-	ID            string                      `json:"id"`
-	Platform      UserConnectionPlatformModel `json:"platform" enums:"TWITCH,YOUTUBE,DISCORD"`
-	Username      string                      `json:"username"`
-	DisplayName   string                      `json:"display_name"`
-	LinkedAt      int64                       `json:"linked_at"`
-	EmoteCapacity int32                       `json:"emote_capacity"`
-	EmoteSet      *EmoteSetModel              `json:"emote_set,omitempty" extensions:"x-omitempty"`
-
-	User *UserModel `json:"user,omitempty" extensions:"x-omitempty"`
-}
-
-type UserConnectionPlatformModel string
-
-var (
-	UserConnectionPlatformTwitch  UserConnectionPlatformModel = "TWITCH"
-	UserConnectionPlatformYouTube UserConnectionPlatformModel = "YOUTUBE"
-	UserConnectionPlatformDiscord UserConnectionPlatformModel = "DISCORD"
-)
-
-func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel {
-	var (
-		displayName string
-		username    string
-	)
-
-	switch v.Platform {
-	case structures.UserConnectionPlatformTwitch:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](v); err == nil {
-			displayName = con.Data.DisplayName
-			username = con.Data.Login
-		}
-	case structures.UserConnectionPlatformYouTube:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](v); err == nil {
-			displayName = con.Data.Title
-			username = con.Data.ID
-		}
-	case structures.UserConnectionPlatformDiscord:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataDiscord](v); err == nil {
-			displayName = con.Data.Username
-			username = con.Data.Username + "#" + con.Data.Discriminator
-		}
-	}
-
-	var set *EmoteSetModel
-
-	if v.EmoteSet != nil {
-		s := x.EmoteSet(*v.EmoteSet)
-		set = &s
-	} else if !v.EmoteSetID.IsZero() {
-		set = utils.PointerOf(x.EmoteSet(structures.EmoteSet{ID: v.EmoteSetID}))
-	}
-
-	return UserConnectionModel{
-		ID:            v.ID,
-		Platform:      UserConnectionPlatformModel(v.Platform),
-		Username:      username,
-		DisplayName:   displayName,
-		LinkedAt:      v.LinkedAt.UnixMilli(),
-		EmoteCapacity: int32(v.EmoteSlots),
-		EmoteSet:      set,
 	}
 }

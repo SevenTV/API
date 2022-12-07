@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v2helpers "github.com/seventv/api/internal/api/gql/v2/helpers"
+	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/global"
-	v2helpers "github.com/seventv/api/internal/gql/v2/helpers"
-	"github.com/seventv/api/internal/gql/v3/gen/model"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"

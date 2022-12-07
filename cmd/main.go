@@ -16,15 +16,16 @@ import (
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/data/query"
+	"github.com/seventv/api/internal/api/gql"
+	"github.com/seventv/api/internal/api/rest"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/gql"
-	"github.com/seventv/api/internal/health"
-	"github.com/seventv/api/internal/limiter"
 	"github.com/seventv/api/internal/loaders"
-	"github.com/seventv/api/internal/monitoring"
-	"github.com/seventv/api/internal/pprof"
-	"github.com/seventv/api/internal/rest"
+	"github.com/seventv/api/internal/svc/health"
+	"github.com/seventv/api/internal/svc/limiter"
+	"github.com/seventv/api/internal/svc/monitoring"
+	"github.com/seventv/api/internal/svc/pprof"
+	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
 	"github.com/seventv/common/mongo"
@@ -81,10 +82,10 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 
-	gCtx, cancel := global.WithCancel(global.New(context.Background(), config))
+	gctx, cancel := global.WithCancel(global.New(context.Background(), config))
 
 	{
-		gCtx.Inst().Redis, err = redis.Setup(gCtx, redis.SetupOptions{
+		gctx.Inst().Redis, err = redis.Setup(gctx, redis.SetupOptions{
 			Username:   config.Redis.Username,
 			Password:   config.Redis.Password,
 			Database:   config.Redis.Database,
@@ -101,7 +102,7 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().Mongo, err = mongo.Setup(gCtx, mongo.SetupOptions{
+		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{
 			URI:    config.Mongo.URI,
 			DB:     config.Mongo.DB,
 			Direct: config.Mongo.Direct,
@@ -114,7 +115,7 @@ func main() {
 
 		// Run collsync
 		go func() {
-			if err := indexing.CollSync(gCtx.Inst().Mongo, indexing.DatabaseRefAPI); err != nil {
+			if err := indexing.CollSync(gctx.Inst().Mongo, indexing.DatabaseRefAPI); err != nil {
 				zap.S().Errorw("couldn't set up indexes",
 					"error", err,
 				)
@@ -125,12 +126,12 @@ func main() {
 	{
 		switch config.MessageQueue.Mode {
 		case configure.MessageQueueModeRMQ:
-			gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigRMQ{
+			gctx.Inst().MessageQueue, err = messagequeue.New(gctx, messagequeue.ConfigRMQ{
 				AmqpURI:              config.MessageQueue.RMQ.URI,
 				MaxReconnectAttempts: config.MessageQueue.RMQ.MaxReconnectAttempts,
 			})
 		case configure.MessageQueueModeSQS:
-			gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigSQS{
+			gctx.Inst().MessageQueue, err = messagequeue.New(gctx, messagequeue.ConfigSQS{
 				Region: config.MessageQueue.SQS.Region,
 				Credentials: aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
 					return aws.Credentials{
@@ -149,7 +150,7 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().S3, err = s3.New(gCtx, s3.Options{
+		gctx.Inst().S3, err = s3.New(gctx, s3.Options{
 			Region:      config.S3.Region,
 			Endpoint:    config.S3.Endpoint,
 			AccessToken: config.S3.AccessToken,
@@ -164,7 +165,7 @@ func main() {
 	}
 
 	{
-		gCtx.Inst().Prometheus = prometheus.New(prometheus.Options{
+		gctx.Inst().Prometheus = prometheus.New(prometheus.Options{
 			Labels: config.Monitoring.Labels.ToPrometheus(),
 		})
 	}
@@ -174,36 +175,41 @@ func main() {
 			Name: "API",
 			CDN:  config.CdnURL,
 		}
-		gCtx.Inst().Events = events.NewPublisher(gCtx, gCtx.Inst().Redis)
+		gctx.Inst().Events = events.NewPublisher(gctx, gctx.Inst().Redis)
 
-		gCtx.Inst().Limiter, err = limiter.New(gCtx, gCtx.Inst().Redis)
+		gctx.Inst().Limiter, err = limiter.New(gctx, gctx.Inst().Redis)
 		if err != nil {
 			zap.S().Fatalw("failed to setup rate limiter", "error", err)
 		}
 
-		gCtx.Inst().CD = compactdisc.New(config.Platforms.Discord.API)
+		gctx.Inst().CD = compactdisc.New(config.Platforms.Discord.API)
 
-		gCtx.Inst().Modelizer = model.NewInstance(model.ModelInstanceOptions{
+		gctx.Inst().Modelizer = model.NewInstance(model.ModelInstanceOptions{
 			CDN:     config.CdnURL,
 			Website: config.WebsiteURL,
 		})
-		gCtx.Inst().Query = query.New(gCtx.Inst().Mongo, gCtx.Inst().Redis)
-		gCtx.Inst().Loaders = loaders.New(gCtx, gCtx.Inst().Mongo, gCtx.Inst().Redis, gCtx.Inst().Query)
+		gctx.Inst().Query = query.New(gctx.Inst().Mongo, gctx.Inst().Redis)
+		gctx.Inst().Loaders = loaders.New(gctx, gctx.Inst().Mongo, gctx.Inst().Redis, gctx.Inst().Query)
 
-		gCtx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
+		gctx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
 			ID:        id,
-			Mongo:     gCtx.Inst().Mongo,
-			Loaders:   gCtx.Inst().Loaders,
-			Redis:     gCtx.Inst().Redis,
-			S3:        gCtx.Inst().S3,
-			Modelizer: gCtx.Inst().Modelizer,
-			Events:    gCtx.Inst().Events,
-			CD:        gCtx.Inst().CD,
+			Mongo:     gctx.Inst().Mongo,
+			Loaders:   gctx.Inst().Loaders,
+			Redis:     gctx.Inst().Redis,
+			S3:        gctx.Inst().S3,
+			Modelizer: gctx.Inst().Modelizer,
+			Events:    gctx.Inst().Events,
+			CD:        gctx.Inst().CD,
+		})
+
+		gctx.Inst().Presences = presences.New(presences.Options{
+			Mongo:   gctx.Inst().Mongo,
+			Loaders: gctx.Inst().Loaders,
 		})
 	}
 
 	{
-		gCtx.Inst().YouTube, err = youtube.New(gCtx, youtube.YouTubeOptions{
+		gctx.Inst().YouTube, err = youtube.New(gctx, youtube.YouTubeOptions{
 			APIKey: config.Platforms.YouTube.APIKey,
 		})
 		if err != nil {
@@ -215,30 +221,30 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
-	if gCtx.Config().Health.Enabled {
+	if gctx.Config().Health.Enabled {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			<-health.New(gCtx)
+			<-health.New(gctx)
 		}()
 	}
 
-	if gCtx.Config().Monitoring.Enabled {
+	if gctx.Config().Monitoring.Enabled {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			<-monitoring.New(gCtx)
+			<-monitoring.New(gctx)
 		}()
 	}
 
-	if gCtx.Config().PProf.Enabled {
+	if gctx.Config().PProf.Enabled {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			<-pprof.New(gCtx)
+			<-pprof.New(gctx)
 		}()
 	}
 
@@ -268,7 +274,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		if err := rest.New(gCtx); err != nil {
+		if err := rest.New(gctx); err != nil {
 			zap.S().Fatalw("rest failed",
 				"error", err,
 			)
@@ -278,7 +284,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		if err := gql.New(gCtx); err != nil {
+		if err := gql.New(gctx); err != nil {
 			zap.S().Fatalw("gql failed",
 				"error", err,
 			)

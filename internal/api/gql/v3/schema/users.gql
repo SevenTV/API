@@ -1,0 +1,146 @@
+extend type Query {
+  actor: User
+
+  # Fetch a single user by ID
+  user(id: ObjectID!): User!
+  # Fetch a single user by connection id
+  userByConnection(platform: ConnectionPlatform!, id: String!): User!
+
+  # Search users
+  users(query: String!, page: Int, limit: Int): [UserPartial!]!
+  # Fetch many users by ID
+  usersByID(list: [ObjectID!]!): [UserPartial!]!
+}
+
+extend type Subscription {
+  currentUser: ChangeMap!
+  user(id: ObjectID!): ChangeMap!
+}
+
+extend type Mutation {
+  user(id: ObjectID!): UserOps
+}
+
+type UserOps {
+  id: ObjectID!
+  connections(id: String!, data: UserConnectionUpdate!): [UserConnection]
+    @goField(forceResolver: true)
+  editors(editor_id: ObjectID!, data: UserEditorUpdate!): [UserEditor]
+    @goField(forceResolver: true)
+  cosmetics(update: UserCosmeticUpdate!): Boolean @goField(forceResolver: true)
+  roles(role_id: ObjectID!, action: ListItemAction!): [ObjectID!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_USERS, MANAGE_ROLES])
+}
+
+type User {
+  id: ObjectID!
+  type: String!
+  username: String!
+  display_name: String!
+  created_at: Time!
+  avatar_url: String!
+  biography: String!
+  style: UserStyle! @goField(forceResolver: true)
+
+  editors: [UserEditor!]! @goField(forceResolver: true)
+  editor_of: [UserEditor!]! @goField(forceResolver: true)
+  cosmetics: [UserCosmetic!]! @goField(forceResolver: true)
+
+  roles: [ObjectID!]!
+
+  emote_sets: [EmoteSet!]! @goField(forceResolver: true)
+  owned_emotes: [Emote!]! @goField(forceResolver: true)
+  activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
+  connections(type: [ConnectionPlatform!]): [UserConnection]!
+    @goField(forceResolver: true)
+
+  inbox_unread_count: Int! @goField(forceResolver: true) @hasPermissions
+
+  reports: [Report!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+type UserPartial {
+  id: ObjectID!
+  type: String!
+  username: String!
+  display_name: String!
+  created_at: Time!
+  avatar_url: String!
+  biography: String!
+  style: UserStyle! @goField(forceResolver: true)
+  roles: [ObjectID!]!
+  connections(type: [ConnectionPlatform!]): [UserConnectionPartial!]!
+  emote_sets: [EmoteSetPartial!]! @goField(forceResolver: true)
+}
+
+type UserEditor {
+  id: ObjectID!
+  user: UserPartial! @goField(forceResolver: true)
+  permissions: Int!
+  visible: Boolean!
+  added_at: Time!
+}
+
+type UserConnection {
+  id: String!
+  platform: ConnectionPlatform!
+  username: String!
+  display_name: String!
+  linked_at: Time!
+  emote_capacity: Int!
+  emote_set_id: ObjectID
+}
+
+type UserConnectionPartial {
+  id: String!
+  platform: ConnectionPlatform!
+  username: String!
+  display_name: String!
+  linked_at: Time!
+  emote_capacity: Int!
+  emote_set_id: ObjectID
+}
+
+type UserStyle {
+  color: Int!
+  paint_id: ObjectID
+  paint: CosmeticPaint
+  badge_id: ObjectID
+  badge: CosmeticBadge
+}
+
+type UserCosmetic {
+  id: ObjectID!
+  selected: Boolean!
+  kind: CosmeticKind!
+}
+
+enum ConnectionPlatform {
+  TWITCH
+  YOUTUBE
+  DISCORD
+}
+
+input UserConnectionUpdate {
+  emote_set_id: ObjectID
+  unlink: Boolean
+}
+
+input UserEditorUpdate {
+  permissions: Int
+  visible: Boolean
+}
+
+input UserCosmeticUpdate {
+  id: ObjectID!
+  kind: CosmeticKind!
+  selected: Boolean!
+}
+
+type UserSearchResult {
+  total: Int!
+  items: [UserPartial!]!
+}

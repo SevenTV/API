@@ -9,6 +9,7 @@ import (
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,27 +18,39 @@ const LoadersKey = utils.Key("dataloaders")
 type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
-	UserByConnectionID(structures.UserConnectionPlatform) UserByConnectionID
+	UserByConnectionID(structures.UserConnectionPlatform) UserLoaderByConnectionID
+
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
 	EmoteSetByID() EmoteSetLoaderByID
 	EmoteSetByUserID() BatchEmoteSetLoaderByID
+
+	PresenceByActorID() PresenceLoaderByID
+	PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID
+
+	EntitlementsLoader() EntitlementsLoader
 }
 
 type inst struct {
 	// User Loaders
 	userByID           UserLoaderByID
 	userByUsername     UserLoaderByUsername
-	userByConnectionID map[structures.UserConnectionPlatform]UserByConnectionID
+	userByConnectionID map[structures.UserConnectionPlatform]UserLoaderByConnectionID
 
 	// Emote Loaders
 	emoteByID      EmoteLoaderByID
 	emoteByOwnerID BatchEmoteLoaderByID
 
 	// Emote Set Loaders
-	emoteSetByID EmoteSetLoaderByID
-
+	emoteSetByID     EmoteSetLoaderByID
 	emoteSetByUserID BatchEmoteSetLoaderByID
+
+	// Presence Loaders
+	presenceByActorID             PresenceLoaderByID
+	presenceOfChannelKindByHostID ChannelPresenceLoaderByID
+
+	// Entitlements
+	entitlements EntitlementsLoader
 
 	// inst
 	mongo mongo.Instance
@@ -64,6 +77,11 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.emoteSetByID = emoteSetByID(ctx, l)
 	l.emoteSetByUserID = emoteSetByUserID(ctx, l)
 
+	l.presenceByActorID = presenceLoader[bson.Raw](ctx, l, structures.UserPresenceKindUnknown, "actor_id")
+	l.presenceOfChannelKindByHostID = presenceLoader[structures.UserPresenceDataChannel](ctx, l, structures.UserPresenceKindChannel, "data.host_id")
+
+	l.entitlements = entitlementsLoader(ctx, l)
+
 	return &l
 }
 
@@ -75,7 +93,7 @@ func (l inst) UserByUsername() UserLoaderByUsername {
 	return l.userByUsername
 }
 
-func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) UserByConnectionID {
+func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) UserLoaderByConnectionID {
 	loader, ok := l.userByConnectionID[platform]
 	if !ok {
 		return l.userByConnectionID[structures.UserConnectionPlatformTwitch]
@@ -101,12 +119,30 @@ func (l *inst) EmoteByOwnerID() BatchEmoteLoaderByID {
 	return l.emoteByOwnerID
 }
 
+func (l *inst) PresenceByActorID() PresenceLoaderByID {
+	return l.presenceByActorID
+}
+
+func (l *inst) PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID {
+	return l.presenceOfChannelKindByHostID
+}
+
+func (l *inst) EntitlementsLoader() EntitlementsLoader {
+	return l.entitlements
+}
+
 type (
-	UserLoaderByID          = *dataloader.DataLoader[primitive.ObjectID, structures.User]
-	UserLoaderByUsername    = *dataloader.DataLoader[string, structures.User]
-	UserByConnectionID      = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByID           = *dataloader.DataLoader[primitive.ObjectID, structures.User]
+	UserLoaderByUsername     = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByConnectionID = *dataloader.DataLoader[string, structures.User]
+
 	EmoteLoaderByID         = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
 	BatchEmoteLoaderByID    = *dataloader.DataLoader[primitive.ObjectID, []structures.Emote]
 	EmoteSetLoaderByID      = *dataloader.DataLoader[primitive.ObjectID, structures.EmoteSet]
 	BatchEmoteSetLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.EmoteSet]
+
+	PresenceLoaderByID        = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
+	ChannelPresenceLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[structures.UserPresenceDataChannel]]
+
+	EntitlementsLoader = *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult]
 )

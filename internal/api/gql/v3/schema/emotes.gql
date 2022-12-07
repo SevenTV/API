@@ -1,0 +1,126 @@
+extend type Query {
+  emote(id: ObjectID!): Emote
+  emotesByID(list: [ObjectID!]!): [EmotePartial!]!
+  emotes(
+    query: String!
+    page: Int
+    limit: Int
+    filter: EmoteSearchFilter
+    sort: Sort
+  ): EmoteSearchResult!
+}
+
+extend type Subscription {
+  emote(id: ObjectID!): ChangeMap!
+}
+
+extend type Mutation {
+  emote(id: ObjectID!): EmoteOps!
+}
+
+type EmoteOps {
+  id: ObjectID!
+  update(params: EmoteUpdate!, reason: String): Emote!
+    @goField(forceResolver: true)
+  rerun: Emote @goField(forceResolver: true)
+}
+
+type Emote {
+  id: ObjectID!
+  name: String!
+  flags: Int!
+  lifecycle: Int!
+  tags: [String!]!
+  animated: Boolean!
+  created_at: Time!
+
+  owner_id: ObjectID!
+  owner: UserPartial @goField(forceResolver: true)
+
+  channels(page: Int, limit: Int): UserSearchResult!
+    @goField(forceResolver: true)
+  common_names: [EmoteCommonName!]! @goField(forceResolver: true)
+  trending: Int @goField(forceResolver: true)
+
+  host: ImageHost!
+  versions: [EmoteVersion!]!
+  activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
+  listed: Boolean!
+
+  reports: [Report!]!
+    @goField(forceResolver: true)
+    @hasPermissions(role: [MANAGE_REPORTS])
+}
+
+type EmotePartial {
+  id: ObjectID!
+  name: String!
+  flags: Int!
+  lifecycle: Int!
+  tags: [String!]!
+  animated: Boolean!
+  created_at: Time!
+  owner_id: ObjectID!
+  owner: UserPartial @goField(forceResolver: true)
+  host: ImageHost!
+  listed: Boolean!
+}
+
+input EmoteSearchFilter {
+  category: EmoteSearchCategory
+  case_sensitive: Boolean
+  exact_match: Boolean
+  ignore_tags: Boolean
+  animated: Boolean
+  zero_width: Boolean
+  authentic: Boolean
+  aspect_ratio: String
+}
+
+type EmoteVersion {
+  id: ObjectID!
+  name: String!
+  description: String!
+  created_at: Time!
+  host: ImageHost!
+  lifecycle: Int!
+  error: String
+  listed: Boolean!
+}
+
+type EmoteCommonName {
+  name: String!
+  count: Int!
+}
+
+enum EmoteSearchCategory {
+  TOP
+  TRENDING_DAY
+  TRENDING_WEEK
+  TRENDING_MONTH
+  FEATURED
+  NEW
+  GLOBAL
+}
+
+type EmoteSearchResult {
+  count: Int!
+  items: [Emote]!
+}
+
+enum ChannelEmoteListItemAction {
+  ADD
+  UPDATE
+  REMOVE
+}
+
+input EmoteUpdate {
+  name: String
+  version_name: String
+  version_description: String
+  flags: Int
+  owner_id: ObjectID
+  tags: [String!]
+  listed: Boolean
+  deleted: Boolean
+}

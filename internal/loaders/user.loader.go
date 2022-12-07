@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func userLoader[T comparable](ctx context.Context, x inst, keyName string) *dataloader.DataLoader[T, structures.User] {
@@ -99,6 +101,50 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 							m[c.ID] = u
 						}
 					}
+				}
+
+				for i, v := range keys {
+					if x, ok := m[v]; ok {
+						items[i] = x
+					} else {
+						errs[i] = errors.ErrUnknownUser()
+					}
+				}
+			} else {
+				for i := range errs {
+					errs[i] = err
+				}
+			}
+
+			return items, errs
+		},
+	})
+}
+
+func entitlementsLoader(ctx context.Context, x inst) *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult] {
+	return dataloader.New(dataloader.Config[primitive.ObjectID, query.EntitlementQueryResult]{
+		Wait: time.Millisecond * 25,
+		Fetch: func(keys []primitive.ObjectID) ([]query.EntitlementQueryResult, []error) {
+			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			defer cancel()
+
+			items := make([]query.EntitlementQueryResult, len(keys))
+			errs := make([]error, len(keys))
+
+			// Fetch entitlements
+			result := x.query.Entitlements(ctx, bson.M{
+				"user_id": bson.M{"$in": keys},
+			}, query.QueryEntitlementsOptions{SelectedOnly: true})
+			if result.Empty() {
+				return items, errs
+			}
+			entitlements, err := result.Items()
+
+			if err == nil {
+				m := make(map[primitive.ObjectID]query.EntitlementQueryResult)
+
+				for _, e := range entitlements {
+					m[e.UserID] = e
 				}
 
 				for i, v := range keys {

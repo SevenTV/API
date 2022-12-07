@@ -37,7 +37,7 @@ func (qb *QueryBinder) MapUsers(users []structures.User, roleEnts ...structures.
 			return nil, err
 		}
 
-		m2[ent.UserID] = append(m2[ent.UserID], ent.Data.ObjectReference)
+		m2[ent.UserID] = append(m2[ent.UserID], ent.Data.RefID)
 	}
 
 	roles, _ := qb.q.Roles(qb.ctx, bson.M{})
