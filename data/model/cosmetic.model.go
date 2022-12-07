@@ -104,6 +104,7 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *
 		ID:      v.ID,
 		Name:    v.Name,
 		Tooltip: v.Data.Tooltip,
+		Tag:     v.Data.Tag,
 		Host:    host,
 	}
 }
