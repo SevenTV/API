@@ -206,7 +206,8 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 
 			// User exists; update
 			if err = r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(ctx, bson.M{
-				"_id": ub.User.ID,
+				"_id":      ub.User.ID,
+				"username": ub.User.Username,
 			}, ub.Update, options.FindOneAndUpdate().SetReturnDocument(1)).Decode(&ub.User); err != nil {
 				zap.S().Errorw("mongo",
 					"error", err,
