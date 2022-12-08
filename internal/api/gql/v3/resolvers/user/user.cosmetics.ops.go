@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"strings"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
@@ -28,6 +30,8 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 
 	w := []mongo.WriteModel{}
 
+	changeFields := []events.ChangeField{}
+
 	// Get the cosmetic item
 	cos := structures.Cosmetic[bson.Raw]{}
 	if !id.IsZero() {
@@ -52,6 +56,65 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 			},
 			Update: bson.M{"$set": bson.M{"data.selected": selected}},
 		})
+
+		// Get user's current cosmetics
+		ents, err := r.Ctx.Inst().Loaders.EntitlementsLoader().Load(obj.ID)
+		if err != nil {
+			r.Z().Errorw("failed to get user entitlements", "error", err)
+
+			return nil, errors.ErrInternalServerError()
+		}
+
+		var (
+			activeCos structures.Cosmetic[bson.Raw]
+			oldData   any
+			newData   any
+		)
+
+		switch kind {
+		case model.CosmeticKindBadge:
+			b, ok := ents.ActiveBadge()
+			if ok {
+				activeCos = b.ToRaw()
+				oldData = r.Ctx.Inst().Modelizer.Badge(b)
+			}
+
+			if nb, err := structures.ConvertCosmetic[structures.CosmeticDataBadge](cos); err == nil {
+				newData = r.Ctx.Inst().Modelizer.Badge(nb)
+			}
+		case model.CosmeticKindPaint:
+			p, ok := ents.ActivePaint()
+			if ok {
+				activeCos = p.ToRaw()
+				oldData = r.Ctx.Inst().Modelizer.Paint(p)
+			}
+
+			if np, err := structures.ConvertCosmetic[structures.CosmeticDataPaint](cos); err == nil {
+				newData = r.Ctx.Inst().Modelizer.Paint(np)
+			}
+		}
+
+		if !activeCos.ID.IsZero() && activeCos.ID != cos.ID {
+			changeFields = append(changeFields, events.ChangeField{
+				Key:    "style",
+				Nested: true,
+				Type:   events.ChangeFieldTypeObject,
+				Value: []events.ChangeField{
+					{
+						Key:      strings.ToLower(kind.String()) + "_id",
+						Type:     events.ChangeFieldTypeString,
+						OldValue: activeCos.ID.Hex(),
+						Value:    cos.ID.Hex(),
+					},
+					{
+						Key:      strings.ToLower(kind.String()),
+						Type:     events.ChangeFieldTypeObject,
+						OldValue: oldData,
+						Value:    newData,
+					},
+				},
+			})
+		}
 	}
 
 	w = append(w, &mongo.UpdateManyModel{
@@ -65,10 +128,24 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 		},
 	})
 
-	if _, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).BulkWrite(ctx, w); err != nil {
+	res, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).BulkWrite(ctx, w)
+	if err != nil {
 		r.Z().Errorw("failed to update user cosmetic state", "error", err)
 
 		return nil, errors.ErrInternalServerError()
+	}
+
+	if res.ModifiedCount > 0 {
+		if err = r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+			ID:      obj.ID,
+			Kind:    structures.ObjectKindUser,
+			Actor:   r.Ctx.Inst().Modelizer.User(actor),
+			Updated: changeFields,
+		}, events.EventCondition{
+			"object_id": obj.ID.Hex(),
+		}); err != nil {
+			r.Z().Errorw("failed to dispatch event", "error", err)
+		}
 	}
 
 	return utils.PointerOf(true), nil
