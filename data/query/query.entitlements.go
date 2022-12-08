@@ -115,14 +115,27 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 
 	// Attach references
 	for i := range items {
-		for j := range items[i].Badges {
+		roleIDs := make(utils.Set[primitive.ObjectID])
+		for _, r := range items[i].Roles {
+			roleIDs.Add(r.Data.RefID)
+		}
+
+		for j, e := range items[i].Badges {
 			x, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](cosmeticMap[items[i].Badges[j].ID])
+
+			if !e.Condition.IsMet(roleIDs) {
+				continue
+			}
 
 			items[i].Badges[j].Data.RefObject = &x
 		}
 
-		for j := range items[i].Paints {
+		for j, e := range items[i].Paints {
 			x, _ := structures.ConvertCosmetic[structures.CosmeticDataPaint](cosmeticMap[items[i].Paints[j].Data.RefID])
+
+			if !e.Condition.IsMet(roleIDs) {
+				continue
+			}
 
 			items[i].Paints[j].Data.RefObject = &x
 		}
