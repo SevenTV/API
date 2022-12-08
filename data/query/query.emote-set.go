@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/common/errors"
@@ -94,19 +95,21 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 				}
 
 				if ix, ok := emoteNameMap[ae.Name]; ok {
-					e := emotes[ix]
-
-					if e.ID == ae.ID {
+					if emotes[ix].ID == ae.ID {
 						continue
 					}
 
-					emotes = utils.SliceRemove(emotes, ix)
+					ae.Origin = origin
+					emotes[ix] = ae
+				} else {
+					ae.Origin = origin
+					emotes = append(emotes, ae)
 				}
-
-				ae.Origin = origin
-
-				emotes = append(emotes, ae)
 			}
+
+			sort.Slice(emotes, func(i, j int) bool {
+				return emotes[i].Origin.ID.IsZero()
+			})
 
 			// resize emotes slice
 			set.Set.Emotes = emotes
