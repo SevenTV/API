@@ -80,30 +80,37 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 		}
 
 		// Apply emotes from origins
-		for _, origin := range set.Set.Origins {
+		for i, origin := range set.Set.Origins {
 			subset := set.OriginSets[origin.ID]
 			if subset.ID.IsZero() {
 				continue // set wasn't found
 			}
+
+			origin.Set = &subset
 
 			for _, ae := range subset.Emotes {
 				if len(emotes) >= int(set.Set.Capacity) {
 					break
 				}
 
+				if ix, ok := emoteNameMap[ae.Name]; ok {
+					e := emotes[ix]
+
+					if e.ID == ae.ID {
+						continue
+					}
+
+					emotes = utils.SliceRemove(emotes, ix)
+				}
+
 				ae.Origin = origin
 
-				if ix, ok := emoteMap[ae.ID]; ok {
-					emotes[ix] = ae
-				} else if ix, ok := emoteNameMap[ae.Name]; ok {
-					emotes[ix] = ae
-				} else {
-					emotes = append(emotes, ae)
-				}
+				emotes = append(emotes, ae)
 			}
 
 			// resize emotes slice
 			set.Set.Emotes = emotes
+			set.Set.Origins[i].Set = &subset
 		}
 
 		items = append(items, set.Set)

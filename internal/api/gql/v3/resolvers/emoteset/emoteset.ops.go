@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/data/mutate"
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -52,7 +53,7 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		name = *nameArg
 	}
 
-	set, err := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": obj.ID}).First()
+	set, err := r.Ctx.Inst().Query.EmoteSets(ctx, bson.M{"_id": obj.ID}, query.QueryEmoteSetsOptions{FetchOrigins: true}).First()
 	if err != nil {
 		if errors.Compare(err, errors.ErrNoItems()) {
 			return nil, errors.ErrUnknownEmoteSet()

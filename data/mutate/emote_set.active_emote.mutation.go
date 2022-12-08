@@ -133,6 +133,19 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		SetTargetID(set.ID).
 		AddChanges(c)
 
+	// get end pos
+	endPos := len(set.Emotes)
+
+	for i, ae := range set.Emotes {
+		if !ae.Origin.ID.IsZero() {
+			endPos = i
+			break
+		}
+	}
+
+	emotes := make([]structures.ActiveEmote, endPos)
+	copy(emotes, set.Emotes[:endPos])
+
 	// Iterate through the target emotes
 	// Check for permissions
 	for _, tgt := range targetEmoteMap {
@@ -193,7 +206,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 			// Verify that the set has available slots
 			if !actor.HasPermission(structures.RolePermissionEditAnyEmoteSet) {
-				if len(set.Emotes) >= int(set.Capacity) {
+				if len(emotes) >= int(set.Capacity) {
 					return errors.ErrNoSpaceAvailable().
 						SetDetail("This set does not have enough slots").
 						SetFields(errors.Fields{"CAPACITY": set.Capacity})
@@ -201,7 +214,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			}
 
 			// Check for conflicts with existing emotes
-			for _, e := range set.Emotes {
+			for _, e := range emotes {
 				// Cannot enable the same emote twice
 				if tgt.ID == e.ID {
 					return errors.ErrEmoteAlreadyEnabled()
@@ -235,7 +248,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Actor: m.modelizer.User(actor),
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
-						Index: utils.PointerOf(int32(len(esb.EmoteSet.Emotes)) - 1),
+						Index: utils.PointerOf(int32(endPos)),
 						Type:  events.ChangeFieldTypeObject,
 						Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
 							ID:        tgt.ID,
@@ -252,7 +265,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			// The emote must already be active
 			found := false
 
-			for _, e := range set.Emotes {
+			for _, e := range emotes {
 				if tgt.Action == structures.ListItemActionUpdate && e.Name == tgt.Name {
 					return errors.ErrEmoteNameConflict().SetFields(errors.Fields{
 						"EMOTE_ID":          tgt.ID.Hex(),
@@ -273,6 +286,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			}
 
 			if tgt.Action == structures.ListItemActionUpdate {
+				// Modify active emote
 				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
 				if !ae.ID.IsZero() {
 					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
@@ -325,6 +339,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					}).ToRaw())
 				}
 			} else if tgt.Action == structures.ListItemActionRemove {
+				// Remove active emote
 				_, ind := esb.RemoveActiveEmote(tgt.ID)
 				c.WriteArrayRemoved(structures.ActiveEmote{
 					ID: tgt.ID,
