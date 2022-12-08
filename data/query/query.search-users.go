@@ -10,6 +10,7 @@ import (
 	"github.com/seventv/common/structures/v3/aggregations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSearchOptions) ([]structures.User, error) {
@@ -20,32 +21,36 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 	items := []structures.User{}
 
 	paginate := mongo.Pipeline{}
-	search := len(opts) > 0
 
-	if search {
+	if len(opts) > 0 {
 		opt := opts[0]
-		sort := bson.M{"_id": -1}
+		sort := bson.M{"searchIndex": 1, "exact": -1}
 
-		if len(opt.Sort) > 0 {
-			sort = opt.Sort
+		for k, v := range opt.Sort {
+			sort[k] = v
 		}
 
 		paginate = append(paginate, []bson.D{
-			{{Key: "$sort", Value: sort}},
-			{{Key: "$limit", Value: opt.Limit}},
-		}...)
-
-		if opt.Query != "" {
-			filter["$expr"] = bson.M{
-				"$gt": bson.A{
-					bson.M{"$indexOfCP": bson.A{
+			{{
+				Key: "$set",
+				Value: bson.M{
+					"searchIndex": bson.M{"$indexOfCP": bson.A{
 						"$username",
 						strings.ToLower(opt.Query),
 					}},
-					-1,
+					"exact": bson.M{"$cond": bson.M{
+						"if":   bson.M{"$eq": bson.A{"$username", strings.ToLower(opt.Query)}},
+						"then": true,
+						"else": false,
+					}},
 				},
-			}
-		}
+			}},
+			{{Key: "$match", Value: bson.M{
+				"searchIndex": bson.M{"$gte": 0},
+			}}},
+			{{Key: "$sort", Value: sort}},
+			{{Key: "$limit", Value: opt.Limit}},
+		}...)
 	}
 
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, aggregations.Combine(
@@ -54,14 +59,12 @@ func (q *Query) SearchUsers(ctx context.Context, filter bson.M, opts ...UserSear
 				Key:   "$match",
 				Value: filter,
 			}},
-			{{
-				Key:   "$project",
-				Value: bson.M{"_id": 1},
-			}},
 		},
 		paginate,
 	))
 	if err != nil {
+		zap.S().Errorw("failed to aggregate search users", "error", err)
+
 		return items, err
 	}
 
