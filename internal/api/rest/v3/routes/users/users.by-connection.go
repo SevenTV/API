@@ -82,9 +82,6 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.From(err)
 		}
 
-		userIDs := make(utils.Set[primitive.ObjectID])
-		userIDs.Add(set.OwnerID)
-
 		emoteIDs := utils.Map(set.Emotes, func(a structures.ActiveEmote) primitive.ObjectID {
 			return a.ID
 		})
@@ -92,30 +89,37 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
 
 		emoteMap := map[primitive.ObjectID]structures.Emote{}
+
 		for _, emote := range emotes {
-			emoteMap[emote.ID] = emote
-
-			userIDs.Add(emote.OwnerID)
-		}
-
-		users, _ := r.Ctx.Inst().Loaders.UserByID().LoadAll(userIDs.Values())
-
-		userMap := map[primitive.ObjectID]structures.User{}
-		for _, user := range users {
-			userMap[user.ID] = user
-		}
-
-		set.Owner = utils.PointerOf(userMap[set.OwnerID])
-
-		for i, ae := range set.Emotes {
-			e := utils.PointerOf(emoteMap[ae.ID])
-
-			if u, ok := userMap[e.OwnerID]; ok {
-				e.Owner = &u
+			if emote.VersionRef == nil || emote.VersionRef.State.Lifecycle != structures.EmoteLifecycleLive {
+				continue
 			}
 
-			set.Emotes[i].Emote = e
+			emoteMap[emote.ID] = emote
 		}
+
+		setOwner, _ := r.Ctx.Inst().Loaders.UserByID().Load(set.OwnerID)
+		if !setOwner.ID.IsZero() {
+			set.Owner = &setOwner
+		}
+
+		emoteResult := make([]structures.ActiveEmote, len(set.Emotes))
+
+		pos := 0
+
+		for _, ae := range set.Emotes {
+			e, ok := emoteMap[ae.ID]
+			if !ok {
+				continue
+			}
+
+			ae.Emote = &e
+			emoteResult[pos] = ae
+
+			pos++
+		}
+
+		set.Emotes = emoteResult[:pos]
 
 		emoteSetModel = r.Ctx.Inst().Modelizer.EmoteSet(set)
 	}

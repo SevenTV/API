@@ -47,6 +47,7 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 						}
 
 						x.ID = v
+						x.VersionRef = &ver
 						items[i] = x
 					}
 				}

@@ -77,7 +77,12 @@ func (r *emoteSetByIDRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	emotes, _ := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
 
 	emoteMap := map[primitive.ObjectID]structures.Emote{}
+
 	for _, emote := range emotes {
+		if emote.VersionRef == nil || emote.VersionRef.State.Lifecycle != structures.EmoteLifecycleLive {
+			continue
+		}
+
 		emoteMap[emote.ID] = emote
 	}
 
@@ -86,11 +91,23 @@ func (r *emoteSetByIDRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		set.Owner = &setOwner
 	}
 
-	for i, ae := range set.Emotes {
-		e := utils.PointerOf(emoteMap[ae.ID])
+	emoteResult := make([]structures.ActiveEmote, len(set.Emotes))
 
-		set.Emotes[i].Emote = e
+	pos := 0
+
+	for _, ae := range set.Emotes {
+		e, ok := emoteMap[ae.ID]
+		if !ok {
+			continue
+		}
+
+		ae.Emote = &e
+		emoteResult[pos] = ae
+
+		pos++
 	}
+
+	set.Emotes = emoteResult[:pos]
 
 	if set.ID.IsZero() {
 		return errors.ErrUnknownEmoteSet()
