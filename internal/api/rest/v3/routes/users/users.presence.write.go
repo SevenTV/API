@@ -70,11 +70,22 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.ErrBadObjectID().SetDetail("invalid or missing host ID")
 		}
 
+		// Validate host user & connection (channel)
+		user, err := r.gctx.Inst().Loaders.UserByID().Load(pd.HostID)
+		if err != nil {
+			return errors.From(err).SetDetail("Host")
+		}
+
+		uc, ind := user.Connections.Get(pd.ConnectionID)
+		if ind == -1 {
+			return errors.ErrUnknownUser().SetDetail("Host Connection")
+		}
+
 		pm := r.gctx.Inst().Presences.ChannelPresence(ctx, userID)
 
 		if err := pm.Write(ctx, time.Minute*5, structures.UserPresenceDataChannel{
-			HostID:       pd.HostID,
-			ConnectionID: pd.ConnectionID,
+			HostID:       user.ID,
+			ConnectionID: uc.ID,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
 			IP:        clientIP,
