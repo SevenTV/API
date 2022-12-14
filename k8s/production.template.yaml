@@ -127,7 +127,6 @@ data:
 
     http:
       addr: 0.0.0.0
-      websocket: false
       ports:
         gql: 3000
         rest: 3100

@@ -201,7 +201,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -310,13 +310,34 @@ const docTemplate = `{
                 "summary": "Upload Profile Picture",
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
         }
     },
     "definitions": {
+        "model.ActiveEmoteFlagModel": {
+            "type": "integer",
+            "enum": [
+                1,
+                65536,
+                131072,
+                262144
+            ],
+            "x-enum-comments": {
+                "ActiveEmoteFlagModelOverrideBetterTTV": "262144 - Overrides BetterTTV emotes with the same name",
+                "ActiveEmoteFlagModelOverrideTwitchGlobal": "65536 - Overrides Twitch Global emotes with the same name",
+                "ActiveEmoteFlagModelOverrideTwitchSubscriber": "131072 - Overrides Twitch Subscriber emotes with the same name",
+                "ActiveEmoteFlagModelZeroWidth": "1 - Emote is zero-width"
+            },
+            "x-enum-varnames": [
+                "ActiveEmoteFlagModelZeroWidth",
+                "ActiveEmoteFlagModelOverrideTwitchGlobal",
+                "ActiveEmoteFlagModelOverrideTwitchSubscriber",
+                "ActiveEmoteFlagModelOverrideBetterTTV"
+            ]
+        },
         "model.ActiveEmoteModel": {
             "type": "object",
             "properties": {
@@ -325,11 +346,15 @@ const docTemplate = `{
                     "x-nullable": true
                 },
                 "data": {
-                    "x-nullable": true,
-                    "$ref": "#/definitions/model.EmotePartialModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.EmotePartialModel"
+                        }
+                    ],
+                    "x-nullable": true
                 },
                 "flags": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.ActiveEmoteFlagModel"
                 },
                 "id": {
                     "type": "string"
@@ -383,6 +408,19 @@ const docTemplate = `{
                 }
             }
         },
+        "model.CosmeticPaintFunction": {
+            "type": "string",
+            "enum": [
+                "LINEAR_GRADIENT",
+                "RADIAL_GRADIENT",
+                "URL"
+            ],
+            "x-enum-varnames": [
+                "CosmeticPaintFunctionLinearGradient",
+                "CosmeticPaintFunctionRadialGradient",
+                "CosmeticPaintFunctionImageURL"
+            ]
+        },
         "model.CosmeticPaintGradientStop": {
             "type": "object",
             "properties": {
@@ -404,11 +442,15 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "function": {
-                    "type": "string",
                     "enum": [
                         "LINEAR_GRADIENT",
                         "RADIAL_GRADIENT",
                         "URL"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintFunction"
+                        }
                     ]
                 },
                 "id": {
@@ -440,6 +482,55 @@ const docTemplate = `{
                 }
             }
         },
+        "model.EmoteFlagsModel": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                256,
+                65536,
+                131072,
+                262144,
+                16777216
+            ],
+            "x-enum-comments": {
+                "EmoteFlagsAuthentic": "The emote was verified to be an original creation by the uploader",
+                "EmoteFlagsContentEdgy": "Edgy or distasteful, may be offensive to some users",
+                "EmoteFlagsContentEpilepsy": "Rapid flashing",
+                "EmoteFlagsContentSexual": "Sexually Suggesive",
+                "EmoteFlagsContentTwitchDisallowed": "Not allowed specifically on the Twitch platform",
+                "EmoteFlagsPrivate": "The emote is private and can only be accessed by its owner, editors and moderators",
+                "EmoteFlagsZeroWidth": "The emote is recommended to be enabled as Zero-Width"
+            },
+            "x-enum-varnames": [
+                "EmoteFlagsPrivate",
+                "EmoteFlagsAuthentic",
+                "EmoteFlagsZeroWidth",
+                "EmoteFlagsContentSexual",
+                "EmoteFlagsContentEpilepsy",
+                "EmoteFlagsContentEdgy",
+                "EmoteFlagsContentTwitchDisallowed"
+            ]
+        },
+        "model.EmoteLifecycleModel": {
+            "type": "integer",
+            "enum": [
+                -1,
+                0,
+                1,
+                2,
+                3,
+                -2
+            ],
+            "x-enum-varnames": [
+                "EmoteLifecycleDeleted",
+                "EmoteLifecyclePending",
+                "EmoteLifecycleProcessing",
+                "EmoteLifecycleDisabled",
+                "EmoteLifecycleLive",
+                "EmoteLifecycleFailed"
+            ]
+        },
         "model.EmoteModel": {
             "type": "object",
             "properties": {
@@ -447,7 +538,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "flags": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.EmoteFlagsModel"
                 },
                 "host": {
                     "$ref": "#/definitions/model.ImageHost"
@@ -456,7 +547,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "lifecycle": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.EmoteLifecycleModel"
                 },
                 "listed": {
                     "type": "boolean"
@@ -465,8 +556,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "owner": {
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.UserPartialModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.UserPartialModel"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "tags": {
                     "type": "array",
@@ -489,7 +584,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "flags": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.EmoteFlagsModel"
                 },
                 "host": {
                     "$ref": "#/definitions/model.ImageHost"
@@ -498,7 +593,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "lifecycle": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.EmoteLifecycleModel"
                 },
                 "listed": {
                     "type": "boolean"
@@ -507,8 +602,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "owner": {
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.UserPartialModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.UserPartialModel"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "tags": {
                     "type": "array",
@@ -552,8 +651,12 @@ const docTemplate = `{
                     "x-omitempty": true
                 },
                 "owner": {
-                    "x-nullable": true,
-                    "$ref": "#/definitions/model.UserPartialModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.UserPartialModel"
+                        }
+                    ],
+                    "x-nullable": true
                 },
                 "privileged": {
                     "type": "boolean"
@@ -596,8 +699,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "owner": {
-                    "x-nullable": true,
-                    "$ref": "#/definitions/model.UserPartialModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.UserPartialModel"
+                        }
+                    ],
+                    "x-nullable": true
                 },
                 "tags": {
                     "type": "array",
@@ -620,14 +727,18 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "host": {
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.ImageHost"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.ImageHost"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "id": {
                     "type": "string"
                 },
                 "lifecycle": {
-                    "type": "integer"
+                    "$ref": "#/definitions/model.EmoteLifecycleModel"
                 },
                 "listed": {
                     "type": "boolean"
@@ -641,7 +752,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "format": {
-                    "type": "string"
+                    "$ref": "#/definitions/model.ImageFormat"
                 },
                 "frame_count": {
                     "type": "integer"
@@ -662,6 +773,17 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "model.ImageFormat": {
+            "type": "string",
+            "enum": [
+                "AVIF",
+                "WEBP"
+            ],
+            "x-enum-varnames": [
+                "ImageFormatAVIF",
+                "ImageFormatWEBP"
+            ]
         },
         "model.ImageHost": {
             "type": "object",
@@ -698,8 +820,12 @@ const docTemplate = `{
                 },
                 "emote_set": {
                     "description": "The emote set that is linked to this connection",
-                    "x-nullable": true,
-                    "$ref": "#/definitions/model.EmoteSetModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.EmoteSetModel"
+                        }
+                    ],
+                    "x-nullable": true
                 },
                 "emote_set_id": {
                     "description": "The ID of the emote set bound to this connection.",
@@ -732,8 +858,12 @@ const docTemplate = `{
                 },
                 "user": {
                     "description": "App data for the user",
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.UserModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.UserModel"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "username": {
                     "description": "The username of the user on the platform.",
@@ -902,8 +1032,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "badge": {
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.CosmeticBadgeModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticBadgeModel"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "badge_id": {
                     "type": "string",
@@ -914,8 +1048,12 @@ const docTemplate = `{
                     "x-omitempty": true
                 },
                 "paint": {
-                    "x-omitempty": true,
-                    "$ref": "#/definitions/model.CosmeticPaintModel"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintModel"
+                        }
+                    ],
+                    "x-omitempty": true
                 },
                 "paint_id": {
                     "type": "string",
