@@ -360,9 +360,9 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			go func(ver structures.EmoteVersion) {
 				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 					Type: events.EventTypeUpdateEmote,
-					Condition: map[string]string{
+					Conditions: []events.EventCondition{{
 						"object_id": ver.ID.Hex(),
-					},
+					}},
 					Body: events.ChangeMap{
 						ID:      ver.ID,
 						Kind:    structures.ObjectKindEmote,

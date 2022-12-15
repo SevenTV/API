@@ -33,10 +33,20 @@ const (
 
 	// User
 
-	EventTypeAnyUser    EventType = "user.*"
-	EventTypeCreateUser EventType = "user.create"
-	EventTypeUpdateUser EventType = "user.update"
-	EventTypeDeleteUser EventType = "user.delete"
+	EventTypeAnyUser           EventType = "user.*"
+	EventTypeCreateUser        EventType = "user.create"
+	EventTypeUpdateUser        EventType = "user.update"
+	EventTypeDeleteUser        EventType = "user.delete"
+	EventTypeCreateEntitlement EventType = "entitlement.create"
+	EventTypeUpdateEntitlement EventType = "entitlement.update"
+	EventTypeDeleteEntitlement EventType = "entitlement.delete"
+
+	// Cosmetics
+
+	EventTypeAnyCosmetic    EventType = "cosmetic.*"
+	EventTypeCreateCosmetic EventType = "cosmetic.create"
+	EventTypeUpdateCosmetic EventType = "cosmetic.update"
+	EventTypeDeleteCosmetic EventType = "cosmetic.delete"
 )
 
 func (et EventType) Split() []string {

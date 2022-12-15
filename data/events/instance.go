@@ -10,7 +10,7 @@ import (
 
 type Instance interface {
 	Publish(ctx context.Context, msg Message[json.RawMessage]) error
-	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond EventCondition) error
+	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error
 }
 
 type eventsInst struct {
@@ -39,11 +39,11 @@ func (inst *eventsInst) Publish(ctx context.Context, msg Message[json.RawMessage
 	return nil
 }
 
-func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond EventCondition) error {
+func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error {
 	msg := NewMessage(OpcodeDispatch, DispatchPayload{
-		Type:      t,
-		Body:      cm,
-		Condition: cond,
+		Type:       t,
+		Body:       cm,
+		Conditions: cond,
 	})
 
 	return inst.Publish(ctx, msg.ToRaw())
