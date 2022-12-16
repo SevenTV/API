@@ -3,6 +3,7 @@ package activeemote
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -31,7 +32,7 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.ActiveEmote) (*model.Us
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
+	return modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(user).ToPartial()), nil
 }
 
 func (r *Resolver) Data(ctx context.Context, obj *model.ActiveEmote) (*model.EmotePartial, error) {
@@ -44,5 +45,5 @@ func (r *Resolver) Data(ctx context.Context, obj *model.ActiveEmote) (*model.Emo
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.Emote(emote).ToPartial().GQL(), nil
+	return modelgql.EmotePartialModel(r.Ctx.Inst().Modelizer.Emote(emote).ToPartial()), nil
 }

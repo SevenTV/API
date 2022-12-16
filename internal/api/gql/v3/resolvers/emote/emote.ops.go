@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
@@ -115,7 +116,7 @@ func (r *ResolverOps) Rerun(ctx context.Context, obj *model.EmoteOps) (*model.Em
 		return nil, errors.ErrInternalServerError()
 	}
 
-	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
+	return modelgql.EmoteModel(r.Ctx.Inst().Modelizer.Emote(emote)), nil
 }
 
 func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params model.EmoteUpdate, reason *string) (*model.Emote, error) {
@@ -232,5 +233,5 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
+	return modelgql.EmoteModel(r.Ctx.Inst().Modelizer.Emote(emote)), nil
 }

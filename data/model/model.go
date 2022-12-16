@@ -14,8 +14,8 @@ type Modelizer interface {
 	UserEditor(v structures.UserEditor) UserEditorModel
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	Entitlement(v structures.Entitlement[bson.Raw]) EntitlementModel
-	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *CosmeticPaintModel
-	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *CosmeticBadgeModel
+	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel
+	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 	Role(v structures.Role) RoleModel

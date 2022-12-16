@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
@@ -146,7 +147,7 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.InboxMessage(inb).GQL(), nil
+	return modelgql.InboxMessageModel(r.Ctx.Inst().Modelizer.InboxMessage(inb)), nil
 }
 
 func (r *Resolver) DismissVoidTargetModRequests(ctx context.Context, objectKind int) (int, error) {

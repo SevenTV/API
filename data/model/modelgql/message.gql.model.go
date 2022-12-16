@@ -1,15 +1,16 @@
-package model
+package modelgql
 
 import (
 	"time"
 
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/api/data/model"
+	gql_model "github.com/seventv/api/internal/api/gql/v3/gen/model"
 )
 
-func (xm InboxMessageModel) GQL() *model.InboxMessage {
-	return &model.InboxMessage{
+func InboxMessageModel(xm model.InboxMessageModel) *gql_model.InboxMessage {
+	return &gql_model.InboxMessage{
 		ID:           xm.ID,
-		Kind:         model.MessageKind(xm.Kind),
+		Kind:         gql_model.MessageKind(xm.Kind),
 		CreatedAt:    time.UnixMilli(xm.CreatedAt),
 		AuthorID:     xm.AuthorID,
 		Read:         xm.Read,
@@ -22,10 +23,10 @@ func (xm InboxMessageModel) GQL() *model.InboxMessage {
 	}
 }
 
-func (xm ModRequestMessageModel) GQL() *model.ModRequestMessage {
-	return &model.ModRequestMessage{
+func ModRequestMessageModel(xm model.ModRequestMessageModel) *gql_model.ModRequestMessage {
+	return &gql_model.ModRequestMessage{
 		ID:         xm.ID,
-		Kind:       model.MessageKind(xm.Kind),
+		Kind:       gql_model.MessageKind(xm.Kind),
 		CreatedAt:  time.UnixMilli(xm.CreatedAt),
 		AuthorID:   xm.AuthorID,
 		TargetKind: int(xm.TargetKind),

@@ -49,13 +49,13 @@ type CosmeticBadgeModel struct {
 	Host    ImageHost          `json:"host"`
 }
 
-func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *CosmeticPaintModel {
+func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel {
 	var color *int32
 	if v.Data.Color != nil {
 		color = utils.PointerOf(v.Data.Color.Sum())
 	}
 
-	return &CosmeticPaintModel{
+	return CosmeticPaintModel{
 		ID:       v.ID,
 		Name:     v.Name,
 		Function: CosmeticPaintFunction(v.Data.Function),
@@ -81,7 +81,7 @@ func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *
 	}
 }
 
-func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *CosmeticBadgeModel {
+func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel {
 	host := ImageHost{
 		URL: fmt.Sprintf("//%s/badge/%s", x.cdnURL, v.ID),
 		Files: []ImageFile{
@@ -100,7 +100,7 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *
 		},
 	}
 
-	return &CosmeticBadgeModel{
+	return CosmeticBadgeModel{
 		ID:      v.ID,
 		Name:    v.Name,
 		Tooltip: v.Data.Tooltip,

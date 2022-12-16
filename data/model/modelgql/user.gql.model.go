@@ -1,25 +1,26 @@
-package model
+package modelgql
 
 import (
 	"time"
 
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/api/data/model"
+	gql_model "github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // GQL User
-func (xm UserModel) GQL() *model.User {
-	editors := make([]*model.UserEditor, len(xm.Editors))
+func UserModel(xm model.UserModel) *gql_model.User {
+	editors := make([]*gql_model.UserEditor, len(xm.Editors))
 	for i, e := range xm.Editors {
-		editors[i] = e.GQL()
+		editors[i] = UserEditorModel(e)
 	}
 
-	connections := make([]*model.UserConnection, len(xm.Connections))
+	connections := make([]*gql_model.UserConnection, len(xm.Connections))
 	for i, c := range xm.Connections {
-		connections[i] = c.GQL()
+		connections[i] = UserConnectionModel(c)
 	}
 
-	return &model.User{
+	return &gql_model.User{
 		ID:          xm.ID,
 		Type:        string(xm.UserType),
 		Username:    xm.Username,
@@ -27,39 +28,39 @@ func (xm UserModel) GQL() *model.User {
 		CreatedAt:   time.UnixMilli(xm.CreatedAt),
 		AvatarURL:   xm.AvatarURL,
 		Biography:   xm.Biography,
-		Style: &model.UserStyle{
+		Style: &gql_model.UserStyle{
 			Color: int(xm.Style.Color),
 		},
 		Editors:     editors,
 		Roles:       xm.RoleIDs,
 		Connections: connections,
-		OwnedEmotes: []*model.Emote{},
-		Reports:     []*model.Report{},
+		OwnedEmotes: []*gql_model.Emote{},
+		Reports:     []*gql_model.Report{},
 	}
 }
 
-func (xm UserPartialModel) GQL() *model.UserPartial {
-	connections := make([]*model.UserConnectionPartial, len(xm.Connections))
+func UserPartialModel(xm model.UserPartialModel) *gql_model.UserPartial {
+	connections := make([]*gql_model.UserConnectionPartial, len(xm.Connections))
 	for i, c := range xm.Connections {
-		connections[i] = c.GQL()
+		connections[i] = UserConnectionPartialModel(c)
 	}
 
-	return &model.UserPartial{
+	return &gql_model.UserPartial{
 		ID:          xm.ID,
 		Type:        string(xm.UserType),
 		Username:    xm.Username,
 		DisplayName: xm.DisplayName,
 		AvatarURL:   xm.AvatarURL,
 		CreatedAt:   xm.ID.Timestamp(),
-		Style:       xm.Style.GQL(),
+		Style:       UserStyle(xm.Style),
 		Roles:       xm.RoleIDs,
 		Connections: connections,
 	}
 }
 
 // GQL UserEditor
-func (xm UserEditorModel) GQL() *model.UserEditor {
-	return &model.UserEditor{
+func UserEditorModel(xm model.UserEditorModel) *gql_model.UserEditor {
+	return &gql_model.UserEditor{
 		ID:          xm.ID,
 		Permissions: int(xm.Permissions),
 		Visible:     xm.Visible,
@@ -68,15 +69,15 @@ func (xm UserEditorModel) GQL() *model.UserEditor {
 }
 
 // GQL UserConnection
-func (xm UserConnectionModel) GQL() *model.UserConnection {
+func UserConnectionModel(xm model.UserConnectionModel) *gql_model.UserConnection {
 	var setID *primitive.ObjectID
 	if xm.EmoteSet != nil {
 		setID = &xm.EmoteSet.ID
 	}
 
-	return &model.UserConnection{
+	return &gql_model.UserConnection{
 		ID:            xm.ID,
-		Platform:      model.ConnectionPlatform(xm.Platform),
+		Platform:      gql_model.ConnectionPlatform(xm.Platform),
 		Username:      xm.Username,
 		DisplayName:   xm.DisplayName,
 		LinkedAt:      time.UnixMilli(xm.LinkedAt),
@@ -86,10 +87,10 @@ func (xm UserConnectionModel) GQL() *model.UserConnection {
 }
 
 // GQL UserConnectionPartial
-func (xm UserConnectionPartialModel) GQL() *model.UserConnectionPartial {
-	return &model.UserConnectionPartial{
+func UserConnectionPartialModel(xm model.UserConnectionPartialModel) *gql_model.UserConnectionPartial {
+	return &gql_model.UserConnectionPartial{
 		ID:          xm.ID,
-		Platform:    model.ConnectionPlatform(xm.Platform),
+		Platform:    gql_model.ConnectionPlatform(xm.Platform),
 		Username:    xm.Username,
 		DisplayName: xm.DisplayName,
 		LinkedAt:    time.UnixMilli(xm.LinkedAt),
@@ -98,8 +99,8 @@ func (xm UserConnectionPartialModel) GQL() *model.UserConnectionPartial {
 }
 
 // GQL UserStyle
-func (xm UserStyle) GQL() *model.UserStyle {
-	return &model.UserStyle{
+func UserStyle(xm model.UserStyle) *gql_model.UserStyle {
+	return &gql_model.UserStyle{
 		Color: int(xm.Color),
 	}
 }
