@@ -1,11 +1,26 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type CosmeticModel[T CosmeticPaintModel | CosmeticBadgeModel | json.RawMessage] struct {
+	ID   primitive.ObjectID `json:"id"`
+	Kind CosmeticKind       `json:"kind"`
+	Data T                  `json:"data"`
+}
+
+type CosmeticKind string
+
+const (
+	CosmeticKindPaint CosmeticKind = "PAINT"
+	CosmeticKindBadge CosmeticKind = "BADGE"
 )
 
 type CosmeticPaintModel struct {
@@ -49,6 +64,33 @@ type CosmeticBadgeModel struct {
 	Host    ImageHost          `json:"host"`
 }
 
+func (x *modelizer) Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage] {
+	var d json.RawMessage
+
+	switch v.Kind {
+	case structures.CosmeticKindBadge:
+		cos, err := structures.ConvertCosmetic[structures.CosmeticDataBadge](v)
+		if err != nil {
+			break
+		}
+
+		d = utils.ToJSON(x.Badge(cos))
+	case structures.CosmeticKindNametagPaint:
+		cos, err := structures.ConvertCosmetic[structures.CosmeticDataPaint](v)
+		if err != nil {
+			break
+		}
+
+		d = utils.ToJSON(x.Paint(cos))
+	}
+
+	return CosmeticModel[json.RawMessage]{
+		ID:   v.ID,
+		Kind: CosmeticKind(v.Kind),
+		Data: d,
+	}
+}
+
 func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel {
 	var color *int32
 	if v.Data.Color != nil {
@@ -83,7 +125,7 @@ func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) C
 
 func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel {
 	host := ImageHost{
-		URL: fmt.Sprintf("//%s/badge/%s", x.cdnURL, v.ID),
+		URL: fmt.Sprintf("//%s/badge/%s", x.cdnURL, v.ID.Hex()),
 		Files: []ImageFile{
 			{
 				Name:   "1x",

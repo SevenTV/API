@@ -274,8 +274,8 @@ func (r *Resolver) Style(ctx context.Context, obj *model.User) (*model.UserStyle
 func userEntitlements(gctx global.Context, userID primitive.ObjectID) (*model.CosmeticBadge, *model.CosmeticPaint) {
 	ents, _ := gctx.Inst().Loaders.EntitlementsLoader().Load(userID)
 
-	badge, _ := ents.ActiveBadge()
-	paint, _ := ents.ActivePaint()
+	badge, _, _ := ents.ActiveBadge()
+	paint, _, _ := ents.ActivePaint()
 
 	return modelgql.CosmeticBadge(gctx.Inst().Modelizer.Badge(badge)), modelgql.CosmeticPaint(gctx.Inst().Modelizer.Paint(paint))
 }
