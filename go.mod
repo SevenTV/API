@@ -18,7 +18,7 @@ require (
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.14.0
-	github.com/swaggo/swag v1.8.8
+	github.com/swaggo/swag v1.8.9
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
