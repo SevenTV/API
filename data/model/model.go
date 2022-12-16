@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -13,8 +14,11 @@ type Modelizer interface {
 	User(v structures.User) UserModel
 	UserEditor(v structures.UserEditor) UserEditorModel
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
-	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) *CosmeticPaintModel
-	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) *CosmeticBadgeModel
+	Presence(v structures.UserPresence[bson.Raw]) PresenceModel
+	Entitlement(v structures.Entitlement[bson.Raw]) EntitlementModel
+	Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage]
+	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel
+	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 	Role(v structures.Role) RoleModel

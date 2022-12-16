@@ -121,7 +121,7 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 		}
 
 		for j, e := range items[i].Badges {
-			x, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](cosmeticMap[items[i].Badges[j].ID])
+			x, _ := structures.ConvertCosmetic[structures.CosmeticDataBadge](cosmeticMap[items[i].Badges[j].Data.RefID])
 
 			if !e.Condition.IsMet(roleIDs) {
 				continue
@@ -156,8 +156,11 @@ type EntitlementQueryResult struct {
 
 type EntitlementQueryResultBucket[T structures.EntitlementData] []structures.Entitlement[T]
 
-func (eqr *EntitlementQueryResult) ActivePaint() (structures.Cosmetic[structures.CosmeticDataPaint], bool) {
-	var item structures.Cosmetic[structures.CosmeticDataPaint]
+func (eqr *EntitlementQueryResult) ActivePaint() (structures.Cosmetic[structures.CosmeticDataPaint], structures.Entitlement[structures.EntitlementDataPaint], bool) {
+	var (
+		item structures.Cosmetic[structures.CosmeticDataPaint]
+		ent  structures.Entitlement[structures.EntitlementDataPaint]
+	)
 
 	for _, p := range eqr.Paints {
 		if p.Data.RefObject == nil {
@@ -169,13 +172,17 @@ func (eqr *EntitlementQueryResult) ActivePaint() (structures.Cosmetic[structures
 		}
 
 		item = *p.Data.RefObject
+		ent = p
 	}
 
-	return item, !item.ID.IsZero()
+	return item, ent, !item.ID.IsZero()
 }
 
-func (eqr *EntitlementQueryResult) ActiveBadge() (structures.Cosmetic[structures.CosmeticDataBadge], bool) {
-	var item structures.Cosmetic[structures.CosmeticDataBadge]
+func (eqr *EntitlementQueryResult) ActiveBadge() (structures.Cosmetic[structures.CosmeticDataBadge], structures.Entitlement[structures.EntitlementDataBadge], bool) {
+	var (
+		item structures.Cosmetic[structures.CosmeticDataBadge]
+		ent  structures.Entitlement[structures.EntitlementDataBadge]
+	)
 
 	for _, b := range eqr.Badges {
 		if b.Data.RefObject == nil {
@@ -187,9 +194,10 @@ func (eqr *EntitlementQueryResult) ActiveBadge() (structures.Cosmetic[structures
 		}
 
 		item = *b.Data.RefObject
+		ent = b
 	}
 
-	return item, !item.ID.IsZero()
+	return item, ent, !item.ID.IsZero()
 }
 
 type QueryEntitlementsOptions struct {

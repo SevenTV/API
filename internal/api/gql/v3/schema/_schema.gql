@@ -5,7 +5,6 @@ scalar ArbitraryMap
 
 schema {
   query: Query
-  subscription: Subscription
   mutation: Mutation
 }
 

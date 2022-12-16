@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -84,10 +85,10 @@ func (r *ResolverOps) Editors(
 	result := make([]*model.UserEditor, len(ub.User.Editors))
 
 	for i, e := range ub.User.Editors {
-		x := r.Ctx.Inst().Modelizer.UserEditor(e).GQL()
+		x := modelgql.UserEditorModel(r.Ctx.Inst().Modelizer.UserEditor(e))
 
 		if e.User != nil {
-			x.User = r.Ctx.Inst().Modelizer.User(*e.User).ToPartial().GQL()
+			x.User = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(*e.User).ToPartial())
 		}
 
 		result[i] = x

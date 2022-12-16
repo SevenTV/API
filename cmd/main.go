@@ -203,8 +203,10 @@ func main() {
 		})
 
 		gctx.Inst().Presences = presences.New(presences.Options{
-			Mongo:   gctx.Inst().Mongo,
-			Loaders: gctx.Inst().Loaders,
+			Mongo:     gctx.Inst().Mongo,
+			Loaders:   gctx.Inst().Loaders,
+			Events:    gctx.Inst().Events,
+			Modelizer: gctx.Inst().Modelizer,
 		})
 	}
 

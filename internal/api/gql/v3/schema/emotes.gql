@@ -10,10 +10,6 @@ extend type Query {
   ): EmoteSearchResult!
 }
 
-extend type Subscription {
-  emote(id: ObjectID!): ChangeMap!
-}
-
 extend type Mutation {
   emote(id: ObjectID!): EmoteOps!
 }

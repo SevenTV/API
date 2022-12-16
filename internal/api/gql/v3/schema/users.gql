@@ -12,11 +12,6 @@ extend type Query {
   usersByID(list: [ObjectID!]!): [UserPartial!]!
 }
 
-extend type Subscription {
-  currentUser: ChangeMap!
-  user(id: ObjectID!): ChangeMap!
-}
-
 extend type Mutation {
   user(id: ObjectID!): UserOps
 }

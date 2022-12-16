@@ -3,14 +3,18 @@ package events
 import (
 	"context"
 	"encoding/json"
+	"hash/crc32"
 	"strings"
 
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/common/redis"
+	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 )
 
 type Instance interface {
 	Publish(ctx context.Context, msg Message[json.RawMessage]) error
-	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond EventCondition) error
+	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error
 }
 
 type eventsInst struct {
@@ -39,11 +43,37 @@ func (inst *eventsInst) Publish(ctx context.Context, msg Message[json.RawMessage
 	return nil
 }
 
-func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond EventCondition) error {
+// systemUser is a placeholder for the ChangeMap actor when no actor was provided
+var systemUser = model.UserModel{
+	ID:          structures.SystemUser.ID,
+	UserType:    model.UserTypeModel(structures.SystemUser.UserType),
+	Username:    structures.SystemUser.Username,
+	DisplayName: structures.SystemUser.DisplayName,
+}
+
+func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error {
+	if cm.Actor.ID.IsZero() {
+		cm.Actor = systemUser
+	}
+
+	// Dedupe hash
+	var dedupeHash *uint32
+
+	if cm.Object != nil {
+		h := crc32.New(crc32.MakeTable(2596996162))
+
+		h.Write(cm.ID[:])
+		h.Write(utils.S2B(cm.Kind.String()))
+		h.Write(cm.Object)
+
+		dedupeHash = utils.PointerOf(h.Sum32())
+	}
+
 	msg := NewMessage(OpcodeDispatch, DispatchPayload{
-		Type:      t,
-		Body:      cm,
-		Condition: cond,
+		Type:       t,
+		Body:       cm,
+		Hash:       dedupeHash,
+		Conditions: cond,
 	})
 
 	return inst.Publish(ctx, msg.ToRaw())

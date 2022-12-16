@@ -73,7 +73,7 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 
 		switch kind {
 		case model.CosmeticKindBadge:
-			b, ok := ents.ActiveBadge()
+			b, _, ok := ents.ActiveBadge()
 			if ok {
 				activeCos = b.ToRaw()
 				oldData = r.Ctx.Inst().Modelizer.Badge(b)
@@ -83,7 +83,7 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 				newData = r.Ctx.Inst().Modelizer.Badge(nb)
 			}
 		case model.CosmeticKindPaint:
-			p, ok := ents.ActivePaint()
+			p, _, ok := ents.ActivePaint()
 			if ok {
 				activeCos = p.ToRaw()
 				oldData = r.Ctx.Inst().Modelizer.Paint(p)

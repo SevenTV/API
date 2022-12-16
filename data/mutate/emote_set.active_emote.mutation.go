@@ -239,9 +239,9 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			// Publish a message to the Event API
 			_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 				Type: events.EventTypeUpdateEmoteSet,
-				Condition: map[string]string{
+				Conditions: []events.EventCondition{{
 					"object_id": esb.EmoteSet.ID.Hex(),
-				},
+				}},
 				Body: events.ChangeMap{
 					ID:    esb.EmoteSet.ID,
 					Kind:  structures.ObjectKindEmoteSet,
@@ -308,9 +308,9 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 						Type: events.EventTypeUpdateEmoteSet,
-						Condition: map[string]string{
+						Conditions: []events.EventCondition{{
 							"object_id": esb.EmoteSet.ID.Hex(),
-						},
+						}},
 						Body: events.ChangeMap{
 							ID:    esb.EmoteSet.ID,
 							Kind:  structures.ObjectKindEmoteSet,
@@ -347,9 +347,9 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 
 				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 					Type: events.EventTypeUpdateEmoteSet,
-					Condition: map[string]string{
+					Conditions: []events.EventCondition{{
 						"object_id": esb.EmoteSet.ID.Hex(),
-					},
+					}},
 					Body: events.ChangeMap{
 						ID:    esb.EmoteSet.ID,
 						Kind:  structures.ObjectKindEmoteSet,

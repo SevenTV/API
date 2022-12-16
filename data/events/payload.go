@@ -41,8 +41,13 @@ type DispatchPayload struct {
 	Type EventType `json:"type"`
 	// Detailed changes to an object
 	Body ChangeMap `json:"body"`
-	// A map of conditions that must match subscriptions in order for this dispatch to be delivered
-	Condition EventCondition `json:"condition,omitempty"`
+	// Contexts are a list of subscription IDs that this dispatch applies to
+	// (applied locally, do not send in publishes)
+	Contexts []string `json:"contexts,omitempty"`
+	// Hash is a hash of the target object, used for deduping
+	Hash *uint32 `json:"hash,omitempty"`
+	// A list of conditions where at least one must have all its fields match a subscription in order for this dispatch to be delivered
+	Conditions []EventCondition `json:"condition,omitempty"`
 }
 
 type EventCondition map[string]string

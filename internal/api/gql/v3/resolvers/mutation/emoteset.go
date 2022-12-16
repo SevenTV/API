@@ -3,6 +3,7 @@ package mutation
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -45,5 +46,5 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, userID primitive.ObjectID
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.EmoteSet(emoteSet).GQL(), nil
+	return modelgql.EmoteSetModel(r.Ctx.Inst().Modelizer.EmoteSet(emoteSet)), nil
 }

@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -55,7 +56,7 @@ func (r *Resolver) Inbox(ctx context.Context, userID primitive.ObjectID, afterID
 
 	for i, msg := range messages {
 		if msg, err := structures.ConvertMessage[structures.MessageDataInbox](msg); err == nil {
-			result[i] = r.Ctx.Inst().Modelizer.InboxMessage(msg).GQL()
+			result[i] = modelgql.InboxMessageModel(r.Ctx.Inst().Modelizer.InboxMessage(msg))
 		}
 	}
 

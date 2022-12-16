@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -22,7 +23,7 @@ func (r *Resolver) Victim(ctx context.Context, obj *model.Ban) (*model.User, err
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
+	return modelgql.UserModel(r.Ctx.Inst().Modelizer.User(user)), nil
 }
 
 func (r *Resolver) Actor(ctx context.Context, obj *model.Ban) (*model.User, error) {
@@ -31,5 +32,5 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.Ban) (*model.User, erro
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
+	return modelgql.UserModel(r.Ctx.Inst().Modelizer.User(user)), nil
 }

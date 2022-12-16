@@ -12,7 +12,6 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/query"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/report"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/role"
-	"github.com/seventv/api/internal/api/gql/v3/resolvers/subscription"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers/user"
 	user_editor "github.com/seventv/api/internal/api/gql/v3/resolvers/user-editor"
 
@@ -59,10 +58,6 @@ func (r *Resolver) Mutation() generated.MutationResolver {
 
 func (r *Resolver) Query() generated.QueryResolver {
 	return query.New(r.Resolver)
-}
-
-func (r *Resolver) Subscription() generated.SubscriptionResolver {
-	return subscription.New(r.Resolver)
 }
 
 func (r *Resolver) Report() generated.ReportResolver {

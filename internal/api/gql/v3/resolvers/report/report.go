@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -21,7 +22,7 @@ func (r *Resolver) Actor(ctx context.Context, obj *model.Report) (*model.User, e
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
+	return modelgql.UserModel(r.Ctx.Inst().Modelizer.User(user)), nil
 }
 
 func New(r types.Resolver) generated.ReportResolver {
@@ -34,7 +35,7 @@ func (r *Resolver) Reporter(ctx context.Context, obj *model.Report) (*model.User
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).GQL(), nil
+	return modelgql.UserModel(r.Ctx.Inst().Modelizer.User(user)), nil
 }
 
 func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.User, error) {
@@ -52,7 +53,7 @@ func (r *Resolver) Assignees(ctx context.Context, obj *model.Report) ([]*model.U
 
 	result := make([]*model.User, len(users))
 	for i, v := range users {
-		result[i] = r.Ctx.Inst().Modelizer.User(v).GQL()
+		result[i] = modelgql.UserModel(r.Ctx.Inst().Modelizer.User(v))
 	}
 
 	return result, nil
