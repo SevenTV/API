@@ -13,18 +13,19 @@ type AnyPayload interface {
 }
 
 type HelloPayload struct {
-	HeartbeatInterval int64               `json:"heartbeat_interval"`
+	HeartbeatInterval uint32              `json:"heartbeat_interval"`
 	SessionID         string              `json:"session_id"`
+	SubscriptionLimit int32               `json:"subscription_limit"`
 	Actor             *primitive.ObjectID `json:"actor,omitempty"`
 }
 
 type AckPayload struct {
-	RequestID string         `json:"request_id"`
-	Data      map[string]any `json:"data"`
+	Command string          `json:"command"`
+	Data    json.RawMessage `json:"data"`
 }
 
 type HeartbeatPayload struct {
-	Count int64 `json:"count"`
+	Count uint64 `json:"count"`
 }
 
 type SubscribePayload struct {
