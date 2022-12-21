@@ -107,7 +107,7 @@ nav {
 
 	.logo {
 		display: flex;
-		color: rgb(225, 45, 45);
+		color: #e12d2d;
 		width: 1em;
 		height: 1em;
 		margin-right: 0.25em;
@@ -130,7 +130,7 @@ nav {
 		left: -50%;
 		font-family: "Work Sans", sans-serif;
 		font-weight: 900;
-		color: rgb(225, 45, 45);
+		color: #e12d2d;
 
 		&.env-offset {
 			bottom: 1em;
@@ -184,12 +184,12 @@ nav {
 
 	@include breakpoint(md, max) {
 		&.router-link-active {
-			background-color: rgba(202, 0, 0, 0.707);
+			background-color: #ca0000b4;
 		}
 
 		&:hover {
 			@include themify() {
-				background: rgba(228, 0, 0, 0.218);
+				background: #e4000038;
 			}
 		}
 	}
@@ -233,22 +233,20 @@ nav {
 }
 
 @media screen and (max-width: 1000px) {
-	// made my own class style bcause holy cheese and crackers this code before was so unreadable
-	// still using the nav-link class at the moment. This will be cleaned up.
 	.realNav {
 		@include breakpoint(lg, min) {
 			display: none;
 		}
 
 		transition: all 0.5s ease-in-out;
-		font-size: 24px;
+		font-size: 1.5rem;
 		display: block;
 		margin-top: 4.5rem;
 		z-index: 150;
 		position: fixed;
-		width: 100vw;
-		box-shadow: black 8px 0 15rem;
-		backdrop-filter: blur(15px);
+		width: 100%;
+		box-shadow: black 0.5rem 0 15rem;
+		backdrop-filter: blur(1rem);
 
 		@include themify() {
 			background-color: transparentize(themed("extreme"), 0.33);
@@ -289,7 +287,7 @@ nav {
 						border-color: transparent !important;
 
 						@include themify() {
-							background: mix(themed("backgroundColor"), rgb(107, 107, 107), 75%);
+							background: mix(themed("backgroundColor"), #6b6b6b, 75%);
 						}
 					}
 				}
