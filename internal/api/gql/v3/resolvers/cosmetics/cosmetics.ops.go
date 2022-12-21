@@ -3,6 +3,7 @@ package cosmetics
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -90,5 +91,5 @@ func (r *ResolverOps) UpdatePaint(ctx context.Context, obj *model.CosmeticOps, d
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.Paint(result).GQL(), nil
+	return modelgql.CosmeticPaint(r.Ctx.Inst().Modelizer.Paint(result)), nil
 }

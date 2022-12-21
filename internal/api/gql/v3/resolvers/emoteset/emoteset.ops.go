@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
@@ -114,12 +115,12 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 		}
 	}()
 
-	setModel := r.Ctx.Inst().Modelizer.EmoteSet(b.EmoteSet).GQL()
+	setModel := modelgql.EmoteSetModel(r.Ctx.Inst().Modelizer.EmoteSet(b.EmoteSet))
 	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)
 
 	for i, e := range emotes {
 		if ae := setModel.Emotes[i]; ae != nil {
-			setModel.Emotes[i].Data = r.Ctx.Inst().Modelizer.Emote(e).ToPartial().GQL()
+			setModel.Emotes[i].Data = modelgql.EmotePartialModel(r.Ctx.Inst().Modelizer.Emote(e).ToPartial())
 		}
 	}
 
@@ -196,5 +197,5 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteSetOps, data m
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.EmoteSet(esb.EmoteSet).GQL(), nil
+	return modelgql.EmoteSetModel(r.Ctx.Inst().Modelizer.EmoteSet(esb.EmoteSet)), nil
 }

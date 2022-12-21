@@ -20,7 +20,7 @@ const (
 
 type PresenceManager[T structures.UserPresenceData] interface {
 	Items() []structures.UserPresence[T]
-	Write(ctx context.Context, ttl time.Duration, data T, opt WritePresenceOptions) error
+	Write(ctx context.Context, ttl time.Duration, data T, opt WritePresenceOptions) (structures.UserPresence[T], error)
 }
 
 type presenceManager[T structures.UserPresenceData] struct {
@@ -36,7 +36,17 @@ func (pm *presenceManager[T]) Items() []structures.UserPresence[T] {
 }
 
 // Write implements PresenceManager
-func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data T, opt WritePresenceOptions) error {
+func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data T, opt WritePresenceOptions) (structures.UserPresence[T], error) {
+	p := structures.UserPresence[T]{
+		UserID:    pm.userID,
+		IP:        opt.IP,
+		Authentic: opt.Authentic,
+		Timestamp: time.Now(),
+		TTL:       time.Now().Add(ttl),
+		Kind:      pm.kind,
+		Data:      data,
+	}
+
 	// Perform protective measures in the case of an unauthentic presence
 	if !opt.Authentic {
 		cur, err := pm.inst.mongo.Collection(mongo.CollectionNameUserPresences).Find(ctx, bson.M{
@@ -63,35 +73,30 @@ func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data
 			// This measure prevents a malicious actor from "spoofing" many users
 			// and causing unnecessary extra data to be delivered to listeners.
 			if len(userIDs) >= MOST_UNIQUE_PRESENCES_PER_IP {
-				return errors.ErrRateLimited().SetDetail("Too Many Unauthentic Presences")
+				return p, errors.ErrRateLimited().SetDetail("Too Many Unauthentic Presences")
 			}
 		}
 	}
 
 	// Write the presence
-	result, err := pm.inst.mongo.Collection(mongo.CollectionNameUserPresences).UpdateOne(ctx, bson.M{
-		"actor_id": pm.userID,
-		"data":     data,
-	}, bson.M{"$set": structures.UserPresence[T]{
-		UserID:    pm.userID,
-		IP:        opt.IP,
-		Authentic: opt.Authentic,
-		Timestamp: time.Now(),
-		TTL:       time.Now().Add(ttl),
-		Kind:      pm.kind,
-		Data:      data,
-	}}, options.Update().SetUpsert(true))
+	err := pm.inst.mongo.Collection(mongo.CollectionNameUserPresences).FindOneAndUpdate(
+		ctx,
+		bson.M{
+			"actor_id": pm.userID,
+			"data":     data,
+		},
+		bson.M{"$set": p},
+		options.FindOneAndUpdate().
+			SetUpsert(true).
+			SetReturnDocument(options.After),
+	).Decode(&p)
 	if err != nil {
 		zap.S().Errorw("failed to write presence", "error", err)
 
-		return errors.ErrInternalServerError()
+		return p, errors.ErrInternalServerError()
 	}
 
-	if result.UpsertedCount > 0 {
-		zap.S().Debugw("write presence", "actor_id", pm.userID, "kind", pm.kind)
-	}
-
-	return nil
+	return p, nil
 }
 
 type WritePresenceOptions struct {

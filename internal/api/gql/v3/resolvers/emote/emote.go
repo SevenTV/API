@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -38,7 +39,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.Emote) (*model.UserPart
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
+	return modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(user).ToPartial()), nil
 }
 
 func (r *Resolver) Reports(ctx context.Context, obj *model.Emote) ([]*model.Report, error) {
@@ -258,7 +259,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.Emote, limitArg *int
 
 	// Add actors to result
 	for i, l := range result {
-		result[i].Actor = r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).ToPartial().GQL()
+		result[i].Actor = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).ToPartial())
 	}
 
 	return result, nil

@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -35,7 +36,7 @@ func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.Emo
 
 	result := make([]*model.EmoteSet, len(sets))
 	for i, v := range sets {
-		result[i] = r.Ctx.Inst().Modelizer.EmoteSet(v).GQL()
+		result[i] = modelgql.EmoteSetModel(r.Ctx.Inst().Modelizer.EmoteSet(v))
 	}
 
 	return result, nil
@@ -80,7 +81,7 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 	for _, e := range obj.Editors {
 		for _, u := range users {
 			if e.ID == u.ID {
-				e.User = r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL()
+				e.User = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(u).ToPartial())
 				result = append(result, e)
 
 				break
@@ -105,7 +106,7 @@ func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.User
 	if err == nil {
 		for _, ed := range editables {
 			if ed.HasPermission(structures.UserEditorPermissionModifyEmotes) {
-				result = append(result, r.Ctx.Inst().Modelizer.UserEditor(ed).GQL())
+				result = append(result, modelgql.UserEditorModel(r.Ctx.Inst().Modelizer.UserEditor(ed)))
 			}
 		}
 	}
@@ -129,7 +130,7 @@ func (r *Resolver) OwnedEmotes(ctx context.Context, obj *model.User) ([]*model.E
 	result = make([]*model.Emote, len(emotes))
 
 	for i, e := range emotes {
-		result[i] = r.Ctx.Inst().Modelizer.Emote(e).GQL()
+		result[i] = modelgql.EmoteModel(r.Ctx.Inst().Modelizer.Emote(e))
 	}
 
 	return result, multierror.Append(nil, errs...).ErrorOrNil()
@@ -252,7 +253,7 @@ func (r *Resolver) Activity(ctx context.Context, obj *model.User, limitArg *int)
 
 	// Add actors to result
 	for i, l := range result {
-		result[i].Actor = r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).ToPartial().GQL()
+		result[i].Actor = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(actorMap[l.ActorID]).ToPartial())
 	}
 
 	return result, nil
@@ -273,8 +274,8 @@ func (r *Resolver) Style(ctx context.Context, obj *model.User) (*model.UserStyle
 func userEntitlements(gctx global.Context, userID primitive.ObjectID) (*model.CosmeticBadge, *model.CosmeticPaint) {
 	ents, _ := gctx.Inst().Loaders.EntitlementsLoader().Load(userID)
 
-	badge, _ := ents.ActiveBadge()
-	paint, _ := ents.ActivePaint()
+	badge, _, _ := ents.ActiveBadge()
+	paint, _, _ := ents.ActivePaint()
 
-	return gctx.Inst().Modelizer.Badge(badge).GQL(), gctx.Inst().Modelizer.Paint(paint).GQL()
+	return modelgql.CosmeticBadge(gctx.Inst().Modelizer.Badge(badge)), modelgql.CosmeticPaint(gctx.Inst().Modelizer.Paint(paint))
 }

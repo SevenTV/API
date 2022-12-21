@@ -27,8 +27,8 @@ format:
 	yarn prettier --write .
 
 deps:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.1
-	go install github.com/99designs/gqlgen@v0.17.5
+	go install github.com/swaggo/swag/cmd/swag@v1.8.8
+	go install github.com/99designs/gqlgen@v0.17.22
 	go mod download
 
 dev_deps:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -52,7 +53,7 @@ func (r *Resolver) Channels(ctx context.Context, obj *model.Emote, pageArg *int,
 			u = structures.DeletedUser
 		}
 
-		models[i] = r.Ctx.Inst().Modelizer.User(u).ToPartial().GQL()
+		models[i] = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(u).ToPartial())
 	}
 
 	results := model.UserSearchResult{

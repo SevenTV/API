@@ -10,6 +10,8 @@ import (
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.uber.org/zap"
 )
 
 type userPresenceWriteRoute struct {
@@ -34,7 +36,7 @@ func (r *userPresenceWriteRoute) Config() rest.RouteConfig {
 // @Param userID path string true "ID of the user"
 // @Tags users
 // @Produce json
-// @Success 200 {object} model.MutationResponse
+// @Success 200 {object} model.PresenceModel
 // @Router /users/{user.id}/presence [post]
 func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	var body userPresenceWriteBody
@@ -54,6 +56,8 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	clientIP, _ := ctx.UserValue(rest.ClientIP).String()
 
+	var presence structures.UserPresence[bson.Raw]
+
 	switch body.Kind {
 	case model.UserPresenceKindChannel:
 		var pd structures.UserPresenceDataChannel
@@ -70,25 +74,41 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.ErrBadObjectID().SetDetail("invalid or missing host ID")
 		}
 
+		// Validate host user & connection (channel)
+		user, err := r.gctx.Inst().Loaders.UserByID().Load(pd.HostID)
+		if err != nil {
+			return errors.From(err).SetDetail("Host")
+		}
+
+		uc, ind := user.Connections.Get(pd.ConnectionID)
+		if ind == -1 {
+			return errors.ErrUnknownUser().SetDetail("Host Connection")
+		}
+
 		pm := r.gctx.Inst().Presences.ChannelPresence(ctx, userID)
 
-		if err := pm.Write(ctx, time.Minute*5, structures.UserPresenceDataChannel{
-			HostID:       pd.HostID,
-			ConnectionID: pd.ConnectionID,
+		p, err := pm.Write(ctx, time.Minute*5, structures.UserPresenceDataChannel{
+			HostID:       user.ID,
+			ConnectionID: uc.ID,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
 			IP:        clientIP,
-		}); err != nil {
+		})
+		if err != nil {
 			return errors.From(err)
+		}
+
+		presence = p.ToRaw()
+
+		if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, p); err != nil {
+			zap.S().Errorw("failed to fanout channel presence", "error", err)
 		}
 	}
 
-	return ctx.JSON(rest.OK, model.MutationResponse{
-		OK: true,
-	})
+	return ctx.JSON(rest.OK, r.gctx.Inst().Modelizer.Presence(presence))
 }
 
 type userPresenceWriteBody struct {
-	Kind model.UserPresenceKind `json:"kind"`
-	Data json.RawMessage        `json:"data"`
+	Kind model.PresenceKind `json:"kind"`
+	Data json.RawMessage    `json:"data"`
 }

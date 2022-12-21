@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -37,7 +38,7 @@ func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emo
 		return nil, errors.ErrUnknownEmote()
 	}
 
-	return r.Ctx.Inst().Modelizer.Emote(emote).GQL(), nil
+	return modelgql.EmoteModel(r.Ctx.Inst().Modelizer.Emote(emote)), nil
 }
 
 func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([]*model.EmotePartial, error) {
@@ -51,7 +52,7 @@ func (r *Resolver) EmotesByID(ctx context.Context, list []primitive.ObjectID) ([
 	result := make([]*model.EmotePartial, len(emotes))
 
 	for i, emote := range emotes {
-		result[i] = r.Ctx.Inst().Modelizer.Emote(emote).ToPartial().GQL()
+		result[i] = modelgql.EmotePartialModel(r.Ctx.Inst().Modelizer.Emote(emote).ToPartial())
 	}
 
 	return result, nil
@@ -271,7 +272,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 			}
 		}
 
-		models[i] = r.Ctx.Inst().Modelizer.Emote(e).GQL()
+		models[i] = modelgql.EmoteModel(r.Ctx.Inst().Modelizer.Emote(e))
 	}
 
 	return &model.EmoteSearchResult{

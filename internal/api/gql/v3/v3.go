@@ -6,7 +6,6 @@ import (
 	goerrors "errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -14,11 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/fasthttp/websocket"
 	"github.com/seventv/common/errors"
 	"go.uber.org/zap"
-
-	wsTransport "github.com/seventv/api/internal/api/gql/websocket"
 
 	"github.com/seventv/api/internal/api/gql/v3/cache"
 	"github.com/seventv/api/internal/api/gql/v3/complexity"
@@ -26,7 +22,6 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	middlewarev3 "github.com/seventv/api/internal/api/gql/v3/middleware"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers"
-	"github.com/seventv/api/internal/api/gql/v3/resolvers/subscription/digest"
 	"github.com/seventv/api/internal/api/gql/v3/types"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/middleware"
@@ -86,7 +81,6 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 	})
 
 	rateLimitFunc := middleware.RateLimit(gCtx, "gql-v3", gCtx.Config().Limits.Buckets.GQL3[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL3[1]))
-	rateLimitFuncWS := middleware.RateLimitWS(gCtx, "gql-v3", gCtx.Config().Limits.Buckets.GQL3[0], time.Second*time.Duration(gCtx.Config().Limits.Buckets.GQL3[1]))
 
 	checkLimit := func(ctx *fasthttp.RequestCtx) bool {
 		if err := rateLimitFunc(ctx); err != nil {
@@ -101,35 +95,6 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 		return true
 	}
 
-	// Event API Digest Bridge
-	digest.Digest(gCtx)
-
-	wsTransport := wsTransport.Websocket{
-		KeepAlivePingInterval: 10 * time.Second,
-		InitFunc: func(ctx context.Context, initPayload wsTransport.InitPayload) (context.Context, error) {
-			authHeader := initPayload.Authorization()
-
-			if strings.HasPrefix(authHeader, "Bearer ") {
-				tok := strings.TrimPrefix(authHeader, "Bearer ")
-
-				user, err := middleware.DoAuth(gCtx, tok)
-				if err != nil {
-					goto handler
-				}
-
-				ctx = context.WithValue(ctx, helpers.UserKey, user)
-			}
-
-		handler:
-			return ctx, nil
-		},
-		Upgrader: websocket.FastHTTPUpgrader{
-			CheckOrigin: func(ctx *fasthttp.RequestCtx) bool {
-				return gCtx.Config().Http.WebSocket
-			},
-		},
-	}
-
 	return func(ctx *fasthttp.RequestCtx) {
 		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
 		lCtx = context.WithValue(lCtx, helpers.ClientIP, ctx.UserValue(string(helpers.ClientIP)))
@@ -138,14 +103,8 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 			return
 		}
 
-		if wsTransport.Supports(ctx) {
-			lCtx = context.WithValue(lCtx, helpers.RateLimitFunc, rateLimitFuncWS)
-
-			wsTransport.Do(ctx, lCtx, exec)
-		} else {
-			fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				srv.ServeHTTP(w, r.WithContext(lCtx))
-			}))(ctx)
-		}
+		fasthttpadaptor.NewFastHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			srv.ServeHTTP(w, r.WithContext(lCtx))
+		}))(ctx)
 	}
 }
