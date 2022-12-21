@@ -28,7 +28,7 @@
 			{{ env.toString().toUpperCase() }}
 		</span>
 	</nav>
-	<div class="realNav" style="margin-top: 4.5rem;" v-if="navOpen">
+	<div class="realNav" style="margin-top: 4.5rem" v-if="navOpen">
 		<div>
 			<div v-for="link of navLinks" :key="link.route">
 				<router-link v-if="!link.condition || link.condition()" class="nav-link" :to="link.route">
@@ -43,7 +43,6 @@
 import { ref, watch } from "vue";
 import Logo from "@svg/Logo.vue";
 import { useRoute } from "vue-router";
-import { useClipboard, usePermission } from '@vueuse/core'
 
 const route = useRoute();
 
@@ -71,7 +70,6 @@ interface NavLink {
 watch(route, () => {
 	navOpen.value = false;
 });
-
 </script>
 
 <style scoped lang="scss">
@@ -186,7 +184,7 @@ nav {
 
 	@include breakpoint(md, max) {
 		&.router-link-active {
-			background-color: rgba(202, 0, 0, 0.707)
+			background-color: rgba(202, 0, 0, 0.707);
 		}
 
 		&:hover {
@@ -235,7 +233,6 @@ nav {
 }
 
 @media screen and (max-width: 1000px) {
-
 	// made my own class style bcause holy cheese and crackers this code before was so unreadable
 	// still using the nav-link class at the moment. This will be cleaned up.
 	.realNav {

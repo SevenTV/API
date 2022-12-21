@@ -11,7 +11,6 @@
 					</select>
 				</span>
 				<button class="toggle-collapse" @click="toggleNav">Expand Links</button>
-
 			</div>
 			<div v-if="routeLinkNavOpen" class="sidebar-routes-big">
 				<p class="sidebar-section">ROUTES</p>
@@ -39,16 +38,19 @@
 					<div class="route-list">
 						<div class="route-item" :method="route.method" v-for="route of routes.result">
 							<h1 :id="route.id">
-								<span style="margin-bottom:3px;">{{ route.summary }}</span>
+								<span style="margin-bottom: 3px">{{ route.summary }}</span>
 							</h1>
-							<div style="padding: 0 6px 6px 6px; font-size: large;">
+							<div style="padding: 0 6px 6px 6px; font-size: large">
 								<span class="route-item-method-name" :method="route.method">
 									{{ route.method.toUpperCase() }}
 								</span>
 								<span v-if="isSupported">
-									<div class="route-path" title="Copy URL"
-										@click="copy(`${host}/${version}${route.path}`)">
-										<pre style="display: inline;">{{ route.path }}</pre>
+									<div
+										class="route-path"
+										title="Copy URL"
+										@click="copy(`${host}/${version}${route.path}`)"
+									>
+										<pre style="display: inline">{{ route.path }}</pre>
 									</div>
 								</span>
 								<span v-else>
@@ -57,30 +59,38 @@
 									</span>
 								</span>
 								<br />
-								<div style="margin-top: 10px;">
+								<div style="margin-top: 10px">
 									<i>{{ route.description }}</i>
 									<br />
 									<div class="route-parameter-box">
-										<div v-for="f in route.params.parameters"
-											v-if="route.params.parameters != null">
-											<h2>{{ f?.name ?? 'no name' }}</h2>
-											string <!-- change this soon, don't want this to be hardcoded in, but the object doesn't have a type apparently? -->
+										<div
+											v-for="f in route.params.parameters"
+											v-if="route.params.parameters != null"
+										>
+											<h2>{{ f?.name ?? "no name" }}</h2>
+											string
+											<!-- change this soon, don't want this to be hardcoded in, but the object doesn't have a type apparently? -->
 											<br />
-											<small><i>({{ f?.in ?? 'no data input type' }})</i></small>
+											<small
+												><i>({{ f?.in ?? "no data input type" }})</i></small
+											>
 											<br />
-											<p style="font-weight: bold;">{{ f?.description ?? 'no description' }}</p>
-											<pre
-												style="margin-top: 5px;">{{ route.params.consumes ?? 'no filetype data' }}</pre>
+											<p style="font-weight: bold">{{ f?.description ?? "no description" }}</p>
+											<pre style="margin-top: 5px">{{
+												route.params.consumes ?? "no filetype data"
+											}}</pre>
 										</div>
 										<div v-else>
 											Accepts:
 											{{ route.params.consumes ?? "no data" }}
 										</div>
 									</div>
-									<small v-if="route.method !== 'get'">Parameter type:
-										{{ route.params.produces?.join(", ") ?? 'not specified' }}</small>
+									<small v-if="route.method !== 'get'"
+										>Parameter type:
+										{{ route.params.produces?.join(", ") ?? "not specified" }}</small
+									>
 									<br v-if="route.method !== 'get'" />
-									<small>tags: {{ route.params.tags?.join(", ") ?? 'none' }}</small>
+									<small>tags: {{ route.params.tags?.join(", ") ?? "none" }}</small>
 								</div>
 							</div>
 						</div>
@@ -94,7 +104,7 @@
 <script setup lang="ts">
 import swag from "swagger-schema-official";
 import { computed, ref } from "vue";
-import { useClipboard, usePermission } from '@vueuse/core'
+import { useClipboard } from "@vueuse/core";
 
 const routeLinkNavOpen = ref(false);
 
@@ -141,8 +151,8 @@ const routes = computed(() => {
 	}
 
 	return {
-		result // i'm too lazy to take this out of the object...
-	}
+		result, // i'm too lazy to take this out of the object...
+	};
 });
 
 // computed(() => Object.keys(paths).map((k) => ({ name: k, ...paths[k] })));
@@ -172,12 +182,10 @@ interface RouteDef {
 }
 
 // Copy to clipboard stuff - lets users copy the request url to their clipboard with ease
-const { text, copied, isSupported, copy } = useClipboard()
-
+const { isSupported, copy } = useClipboard();
 </script>
 
 <style scoped lang="scss">
-
 // TODO clean up these style defs in the future
 
 @import "@style/themes.scss";
@@ -189,8 +197,6 @@ body {
 
 dl {
 	margin: 0 0 1em;
-	;
-
 	dt {
 		background-color: #ccc;
 		padding: 1em;
@@ -206,8 +212,6 @@ dl {
 	}
 }
 
-
-
 #app {
 	width: 100vw;
 	min-height: 100vh;
@@ -217,7 +221,6 @@ dl {
 	flex-direction: column;
 	padding: 16px;
 }
-
 
 .accordions {
 	width: 100%;
@@ -316,7 +319,7 @@ main.docs {
 			}
 		}
 
-		.route-item>h1 {
+		.route-item > h1 {
 			border-radius: 5px;
 		}
 
@@ -340,11 +343,11 @@ main.docs {
 			}
 
 			&[method="put"] {
-				background-color: darken(adjust-hue(themed("warning"), 25), 10)
+				background-color: darken(adjust-hue(themed("warning"), 25), 10);
 			}
 
 			&[method="delete"] {
-				background-color: #d7392e
+				background-color: #d7392e;
 			}
 		}
 
@@ -367,7 +370,6 @@ main.docs {
 		overflow: auto;
 
 		.sidebar-routes-big {
-
 			// this is just to keep it hidden on default for smaller screens. JS will hide/unhide it.
 			@include breakpoint(md, min) {
 				display: none;
@@ -375,7 +377,6 @@ main.docs {
 		}
 
 		.sidebar-routes-small {
-
 			// this is just to keep it hidden on default for smaller screens. JS will hide/unhide it.
 			@include breakpoint(md, max) {
 				display: none;
@@ -387,7 +388,7 @@ main.docs {
 			font-weight: 600;
 		}
 
-		>.sidebar-version-selector>select {
+		> .sidebar-version-selector > select {
 			margin-top: 0.5em;
 		}
 	}
@@ -406,8 +407,6 @@ main.docs {
 			}
 		}
 	}
-
-
 
 	.route-navigator-item {
 		transition: all 0.1s ease-in-out;
@@ -429,17 +428,17 @@ main.docs {
 		}
 
 		.route-item {
-			>h1 {
+			> h1 {
 				display: grid;
 				align-items: center;
 				padding: 0.25em;
 
-				>span:nth-child(2) {
+				> span:nth-child(2) {
 					font-size: 1rem;
 					font-weight: 400;
 					margin-left: 0.1em;
 
-					>.route-item-method-name {
+					> .route-item-method-name {
 						font-weight: 600;
 					}
 				}

@@ -1,8 +1,6 @@
 <template>
 	<main class="apps">
-		<p>
-			In development
-		</p>
+		<p>In development</p>
 	</main>
 </template>
 
