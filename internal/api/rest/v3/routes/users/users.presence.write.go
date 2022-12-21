@@ -37,7 +37,7 @@ func (r *userPresenceWriteRoute) Config() rest.RouteConfig {
 // @Tags users
 // @Produce json
 // @Success 200 {object} model.PresenceModel
-// @Router /users/{user.id}/presence [post]
+// @Router /users/{user.id}/presences [post]
 func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	var body userPresenceWriteBody
 
@@ -100,9 +100,11 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 		presence = p.ToRaw()
 
-		if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, p); err != nil {
-			zap.S().Errorw("failed to fanout channel presence", "error", err)
-		}
+		go func() {
+			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, p); err != nil {
+				zap.S().Errorw("failed to fanout channel presence", "error", err)
+			}
+		}()
 	}
 
 	return ctx.JSON(rest.OK, r.gctx.Inst().Modelizer.Presence(presence))

@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.UserPresence[structures.UserPresenceDataChannel]) error {
@@ -20,53 +21,47 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		"connection_id": presence.Data.ConnectionID,
 	}
 
+	// Fetch user in presence
+	user, err := p.loaders.UserByID().Load(presence.UserID)
+	if err != nil {
+		return err
+	}
+
 	// Fetch user's active cosmetics
 	cosmetics, err := p.loaders.EntitlementsLoader().Load(presence.UserID)
 	if err != nil {
 		return err
 	}
 
-	// Dispatch badge
-	badge, badgeEnt, hasBadge := cosmetics.ActiveBadge()
-	if hasBadge {
-		// Badge Cosmetic
+	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw], ent structures.Entitlement[bson.Raw]) {
+		// Cosmetic
 		_ = p.events.Dispatch(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-			ID:         badge.ID,
+			ID:         cos.ID,
 			Kind:       structures.ObjectKindCosmetic,
 			Contextual: true,
-			Object:     utils.ToJSON(p.modelizer.Cosmetic(badge.ToRaw())),
+			Object:     utils.ToJSON(p.modelizer.Cosmetic(cos.ToRaw())),
 		}, eventCond)
 
-		// Badge Entitlement
+		// Entitlement
 		_ = p.events.Dispatch(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
-			ID:         badgeEnt.ID,
+			ID:         ent.ID,
 			Kind:       structures.ObjectKindEntitlement,
 			Contextual: true,
-			Object:     utils.ToJSON(p.modelizer.Entitlement(badgeEnt.ToRaw())),
+			Object:     utils.ToJSON(p.modelizer.Entitlement(ent.ToRaw(), user)),
 		}, eventCond)
+	}
+
+	// Dispatch badge
+	if badge, badgeEnt, hasBadge := cosmetics.ActiveBadge(); hasBadge {
+		dispatchCosmetic(badge.ToRaw(), badgeEnt.ToRaw())
 	}
 
 	// Dispatch paint
-	paint, paintEnt, hasPaint := cosmetics.ActivePaint()
-	if hasPaint {
-		// Paint Cosmetic
-		_ = p.events.Dispatch(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-			ID:         paint.ID,
-			Kind:       structures.ObjectKindCosmetic,
-			Contextual: true,
-			Object:     utils.ToJSON(p.modelizer.Cosmetic(paint.ToRaw())),
-		}, eventCond)
-
-		// Paint Entitlement
-		_ = p.events.Dispatch(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
-			ID:         paintEnt.ID,
-			Kind:       structures.ObjectKindEntitlement,
-			Contextual: true,
-			Object:     utils.ToJSON(p.modelizer.Entitlement(paintEnt.ToRaw())),
-		}, eventCond)
+	if paint, paintEnt, hasPaint := cosmetics.ActivePaint(); hasPaint {
+		dispatchCosmetic(paint.ToRaw(), paintEnt.ToRaw())
 	}
 
-	// Dispatch entitlements
+	// TODO: dispatch personal emote sets
 
 	return nil
 }

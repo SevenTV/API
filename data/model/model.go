@@ -15,7 +15,7 @@ type Modelizer interface {
 	UserEditor(v structures.UserEditor) UserEditorModel
 	UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel
 	Presence(v structures.UserPresence[bson.Raw]) PresenceModel
-	Entitlement(v structures.Entitlement[bson.Raw]) EntitlementModel
+	Entitlement(v structures.Entitlement[bson.Raw], user structures.User) EntitlementModel
 	Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage]
 	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel
 	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel
