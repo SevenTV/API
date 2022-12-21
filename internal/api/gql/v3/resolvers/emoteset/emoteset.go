@@ -3,6 +3,7 @@ package emoteset
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
@@ -26,7 +27,7 @@ func (r *Resolver) Owner(ctx context.Context, obj *model.EmoteSet) (*model.UserP
 		return nil, err
 	}
 
-	return r.Ctx.Inst().Modelizer.User(user).ToPartial().GQL(), nil
+	return modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(user).ToPartial()), nil
 }
 
 func (*Resolver) Emotes(ctx context.Context, obj *model.EmoteSet, limit *int, origins *bool) ([]*model.ActiveEmote, error) {

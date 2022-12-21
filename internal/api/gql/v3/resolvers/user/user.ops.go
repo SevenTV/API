@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
@@ -164,7 +165,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 		return nil, err
 	}
 
-	result := r.Ctx.Inst().Modelizer.User(b.User).GQL()
+	result := modelgql.UserModel(r.Ctx.Inst().Modelizer.User(b.User))
 	events.Publish(r.Ctx, "users", b.User.ID)
 
 	return result.Connections, nil

@@ -17,13 +17,13 @@ type UserModel struct {
 	UserType    UserTypeModel          `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string                 `json:"username"`
 	DisplayName string                 `json:"display_name"`
-	CreatedAt   int64                  `json:"createdAt,omitempty"`
-	AvatarURL   string                 `json:"avatar_url"`
+	CreatedAt   int64                  `json:"created_at,omitempty"`
+	AvatarURL   string                 `json:"avatar_url,omitempty"`
 	Biography   string                 `json:"biography,omitempty" extensions:"x-omitempty"`
 	Style       UserStyle              `json:"style"`
 	EmoteSets   []EmoteSetPartialModel `json:"emote_sets,omitempty" extensions:"x-omitempty"`
 	Editors     []UserEditorModel      `json:"editors,omitempty"`
-	RoleIDs     []primitive.ObjectID   `json:"roles"`
+	RoleIDs     []primitive.ObjectID   `json:"roles,omitempty"`
 	Connections []UserConnectionModel  `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 

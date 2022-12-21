@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/gql/v3/auth"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
@@ -56,7 +57,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 
 	for i, msg := range messages {
 		if msg, err := structures.ConvertMessage[structures.MessageDataModRequest](msg); err == nil {
-			result[i] = r.Ctx.Inst().Modelizer.ModRequestMessage(msg).GQL()
+			result[i] = modelgql.ModRequestMessageModel(r.Ctx.Inst().Modelizer.ModRequestMessage(msg))
 		}
 	}
 

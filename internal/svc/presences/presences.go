@@ -3,6 +3,8 @@ package presences
 import (
 	"context"
 
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -14,23 +16,33 @@ import (
 type Instance interface {
 	// ChannelPresence returns a PresenceManager for the given actorID, with only Channel presence data.
 	ChannelPresence(ctx context.Context, actorID primitive.ObjectID) PresenceManager[structures.UserPresenceDataChannel]
+	ChannelPresenceFanout(ctx context.Context, presence structures.UserPresence[structures.UserPresenceDataChannel]) error
 }
 
 type inst struct {
 	mongo   mongo.Instance
 	loaders loaders.Instance
+	events  events.Instance
+
+	modelizer model.Modelizer
 }
 
 func New(opt Options) Instance {
 	return &inst{
 		mongo:   opt.Mongo,
 		loaders: opt.Loaders,
+		events:  opt.Events,
+
+		modelizer: opt.Modelizer,
 	}
 }
 
 type Options struct {
 	Mongo   mongo.Instance
 	Loaders loaders.Instance
+	Events  events.Instance
+
+	Modelizer model.Modelizer
 }
 
 func (p *inst) ChannelPresence(ctx context.Context, actorID primitive.ObjectID) PresenceManager[structures.UserPresenceDataChannel] {

@@ -1,33 +1,34 @@
-package model
+package modelgql
 
 import (
 	"time"
 
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/api/data/model"
+	gql_model "github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (xm EmoteModel) GQL() *model.Emote {
+func EmoteModel(xm model.EmoteModel) *gql_model.Emote {
 	var (
-		versions = make([]*model.EmoteVersion, len(xm.Versions))
-		owner    *model.UserPartial
+		versions = make([]*gql_model.EmoteVersion, len(xm.Versions))
+		owner    *gql_model.UserPartial
 	)
 
 	for i, v := range xm.Versions {
-		versions[i] = v.GQL()
+		versions[i] = EmoteVersionModel(v)
 
 		if v.ID == xm.ID {
-			versions[i].Host = xm.Host.GQL()
+			versions[i].Host = ImageHost(xm.Host)
 		}
 	}
 
 	if xm.Owner != nil {
 		u := *xm.Owner
 
-		owner = u.GQL()
+		owner = UserPartialModel(u)
 	}
 
-	return &model.Emote{
+	return &gql_model.Emote{
 		ID:        xm.ID,
 		Name:      xm.Name,
 		Flags:     int(xm.Flags),
@@ -38,25 +39,25 @@ func (xm EmoteModel) GQL() *model.Emote {
 		CreatedAt: xm.ID.Timestamp(),
 		OwnerID:   xm.OwnerID,
 		Owner:     owner,
-		Host:      xm.Host.GQL(),
+		Host:      ImageHost(xm.Host),
 		Versions:  versions,
 	}
 }
 
-func (xm EmotePartialModel) GQL() *model.EmotePartial {
+func EmotePartialModel(xm model.EmotePartialModel) *gql_model.EmotePartial {
 	var (
 		ownerID primitive.ObjectID
-		owner   *model.UserPartial
+		owner   *gql_model.UserPartial
 	)
 
 	if xm.Owner != nil {
 		u := *xm.Owner
 
 		ownerID = u.ID
-		owner = u.GQL()
+		owner = UserPartialModel(u)
 	}
 
-	return &model.EmotePartial{
+	return &gql_model.EmotePartial{
 		ID:        xm.ID,
 		Name:      xm.Name,
 		Flags:     int(xm.Flags),
@@ -66,20 +67,20 @@ func (xm EmotePartialModel) GQL() *model.EmotePartial {
 		Animated:  xm.Animated,
 		OwnerID:   ownerID,
 		Owner:     owner,
-		Host:      xm.Host.GQL(),
+		Host:      ImageHost(xm.Host),
 	}
 }
 
-func (xm EmoteVersionModel) GQL() *model.EmoteVersion {
-	host := &model.ImageHost{
+func EmoteVersionModel(xm model.EmoteVersionModel) *gql_model.EmoteVersion {
+	host := &gql_model.ImageHost{
 		URL:   "",
-		Files: []*model.Image{},
+		Files: []*gql_model.Image{},
 	}
 	if xm.Host != nil {
-		host = xm.Host.GQL()
+		host = ImageHost(*xm.Host)
 	}
 
-	return &model.EmoteVersion{
+	return &gql_model.EmoteVersion{
 		ID:          xm.ID,
 		Name:        xm.Name,
 		Description: xm.Description,

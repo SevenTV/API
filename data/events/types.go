@@ -33,10 +33,20 @@ const (
 
 	// User
 
-	EventTypeAnyUser    EventType = "user.*"
-	EventTypeCreateUser EventType = "user.create"
-	EventTypeUpdateUser EventType = "user.update"
-	EventTypeDeleteUser EventType = "user.delete"
+	EventTypeAnyUser           EventType = "user.*"
+	EventTypeCreateUser        EventType = "user.create"
+	EventTypeUpdateUser        EventType = "user.update"
+	EventTypeDeleteUser        EventType = "user.delete"
+	EventTypeCreateEntitlement EventType = "entitlement.create"
+	EventTypeUpdateEntitlement EventType = "entitlement.update"
+	EventTypeDeleteEntitlement EventType = "entitlement.delete"
+
+	// Cosmetics
+
+	EventTypeAnyCosmetic    EventType = "cosmetic.*"
+	EventTypeCreateCosmetic EventType = "cosmetic.create"
+	EventTypeUpdateCosmetic EventType = "cosmetic.update"
+	EventTypeDeleteCosmetic EventType = "cosmetic.delete"
 )
 
 func (et EventType) Split() []string {
@@ -64,7 +74,7 @@ type ChangeMap struct {
 	// genuine creation, deletion, or update to the object
 	Contextual bool `json:"contextual,omitempty"`
 	// The user who made changes to the object
-	Actor model.UserModel `json:"actor"`
+	Actor model.UserModel `json:"actor,omitempty"`
 	// A list of added fields
 	Added []ChangeField `json:"added,omitempty"`
 	// A list of updated fields
