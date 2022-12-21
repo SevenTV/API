@@ -61,11 +61,10 @@
 									<i>{{ route.description }}</i>
 									<br />
 									<div class="route-parameter-box">
-										<!-- this needs to be fixed up, typescript isn't happy -->
 										<div v-for="f in route.params.parameters"
 											v-if="route.params.parameters != null">
 											<h2>{{ f?.name ?? 'no name' }}</h2>
-											{{ f?.type ?? 'no type' }}
+											string <!-- change this soon, don't want this to be hardcoded in, but the object doesn't have a type apparently? -->
 											<br />
 											<small><i>({{ f?.in ?? 'no data input type' }})</i></small>
 											<br />
@@ -134,7 +133,7 @@ const routes = computed(() => {
 				id: method + " " + key,
 				summary: params?.summary ?? "",
 				description: params?.description ?? "",
-				params: params as swag.Operation,
+				params: params as swag.Spec,
 				method,
 				path: key,
 			});
@@ -169,15 +168,7 @@ interface RouteDef {
 	description: string;
 	method: string;
 	path: string;
-	params: swag.Operation;
-}
-
-// was gonna use this to fix the #route-parameter-box but I wanna leave that to someone else, i don't like ts
-interface RouteParameterDef {
-	name: string;
-	in: string;
-	type: string;
-	description: string;
+	params: swag.Spec; // changed to swag.Spec because it fit our needs better than swag.Operation
 }
 
 // Copy to clipboard stuff - lets users copy the request url to their clipboard with ease
