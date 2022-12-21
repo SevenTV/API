@@ -1,22 +1,17 @@
 <template>
-	<main class="intro">
+	<main class="apps">
 		<p>
-			Hello and welcome to 7TV's Developer Portal! This area exists to provide documentation for developers to
-			integrate with our API.
-			<br />
-			Head over to the docs page to get started!
+			In development
 		</p>
-		<br />
 	</main>
 </template>
 
 <script setup lang="ts"></script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
-main.intro {
+main.apps {
 	padding-top: 1em;
 	margin-right: 15%;
 	margin-left: 15%;
