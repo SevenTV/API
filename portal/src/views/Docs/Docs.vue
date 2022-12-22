@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+
 import swag from "swagger-schema-official";
 import { computed, ref } from "vue";
 import DocsSideBarVue from "@/components/Docs/DocsSideBar.vue";
@@ -83,11 +84,44 @@ interface RouteDef {
 	description: string;
 	method: string;
 	path: string;
-	params: swag.Spec; // changed to swag.Spec because it fit our needs better than swag.Operation
+	params: swag.Spec; 
+
+	/* 
+
+	changed to swag.Spec because it fit our needs better than swag.Operation
+	swag.Spec gives us the BodyParamter type in the parameters object. This 
+	allows us to display a value such as route.params.parameters[0].name without
+	having to define the type of it. TLDR; typescript is not happy when you try
+	to display route.params.parameters[0].name while using swag.Operation.
+
+	If swag.Operation serves a purpose that is needed, we could always make 
+	swag.Spec and swag.Operation two different objects. 
+
+	Maybe like:
+	{
+			paramsOperation: swag.Operation;
+			paramsSpec: swag.Spec;	
+	}
+
+	If there is a better way of doing this, I most likely didn't see it. 
+	I'm not a pro with typescript, so I just took the approach that made
+	the most sense to me. Which was to use the type with parameters already defined.
+	
+	swag.Spec parameters type:
+			parameters?: { [parameterName: string]: BodyParameter | QueryParameter } | undefined;
+	
+	swag.Operation parameter type:
+			parameters?: Array<Parameter | Reference> | undefined;
+			^ threw errors in workspace and during build because "type name does not exist in Reference" or something like that.
+
+	*/
+	
 }
+
 </script>
 
 <style scoped lang="scss">
+
 @import "@style/themes.scss";
 
 #app {
@@ -175,4 +209,5 @@ main.docs {
 		}
 	}
 }
+
 </style>

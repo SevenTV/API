@@ -16,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { useHead } from "@vueuse/head";
 import Nav from "./components/Nav.vue";
 
@@ -24,6 +25,7 @@ useHead({
 		class: "theme-dark",
 	},
 });
+
 </script>
 
 <style></style>

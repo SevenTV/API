@@ -54,17 +54,22 @@
 </template>
 
 <script setup lang="ts">
+
 // Copy to clipboard stuff - lets users copy the request url to their clipboard with ease
 import { useClipboard } from "@vueuse/core";
+
 const { isSupported, copy } = useClipboard();
+
 defineProps<{
 	route: any;
 	host: string;
 	version: string;
 }>();
+
 </script>
 
 <style scoped lang="scss">
+
 @import "@style/themes.scss";
 
 pre {
@@ -127,4 +132,5 @@ pre {
 		}
 	}
 }
+
 </style>

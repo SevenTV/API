@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref } from "vue";
 
 const host = import.meta.env.VITE_APP_API_REST ?? "";
@@ -57,9 +58,11 @@ defineProps<{
 	versions: object;
 	routes: any;
 }>();
+
 </script>
 
 <style scoped lang="scss">
+
 @import "@style/themes.scss";
 
 #sidebarmain {
@@ -168,4 +171,5 @@ defineProps<{
 		}
 	}
 }
+
 </style>

@@ -40,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, watch } from "vue";
 import Logo from "@svg/Logo.vue";
 import { useRoute } from "vue-router";
@@ -70,9 +71,11 @@ interface NavLink {
 watch(route, () => {
 	navOpen.value = false;
 });
+
 </script>
 
 <style scoped lang="scss">
+
 @import "@style/themes.scss";
 
 nav {
@@ -232,27 +235,27 @@ nav {
 	}
 }
 
-@media screen and (max-width: 1000px) {
-	.realNav {
-		@include breakpoint(lg, min) {
-			display: none;
-		}
-
-		transition: all 0.5s ease-in-out;
-		font-size: 1.5rem;
-		display: block;
-		margin-top: 4.5rem;
-		z-index: 150;
-		position: fixed;
-		width: 100%;
-		box-shadow: black 0.5rem 0 15rem;
-		backdrop-filter: blur(1rem);
-
-		@include themify() {
-			background-color: transparentize(themed("extreme"), 0.33);
-		}
+.realNav {
+	@include breakpoint(lg, min) {
+		display: none;
 	}
 
+	transition: all 0.5s ease-in-out;
+	font-size: 1.5rem;
+	display: block;
+	margin-top: 4.5rem;
+	z-index: 150;
+	position: fixed;
+	width: 100%;
+	box-shadow: black 0.5rem 0 15rem;
+	backdrop-filter: blur(1rem);
+
+	@include themify() {
+		background-color: transparentize(themed("extreme"), 0.33);
+	}
+}
+
+@include breakpoint(lg, max) {
 	.navOpen {
 		.collapse {
 			min-height: calc(100vh - 4.5rem);
@@ -314,4 +317,5 @@ nav {
 		display: block;
 	}
 }
+
 </style>
