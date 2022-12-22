@@ -101,7 +101,10 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 
 	if err := m.mongo.Collection(mongo.CollectionNameUsers).FindOneAndUpdate(
 		ctx,
-		bson.M{"_id": ub.User.ID},
+		bson.M{
+			"_id":      ub.User.ID,
+			"username": ub.User.Username,
+		},
 		ub.Update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(&ub.User); err != nil {
