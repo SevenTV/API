@@ -8,8 +8,8 @@ import (
 
 type EntitlementModel struct {
 	ID    primitive.ObjectID `json:"id"`
-	RefID primitive.ObjectID `json:"ref_id"`
 	Kind  EntitlementKind    `json:"kind"`
+	RefID primitive.ObjectID `json:"ref_id"`
 }
 
 type EntitlementKind string

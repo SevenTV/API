@@ -43,7 +43,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			Kind:       structures.ObjectKindEntitlement,
 			Contextual: true,
 			Object:     utils.ToJSON(p.modelizer.Entitlement(badgeEnt.ToRaw())),
-		})
+		}, eventCond)
 	}
 
 	// Dispatch paint
@@ -63,7 +63,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			Kind:       structures.ObjectKindEntitlement,
 			Contextual: true,
 			Object:     utils.ToJSON(p.modelizer.Entitlement(paintEnt.ToRaw())),
-		})
+		}, eventCond)
 	}
 
 	// Dispatch entitlements
