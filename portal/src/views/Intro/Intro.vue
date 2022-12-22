@@ -13,7 +13,6 @@
 <script setup lang="ts"></script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
 main.intro {
@@ -25,5 +24,4 @@ main.intro {
 		margin-bottom: 1em;
 	}
 }
-
 </style>

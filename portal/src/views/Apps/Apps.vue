@@ -7,7 +7,6 @@
 <script setup lang="ts"></script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
 main.apps {
@@ -19,5 +18,4 @@ main.apps {
 		margin-bottom: 1em;
 	}
 }
-
 </style>

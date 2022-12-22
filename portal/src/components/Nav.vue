@@ -40,7 +40,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { ref, watch } from "vue";
 import Logo from "@svg/Logo.vue";
 import { useRoute } from "vue-router";
@@ -71,11 +70,9 @@ interface NavLink {
 watch(route, () => {
 	navOpen.value = false;
 });
-
 </script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
 nav {
@@ -317,5 +314,4 @@ nav {
 		display: block;
 	}
 }
-
 </style>

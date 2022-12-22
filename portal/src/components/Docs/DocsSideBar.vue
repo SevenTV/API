@@ -1,5 +1,5 @@
 <template>
-	<div id="sidebarmain">
+	<div class="sidebarmain">
 		<div id="sidebar" class="docs-sidebar">
 			<!-- Version Selector -->
 			<div class="sidebar-version-selector">
@@ -33,7 +33,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { ref } from "vue";
 
 const host = import.meta.env.VITE_APP_API_REST ?? "";
@@ -58,14 +57,12 @@ defineProps<{
 	versions: object;
 	routes: any;
 }>();
-
 </script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
-#sidebarmain {
+.sidebarmain {
 	display: grid;
 	scroll-behavior: smooth;
 	position: sticky;
@@ -171,5 +168,4 @@ defineProps<{
 		}
 	}
 }
-
 </style>

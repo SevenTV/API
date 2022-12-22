@@ -44,8 +44,8 @@
 					</div>
 				</div>
 				<small v-if="route.method !== 'get'">
-                    Parameter type: {{ route.params.produces?.join(", ") ?? "not specified" }}
-                </small>
+					Parameter type: {{ route.params.produces?.join(", ") ?? "not specified" }}
+				</small>
 				<br v-if="route.method !== 'get'" />
 				<small>tags: {{ route.params.tags?.join(", ") ?? "none" }}</small>
 			</div>
@@ -54,7 +54,6 @@
 </template>
 
 <script setup lang="ts">
-
 // Copy to clipboard stuff - lets users copy the request url to their clipboard with ease
 import { useClipboard } from "@vueuse/core";
 
@@ -65,11 +64,9 @@ defineProps<{
 	host: string;
 	version: string;
 }>();
-
 </script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
 pre {
@@ -132,5 +129,4 @@ pre {
 		}
 	}
 }
-
 </style>

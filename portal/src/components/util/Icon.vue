@@ -3,7 +3,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { useStore } from "@/store/main";
 import { storeToRefs } from "pinia";
 
@@ -16,5 +15,4 @@ defineProps<{
 const { faPro: pro } = storeToRefs(useStore());
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
-
 </script>

@@ -19,7 +19,6 @@
 </template>
 
 <script setup lang="ts">
-
 import swag from "swagger-schema-official";
 import { computed, ref } from "vue";
 import DocsSideBarVue from "@/components/Docs/DocsSideBar.vue";
@@ -84,7 +83,7 @@ interface RouteDef {
 	description: string;
 	method: string;
 	path: string;
-	params: swag.Spec; 
+	params: swag.Spec;
 
 	/* 
 
@@ -115,13 +114,10 @@ interface RouteDef {
 			^ threw errors in workspace and during build because "type name does not exist in Reference" or something like that.
 
 	*/
-	
 }
-
 </script>
 
 <style scoped lang="scss">
-
 @import "@style/themes.scss";
 
 #app {
@@ -209,5 +205,4 @@ main.docs {
 		}
 	}
 }
-
 </style>
