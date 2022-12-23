@@ -61,6 +61,7 @@ type ModRequestMessage implements Message {
 
   target_kind: Int!
   target_id: ObjectID!
+  wish: String!
 }
 
 type ModRequestMessageList {
