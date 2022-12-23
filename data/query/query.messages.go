@@ -101,10 +101,11 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 	return q.Messages(ctx, bson.M{
 		"kind": structures.MessageKindModRequest,
 	}, MessageQueryOptions{
-		UnreadOnly: true,
-		Actor:      actor,
-		Sort:       opt.Sort,
-		Limit:      opt.Limit,
+		UnreadOnly:    true,
+		MessageFilter: opt.Filter,
+		Actor:         actor,
+		Sort:          opt.Sort,
+		Limit:         opt.Limit,
 	})
 }
 
@@ -195,6 +196,17 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 				},
 			}},
 		},
+		func() mongo.Pipeline {
+			if len(opt.MessageFilter) == 0 {
+				return mongo.Pipeline{}
+			}
+
+			return mongo.Pipeline{
+				{{
+					Key:   "$match",
+					Value: opt.MessageFilter,
+				}}}
+		}(),
 	))
 	if err != nil {
 		zap.S().Errorw("failed to create messages aggregation", "error", err)
@@ -237,6 +249,7 @@ type MessageQueryOptions struct {
 	Actor            *structures.User
 	Limit            int
 	UnreadOnly       bool
+	MessageFilter    bson.M
 	FilterRecipients []primitive.ObjectID
 	Sort             bson.M
 }
