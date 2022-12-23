@@ -11,15 +11,38 @@ $themes: (
 		footerBackgroundColor: mix(black, #cae7ed, 5),
 	),
 	dark: (
-		color: rgb(230, 230, 230),
+		color: #e6e6e6,
 		extreme: black,
 		primary: #0288d1,
-		accent: #5ca20d,
+		accent: #0da212,
 		warning: #f44336,
 		backgroundColor: #181d1f,
 		secondaryBackgroundColor: #1f2122,
-		navBackgroundColor: mix(black, #293133, 50%),
-		footerBackgroundColor: mix(black, #181f1f, 25%),
+		navBackgroundColor: mix(black, #29313360, 50%),
+		footerBackgroundColor: mix(black, #181f1f60, 25%),
+	),
+);
+
+$breakpoints: (
+	sm: (
+		min: 576px,
+		max: 575.98px,
+	),
+	md: (
+		min: 768px,
+		max: 767.98px,
+	),
+	lg: (
+		min: 992px,
+		max: 991.98px,
+	),
+	xl: (
+		min: 1200px,
+		max: 1199.98px,
+	),
+	xxl: (
+		min: 1400px,
+		max: 1399.98px,
 	),
 );
 
@@ -46,4 +69,35 @@ $themes: (
 
 @function themed($key) {
 	@return map-get($theme-map, $key);
+}
+
+@mixin breakpoint($breakpoint, $direction: min) {
+	@if map-has-key($breakpoints, $breakpoint) {
+		$breakpoint-values: map-get($breakpoints, $breakpoint);
+		$breakpoint-min: map-get($breakpoint-values, min);
+		$breakpoint-max: map-get($breakpoint-values, max);
+
+		//check if we are writing styles for larger or smaller screens
+		@if $direction == min {
+			@media (min-width: $breakpoint-min) {
+				@content;
+			}
+		} @else {
+			@media (max-width: $breakpoint-max) {
+				@content;
+			}
+		}
+
+		// use the custom value if the breakpoint is not part of the pre-defined list
+	} @else {
+		@if $direction == min {
+			@media (min-width: $breakpoint) {
+				@content;
+			}
+		} @else {
+			@media (max-width: $breakpoint) {
+				@content;
+			}
+		}
+	}
 }

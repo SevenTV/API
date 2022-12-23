@@ -11,7 +11,7 @@
 			</div>
 		</router-link>
 
-		<button class="toggle-collapse" @click="toggleNav"></button>
+		<button class="toggle-collapse" @click="toggleNav">Menu</button>
 		<div class="collapse">
 			<div class="nav-links">
 				<div v-for="link of navLinks" :key="link.route">
@@ -28,15 +28,28 @@
 			{{ env.toString().toUpperCase() }}
 		</span>
 	</nav>
+	<div class="realNav" style="margin-top: 4.5rem" v-if="navOpen">
+		<div>
+			<div v-for="link of navLinks" :key="link.route">
+				<router-link v-if="!link.condition || link.condition()" class="nav-link" :to="link.route">
+					<span :style="{ color: link.color }">{{ link.label }}</span>
+				</router-link>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import Logo from "@svg/Logo.vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const env = import.meta.env.VITE_APP_ENV;
 
 const navOpen = ref(false);
+
 const toggleNav = () => {
 	navOpen.value = !navOpen.value;
 };
@@ -53,6 +66,10 @@ interface NavLink {
 	color?: string;
 	condition?: () => boolean;
 }
+
+watch(route, () => {
+	navOpen.value = false;
+});
 </script>
 
 <style scoped lang="scss">
@@ -62,7 +79,7 @@ nav {
 	position: fixed;
 	z-index: 100;
 	top: 0;
-	width: 100vw;
+	width: 100%;
 	height: 4.5rem;
 	max-height: 4.5rem;
 	min-height: 4.5rem;
@@ -70,6 +87,7 @@ nav {
 	display: flex;
 	font-size: 1.25rem;
 	transition: background-color 100ms ease-in;
+	backdrop-filter: blur(15px);
 
 	@include themify() {
 		background-color: themed("navBackgroundColor");
@@ -79,7 +97,6 @@ nav {
 .app-title {
 	--logo-primary: currentColor;
 	--logo-secondary: #4fc2bc;
-
 	z-index: 1;
 	display: flex;
 	align-items: center;
@@ -90,7 +107,7 @@ nav {
 
 	.logo {
 		display: flex;
-		color: rgb(225, 45, 45);
+		color: #e12d2d;
 		width: 1em;
 		height: 1em;
 		margin-right: 0.25em;
@@ -113,7 +130,7 @@ nav {
 		left: -50%;
 		font-family: "Work Sans", sans-serif;
 		font-weight: 900;
-		color: rgb(225, 45, 45);
+		color: #e12d2d;
 
 		&.env-offset {
 			bottom: 1em;
@@ -126,7 +143,6 @@ nav {
 .account {
 	display: flex;
 	flex-wrap: wrap;
-
 	width: 20%;
 }
 
@@ -141,6 +157,7 @@ nav {
 	user-select: none;
 	letter-spacing: 1em;
 	font-size: 3em;
+
 	@include themify() {
 		color: transparentize(themed("color"), 0.85);
 	}
@@ -163,18 +180,36 @@ nav {
 	height: 100%;
 	border-bottom: 0.1em solid transparent;
 	font-size: 0.85em;
-	&.router-link-active {
-		border-color: currentColor;
+	transition: all 0.2s ease-in-out;
+
+	@include breakpoint(md, max) {
+		&.router-link-active {
+			background-color: #ca0000b4;
+		}
+
+		&:hover {
+			@include themify() {
+				background: #e4000038;
+			}
+		}
 	}
-	&:hover {
-		@include themify() {
-			background: transparentize(themed("backgroundColor"), 0.5);
+
+	@include breakpoint(lg, min) {
+		&.router-link-active {
+			border-color: currentColor;
+		}
+
+		&:hover {
+			@include themify() {
+				background: transparentize(themed("backgroundColor"), 0.5);
+			}
 		}
 	}
 }
 
 .collapse {
 	display: flex;
+	z-index: 1000;
 	flex-grow: 1;
 }
 
@@ -187,15 +222,37 @@ nav {
 	padding: 0.5em;
 	border-radius: 0.5em;
 	place-self: center;
+
 	&:hover {
 		border-color: #303030;
 	}
+
 	&:active {
 		background-color: #424242;
 	}
 }
 
-@media screen and (max-width: 1000px) {
+.realNav {
+	@include breakpoint(lg, min) {
+		display: none;
+	}
+
+	transition: all 0.5s ease-in-out;
+	font-size: 1.5rem;
+	display: block;
+	margin-top: 4.5rem;
+	z-index: 150;
+	position: fixed;
+	width: 100%;
+	box-shadow: black 0.5rem 0 15rem;
+	backdrop-filter: blur(1rem);
+
+	@include themify() {
+		background-color: transparentize(themed("extreme"), 0.33);
+	}
+}
+
+@include breakpoint(lg, max) {
 	.navOpen {
 		.collapse {
 			min-height: calc(100vh - 4.5rem);
@@ -209,41 +266,49 @@ nav {
 			}
 
 			position: absolute;
-			z-index: 10;
+			z-index: 1000;
 			flex-direction: column;
+
 			.account {
 				width: 100vw;
 				place-items: center;
 				justify-content: center;
 				font-size: 1.5em;
 			}
+
 			.nav-links {
 				flex-direction: column;
 				justify-content: start;
 				width: 100vw;
 				order: 2;
+
 				.nav-link {
 					&.router-link-exact-active {
 						border-color: transparent !important;
+
 						@include themify() {
-							background: mix(themed("backgroundColor"), rgb(107, 107, 107), 75%);
+							background: mix(themed("backgroundColor"), #6b6b6b, 75%);
 						}
 					}
 				}
 			}
 		}
+
 		.account {
 			position: unset;
 		}
+
 		.nav-link {
 			width: 100vw;
 		}
 	}
+
 	nav:not(.navOpen) {
 		.collapse {
 			display: none;
 		}
 	}
+
 	.toggle-collapse {
 		margin-left: auto;
 		display: block;

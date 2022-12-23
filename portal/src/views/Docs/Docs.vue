@@ -1,49 +1,15 @@
 <template>
 	<main class="docs">
-		<div class="docs-sidebar">
-			<!-- Version Selector -->
-			<div class="sidebar-version-selector">
-				<p class="sidebar-section">API HOST</p>
-				<span>
-					<span>{{ host.replace(/^(https?:|)\/\//, "") }}/</span>
-					<select v-model="version">
-						<option v-for="v of versions">{{ v }}</option>
-					</select>
-				</span>
-			</div>
-
-			<div class="sidebar-routes">
-				<p class="sidebar-section">ROUTES</p>
-				<div class="route-navigator">
-					<div class="route-navigator-item" v-for="route in routes" :key="route.id">
-						<a class="route-navigator-link" @click="scrollTo($event, route.id)">{{ route.summary }}</a>
-					</div>
-				</div>
-			</div>
-		</div>
-
+		<DocsSideBarVue :host="host.replace(/^(https?:|)\/\//, '')" :versions="versions" :routes="routes.result" />
 		<div class="docs-content">
 			<div v-if="error" class="load-error">
 				<span>{{ error }}</span>
 			</div>
-
 			<div>
 				<div class="route-list">
 					<div class="route-list">
-						<div class="route-item" v-for="route of routes">
-							<h1 :id="route.id">
-								<span>{{ route.summary }}</span>
-								<span>
-									<span class="route-item-method-name" :method="route.method">
-										{{ route.method.toUpperCase() }}
-									</span>
-									{{ route.path }}
-								</span>
-							</h1>
-
-							<div class="route-item-description">
-								{{ route.description }}
-							</div>
+						<div class="route-item" :method="route.method" v-for="route of routes.result">
+							<DocsRouteItemVue :route="route" :host="host" :version="version" />
 						</div>
 					</div>
 				</div>
@@ -55,6 +21,8 @@
 <script setup lang="ts">
 import swag from "swagger-schema-official";
 import { computed, ref } from "vue";
+import DocsSideBarVue from "@/components/Docs/DocsSideBar.vue";
+import DocsRouteItemVue from "@/components/Docs/DocsRouteItem.vue";
 
 const error = ref("");
 
@@ -83,29 +51,23 @@ const routes = computed(() => {
 
 		for (const method of methods) {
 			const params = path[method as "get" | "post" | "put" | "delete"];
-
 			result.push({
 				id: method + " " + key,
 				summary: params?.summary ?? "",
 				description: params?.description ?? "",
-				params: params as swag.Operation,
+				params: params as swag.Spec,
 				method,
 				path: key,
 			});
 		}
 	}
 
-	return result;
+	return {
+		result,
+	};
 });
 
 // computed(() => Object.keys(paths).map((k) => ({ name: k, ...paths[k] })));
-
-const scrollTo = (evt: MouseEvent, id: string) => {
-	const el = document.getElementById(id);
-	if (!el) return;
-
-	el.scrollIntoView({ behavior: "smooth" });
-};
 
 const methodSort = {
 	get: 1,
@@ -121,75 +83,113 @@ interface RouteDef {
 	description: string;
 	method: string;
 	path: string;
-	params: swag.Operation;
+	params: swag.Spec;
+
+	/* 
+
+	changed to swag.Spec because it fit our needs better than swag.Operation
+	swag.Spec gives us the BodyParamter type in the parameters object. This 
+	allows us to display a value such as route.params.parameters[0].name without
+	having to define the type of it. TLDR; typescript is not happy when you try
+	to display route.params.parameters[0].name while using swag.Operation.
+
+	If swag.Operation serves a purpose that is needed, we could always make 
+	swag.Spec and swag.Operation two different objects. 
+
+	Maybe like:
+	{
+			paramsOperation: swag.Operation;
+			paramsSpec: swag.Spec;	
+	}
+
+	If there is a better way of doing this, I most likely didn't see it. 
+	I'm not a pro with typescript, so I just took the approach that made
+	the most sense to me. Which was to use the type with parameters already defined.
+	
+	swag.Spec parameters type:
+			parameters?: { [parameterName: string]: BodyParameter | QueryParameter } | undefined;
+	
+	swag.Operation parameter type:
+			parameters?: Array<Parameter | Reference> | undefined;
+			^ threw errors in workspace and during build because "type name does not exist in Reference" or something like that.
+
+	*/
 }
 </script>
 
 <style scoped lang="scss">
 @import "@style/themes.scss";
 
+#app {
+	width: 100%;
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	padding: 1rem;
+}
+
 main.docs {
-	display: grid;
+	@include breakpoint(md, max) {
+		display: flex;
+	}
+	@include breakpoint(md, min) {
+		display: grid;
+	}
 	grid-template-columns: max(14em, min(18em, 25%)) 1fr;
 	scroll-behavior: smooth;
 
 	@include themify() {
-		.docs-sidebar {
-			background-color: lighten(themed("backgroundColor"), 2);
+		.route-item {
+			background-color: darken(themed("backgroundColor"), 5);
+			margin-left: 1rem;
+			margin-right: 1rem;
+			padding: 5px;
+			transition: all 0.5s ease-in-out;
+
+			@include breakpoint(md, max) {
+				width: calc(100vw - 30px);
+			}
+
+			@include breakpoint(lg, min) {
+				width: calc(100vw - 320px);
+			}
+
+			&[method="get"] {
+				box-shadow: lighten(themed("accent"), 1) -3px 0;
+			}
+
+			&[method="post"] {
+				box-shadow: lighten(themed("primary"), 1) -3px 0;
+			}
+
+			&[method="patch"] {
+				box-shadow: adjust-hue(themed("primary"), 95) -3px 0;
+			}
+
+			&[method="put"] {
+				box-shadow: darken(adjust-hue(themed("warning"), 25), 10) -3px 0;
+			}
+
+			&[method="delete"] {
+				box-shadow: #d7392e -3px 0;
+			}
 		}
 
 		.route-item > h1 {
-			background-color: darken(themed("backgroundColor"), 1.5);
-		}
-
-		.route-item-method-name {
-			&[method="get"] {
-				color: themed("accent");
-			}
-			&[method="post"] {
-				color: themed("primary");
-			}
-			&[method="patch"] {
-				color: adjust-hue(themed("primary"), 95);
-			}
-			&[method="put"] {
-				color: adjust-hue(themed("warning"), 25);
-			}
-			&[method="delete"] {
-				color: themed("warning");
-			}
-		}
-
-		.route-item-description {
-			margin: 0.5em;
+			border-radius: 0.313rem;
 		}
 	}
 
-	.docs-sidebar {
-		display: flex;
-		flex-direction: column;
-		background-color: red;
-		padding-left: 1em;
-		padding-top: 1em;
-		gap: 1em;
-		position: relative;
-		max-height: 100vh;
-		overflow: auto;
-
-		.sidebar-section {
-			font-size: 0.85rem;
-			font-weight: 600;
-		}
-
-		> .sidebar-version-selector > select {
-			margin-top: 0.5em;
-		}
-	}
 	.docs-content {
 		.route-list {
+			margin-top: 0.625rem;
+			margin-bottom: 0.625rem;
 			display: grid;
-			gap: 2.5em;
+			gap: 1.5em;
 		}
+
 		.route-item {
 			> h1 {
 				display: grid;
@@ -197,13 +197,9 @@ main.docs {
 				padding: 0.25em;
 
 				> span:nth-child(2) {
-					font-size: 0.85rem;
+					font-size: 1rem;
 					font-weight: 400;
 					margin-left: 0.1em;
-
-					> .route-item-method-name {
-						font-weight: 600;
-					}
 				}
 			}
 		}
