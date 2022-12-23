@@ -31,5 +31,6 @@ func ModRequestMessageModel(xm model.ModRequestMessageModel) *gql_model.ModReque
 		AuthorID:   xm.AuthorID,
 		TargetKind: int(xm.TargetKind),
 		TargetID:   xm.TargetID,
+		Read:       xm.Read,
 	}
 }

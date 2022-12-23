@@ -2,7 +2,7 @@ package query
 
 import (
 	"context"
-	"io"
+	"sync"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions) *QueryResult[structures.Message[bson.Raw]] {
@@ -69,7 +70,6 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 	return q.Messages(ctx, bson.M{"$and": and}, MessageQueryOptions{
 		Actor:            actor,
 		Limit:            opt.Limit,
-		ReturnUnread:     true,
 		FilterRecipients: []primitive.ObjectID{user.ID},
 	})
 }
@@ -98,32 +98,13 @@ func (q *Query) ModRequestMessages(ctx context.Context, opt ModRequestMessagesQu
 		}
 	}
 
-	targetsAry := []structures.ObjectKind{}
-
-	for k, ok := range targets {
-		if ok {
-			targetsAry = append(targetsAry, k)
-		}
-	}
-
-	f := bson.M{
+	return q.Messages(ctx, bson.M{
 		"kind": structures.MessageKindModRequest,
-		"data.target_kind": bson.M{
-			"$in": targetsAry,
-		},
-	}
-	if len(opt.TargetIDs) > 0 {
-		f["data.target_id"] = bson.M{"$in": opt.TargetIDs}
-	}
-
-	for k, v := range opt.Filter {
-		f[k] = v
-	}
-
-	return q.Messages(ctx, f, MessageQueryOptions{
-		Actor: actor,
-		Sort:  opt.Sort,
-		Limit: opt.Limit,
+	}, MessageQueryOptions{
+		UnreadOnly: true,
+		Actor:      actor,
+		Sort:       opt.Sort,
+		Limit:      opt.Limit,
 	})
 }
 
@@ -134,94 +115,104 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		opt.Sort = bson.M{"_id": -1}
 	}
 
-	// Create the pipeline
-	cur, err := q.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, aggregations.Combine(
-		// Search message read states
+	if opt.UnreadOnly {
+		filter["read"] = false
+	}
+
+	matcherPipeline := mongo.Pipeline{
+		{{Key: "$sort", Value: opt.Sort}},
+		{{Key: "$match", Value: filter}},
+		{{
+			Key: "$lookup",
+			Value: mongo.Lookup{
+				From:         mongo.CollectionNameMessages,
+				LocalField:   "message_id",
+				ForeignField: "_id",
+				As:           "message",
+			},
+		}},
+		{{
+			Key: "$match",
+			Value: bson.M{
+				"message": bson.M{"$size": 1},
+			},
+		}},
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
+			matcherPipeline,
+			mongo.Pipeline{{{Key: "$count", Value: "count"}}},
+		))
+		if err != nil {
+			zap.S().Errorw("failed to count total messages", "error", err)
+
+			return
+		}
+
+		v := struct {
+			Count int64 `bson:"count"`
+		}{}
+
+		if cur.Next(ctx) {
+			if err = cur.Decode(&v); err != nil {
+				zap.S().Errorw("failed to decode total messages", "error", err)
+			}
+		}
+
+		qr.setTotal(v.Count)
+	}()
+
+	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
+		matcherPipeline,
 		mongo.Pipeline{
-			{{Key: "$sort", Value: opt.Sort}},
-			{{Key: "$match", Value: filter}},
-		},
-		mongo.Pipeline{
-			{{
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameMessagesRead,
-					LocalField:   "_id",
-					ForeignField: "message_id",
-					As:           "read_states",
-				},
-			}},
+			{{Key: "$limit", Value: opt.Limit}},
 			{{
 				Key: "$set",
 				Value: bson.M{
-					"readers": bson.M{"$size": "$read_states"},
-					"read": bson.M{"$getField": bson.M{
-						"input": bson.M{"$first": bson.M{
-							"$filter": bson.M{
-								"input": "$read_states",
-								"as":    "rs",
-								"cond": bson.M{
-									"$and": func() bson.A {
-										a := bson.A{bson.M{"$eq": bson.A{"$$rs.read", true}}}
-										if len(opt.FilterRecipients) > 0 {
-											a = append(a, bson.M{"$in": bson.A{"$$rs.recipient_id", opt.FilterRecipients}})
-										}
-
-										return a
-									}(),
-								},
-							},
-						}},
-						"field": "read",
-					}},
+					"message": bson.M{
+						"$arrayElemAt": bson.A{"$message", 0},
+					},
 				},
 			}},
 			{{
-				Key: "$match",
-				Value: func() bson.M {
-					m := bson.M{"readers": bson.M{"$gt": 0}}
-					if !opt.ReturnUnread {
-						m["read"] = bson.M{"$not": bson.M{"$eq": true}}
-					}
-
-					return m
-				}(),
-			}},
-			{{Key: "$limit", Value: opt.Limit}},
-			{{
-				Key:   "$unset",
-				Value: bson.A{"read_states"},
-			}},
-			{{
-				Key: "$group",
+				Key: "$replaceRoot",
 				Value: bson.M{
-					"_id": nil,
-					"messages": bson.M{
-						"$push": "$$ROOT",
+					"newRoot": bson.M{
+						"$mergeObjects": bson.A{
+							"$message",
+							bson.M{
+								"timestamp": "$timestamp",
+								"read":      "$read",
+							},
+						},
 					},
 				},
 			}},
 		},
 	))
 	if err != nil {
-		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
+		zap.S().Errorw("failed to create messages aggregation", "error", err)
+
+		return qr.setError(errors.ErrInternalServerError())
 	}
 
-	v := &aggregatedMessagesResult{}
+	v := []structures.Message[bson.Raw]{}
 
-	cur.Next(ctx)
+	if err = cur.All(ctx, &v); err != nil {
+		zap.S().Errorw("failed to decode messages", "error", err)
 
-	if err := cur.Decode(v); err != nil {
-		if err == io.EOF {
-			return qr.setError(errors.ErrNoItems().SetDetail("No messages"))
-		}
-
-		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
+		return qr.setError(errors.ErrInternalServerError())
 	}
 
-	qr.setTotal(v.Count)
+	wg.Wait()
 
-	return qr.setItems(v.Messages)
+	return qr.setItems(v)
 }
 
 type InboxMessagesQueryOptions struct {
@@ -245,14 +236,7 @@ type ModRequestMessagesQueryOptions struct {
 type MessageQueryOptions struct {
 	Actor            *structures.User
 	Limit            int
-	ReturnUnread     bool
+	UnreadOnly       bool
 	FilterRecipients []primitive.ObjectID
 	Sort             bson.M
-}
-
-type aggregatedMessagesResult struct {
-	Count            int64                              `bson:"count"`
-	Messages         []structures.Message[bson.Raw]     `bson:"messages"`
-	Authors          []structures.User                  `bson:"authors"`
-	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }

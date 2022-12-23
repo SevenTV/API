@@ -14,7 +14,7 @@ import (
 )
 
 // ModRequests implements generated.QueryResolver
-func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID, limitArg *int) ([]*model.ModRequestMessage, error) {
+func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID, limitArg *int) (*model.ModRequestMessageList, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -30,12 +30,12 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		match["_id"] = bson.M{"$lt": afterID}
 	}
 
-	limit := 500
+	limit := 50
 	if limitArg != nil {
 		limit = *limitArg
 	}
 
-	messages, err := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
+	msgQuery := r.Ctx.Inst().Query.ModRequestMessages(ctx, query.ModRequestMessagesQueryOptions{
 		Actor:  &actor,
 		Filter: match,
 		Limit:  limit,
@@ -43,11 +43,13 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,
 		},
-	}).Items()
+	})
+
+	messages, err := msgQuery.Items()
 	if err != nil {
 		errCode, _ := err.(errors.APIError)
 		if errCode.Code() == errors.ErrNoItems().Code() {
-			return []*model.ModRequestMessage{}, nil
+			return &model.ModRequestMessageList{}, nil
 		}
 
 		return nil, err
@@ -61,5 +63,8 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		}
 	}
 
-	return result, nil
+	return &model.ModRequestMessageList{
+		Messages: result,
+		Total:    int(msgQuery.Total()),
+	}, nil
 }
