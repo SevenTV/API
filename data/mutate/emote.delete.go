@@ -129,16 +129,40 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		return errors.ErrInternalServerError()
 	}
 
-	// Remove any mod requests for the emote
+	// Fetch pending mod requests
 	// if !opt.Undo {
-	_, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteMany(ctx, bson.M{
+	pendingRequests := []structures.Message[structures.MessageDataModRequest]{} // fetch p
+
+	cur, err := m.mongo.Collection(mongo.CollectionNameMessages).Find(ctx, bson.M{
 		"kind":             structures.MessageKindModRequest,
 		"data.target_kind": structures.ObjectKindEmote,
 		"data.target_id":   utils.Ternary(opt.VersionID.IsZero(), bson.M{"$in": versionIDs}, bson.M{"$eq": opt.VersionID}),
 	})
 	if err != nil {
-		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+		zap.S().Errorw("mongo, failed to query pending mod requests for emote during its deletion", "error", err)
 	}
+
+	// Remove pending mod request messages and their respective readstates
+	if err := cur.All(ctx, &pendingRequests); err != nil {
+		zap.S().Errorw("mongo, failed to delete mod requests for emote during its deletion", "error", err)
+	} else {
+		for _, req := range pendingRequests {
+			// Remove the message
+			if _, err := m.mongo.Collection(mongo.CollectionNameMessages).DeleteOne(ctx, bson.M{
+				"_id": req.ID,
+			}); err != nil {
+				zap.S().Errorw("mongo, failed to delete mod request for emote during its deletion", "error", err)
+			}
+
+			// Remove the message from the user's inbox
+			if _, err := m.mongo.Collection(mongo.CollectionNameMessagesRead).DeleteOne(ctx, bson.M{
+				"message_id": req.ID,
+			}); err != nil {
+				zap.S().Errorw("mongo, failed to delete mod request for emote during its deletion", "error", err)
+			}
+		}
+	}
+
 	// }
 
 	// Write audit log
