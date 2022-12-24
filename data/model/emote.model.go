@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -14,6 +15,7 @@ type EmoteModel struct {
 	Flags     EmoteFlagsModel     `json:"flags"`
 	Tags      []string            `json:"tags"`
 	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
+	States    []EmoteVersionState `json:"states"`
 	Listed    bool                `json:"listed"`
 	Animated  bool                `json:"animated"`
 	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
@@ -28,6 +30,7 @@ type EmotePartialModel struct {
 	Flags     EmoteFlagsModel     `json:"flags"`
 	Tags      []string            `json:"tags,omitempty"`
 	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
+	States    []EmoteVersionState `json:"states"`
 	Listed    bool                `json:"listed"`
 	Animated  bool                `json:"animated"`
 	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
@@ -39,6 +42,7 @@ type EmoteVersionModel struct {
 	Name        string              `json:"name"`
 	Description string              `json:"description"`
 	Lifecycle   EmoteLifecycleModel `json:"lifecycle"`
+	States      []EmoteVersionState `json:"states"`
 	Listed      bool                `json:"listed"`
 	Animated    bool                `json:"animated"`
 	Host        *ImageHost          `json:"host,omitempty" extensions:"x-omitempty"`
@@ -71,11 +75,20 @@ const (
 	EmoteFlagsContentTwitchDisallowed EmoteFlagsModel = 1 << 24 // Not allowed specifically on the Twitch platform
 )
 
+type EmoteVersionState string
+
+const (
+	EmoteVersionStateListed        EmoteVersionState = "LISTED"
+	EmoteVersionStateAllowPersonal EmoteVersionState = "ALLOW_PERSONAL"
+)
+
 func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 	images := make([]ImageFile, 0)
 	lifecycle := EmoteLifecycleDisabled
 	listed := false
 	animated := false
+
+	states := make(utils.Set[EmoteVersionState], 0)
 
 	versions := make([]EmoteVersionModel, len(v.Versions))
 
@@ -97,9 +110,16 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 
 		if ver.ID == v.ID {
 			lifecycle = EmoteLifecycleModel(ver.State.Lifecycle)
-			listed = ver.State.Listed
 			animated = ver.Animated
 			images = vimages
+
+			if listed = ver.State.Listed; listed {
+				states.Add(EmoteVersionStateListed)
+			}
+
+			if ver.State.AllowPersonal != nil && *ver.State.AllowPersonal {
+				states.Add(EmoteVersionStateAllowPersonal)
+			}
 		}
 
 		if ver.IsUnavailable() {
@@ -135,6 +155,7 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		Flags:     EmoteFlagsModel(v.Flags),
 		Tags:      v.Tags,
 		Lifecycle: lifecycle,
+		States:    states.Values(),
 		Listed:    listed,
 		Animated:  animated,
 		Owner:     owner,
@@ -154,6 +175,7 @@ func (em EmoteModel) ToPartial() EmotePartialModel {
 		Flags:     em.Flags,
 		Tags:      em.Tags,
 		Lifecycle: em.Lifecycle,
+		States:    em.States,
 		Listed:    em.Listed,
 		Animated:  em.Animated,
 		Owner:     em.Owner,
@@ -172,11 +194,22 @@ func (x *modelizer) EmoteVersion(v structures.EmoteVersion) EmoteVersionModel {
 		return files[i].Width < files[j].Width
 	})
 
+	states := make(utils.Set[EmoteVersionState])
+
+	if v.State.Listed {
+		states.Add(EmoteVersionStateListed)
+	}
+
+	if v.State.AllowPersonal != nil && *v.State.AllowPersonal {
+		states.Add(EmoteVersionStateAllowPersonal)
+	}
+
 	return EmoteVersionModel{
 		ID:          v.ID,
 		Name:        v.Name,
 		Description: v.Description,
 		Lifecycle:   EmoteLifecycleModel(v.State.Lifecycle),
+		States:      states.Values(),
 		Listed:      v.State.Listed,
 		Animated:    v.Animated,
 		Host: &ImageHost{

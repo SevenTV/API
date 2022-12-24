@@ -9,6 +9,7 @@ import (
 type EmoteSetModel struct {
 	ID         primitive.ObjectID `json:"id"`
 	Name       string             `json:"name"`
+	Flags      EmoteSetFlagModel  `json:"flags"`
 	Tags       []string           `json:"tags"`
 	Immutable  bool               `json:"immutable"`
 	Privileged bool               `json:"privileged"`
@@ -22,10 +23,24 @@ type EmoteSetModel struct {
 type EmoteSetPartialModel struct {
 	ID       primitive.ObjectID `json:"id"`
 	Name     string             `json:"name"`
+	Flags    EmoteSetFlagModel  `json:"flags"`
 	Tags     []string           `json:"tags"`
 	Capacity int32              `json:"capacity"`
 	Owner    *UserPartialModel  `json:"owner,omitempty" extensions:"x-nullable, x-omitempty"`
 }
+
+type EmoteSetFlagModel int32
+
+const (
+	// Set is immutable, meaning it cannot be modified
+	EmoteSetFlagImmutable EmoteSetFlagModel = 1 << 0
+	// Set is privileged, meaning it can only be modified by its owner
+	EmoteSetFlagPrivileged EmoteSetFlagModel = 1 << 1
+	// Set is personal, meaning its content can be used globally and it is subject to stricter content moderation rules
+	EmoteSetFlagPersonal EmoteSetFlagModel = 1 << 2
+	// Set is commercial, meaning it is sold and subject to extra rules on content ownership
+	EmoteSetFlagCommercial EmoteSetFlagModel = 1 << 3
+)
 
 type ActiveEmoteModel struct {
 	ID        primitive.ObjectID   `json:"id"`
@@ -76,6 +91,7 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 	return EmoteSetModel{
 		ID:         v.ID,
 		Name:       v.Name,
+		Flags:      EmoteSetFlagModel(v.Flags),
 		Tags:       v.Tags,
 		Immutable:  v.Immutable,
 		Privileged: v.Privileged,
@@ -93,6 +109,7 @@ func (esm EmoteSetModel) ToPartial() EmoteSetPartialModel {
 	return EmoteSetPartialModel{
 		ID:       esm.ID,
 		Name:     esm.Name,
+		Flags:    esm.Flags,
 		Tags:     esm.Tags,
 		Capacity: esm.Capacity,
 		Owner:    esm.Owner,

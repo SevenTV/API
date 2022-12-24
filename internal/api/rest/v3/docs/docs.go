@@ -264,7 +264,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{user.id}/presence": {
+        "/users/{user.id}/presences": {
             "post": {
                 "description": "Update user presence",
                 "produces": [
@@ -287,7 +287,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.MutationResponse"
+                            "$ref": "#/definitions/model.PresenceModel"
                         }
                     }
                 }
@@ -563,6 +563,12 @@ const docTemplate = `{
                     ],
                     "x-omitempty": true
                 },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
+                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -609,6 +615,12 @@ const docTemplate = `{
                     ],
                     "x-omitempty": true
                 },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
+                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -616,6 +628,21 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "model.EmoteSetFlagModel": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                4,
+                8
+            ],
+            "x-enum-varnames": [
+                "EmoteSetFlagImmutable",
+                "EmoteSetFlagPrivileged",
+                "EmoteSetFlagPersonal",
+                "EmoteSetFlagCommercial"
+            ]
         },
         "model.EmoteSetModel": {
             "type": "object",
@@ -633,6 +660,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.ActiveEmoteModel"
                     },
                     "x-omitempty": true
+                },
+                "flags": {
+                    "$ref": "#/definitions/model.EmoteSetFlagModel"
                 },
                 "id": {
                     "type": "string"
@@ -692,6 +722,9 @@ const docTemplate = `{
                 "capacity": {
                     "type": "integer"
                 },
+                "flags": {
+                    "$ref": "#/definitions/model.EmoteSetFlagModel"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -745,8 +778,25 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
                 }
             }
+        },
+        "model.EmoteVersionState": {
+            "type": "string",
+            "enum": [
+                "LISTED",
+                "ALLOW_PERSONAL"
+            ],
+            "x-enum-varnames": [
+                "EmoteVersionStateListed",
+                "EmoteVersionStateAllowPersonal"
+            ]
         },
         "model.ImageFile": {
             "type": "object",
@@ -799,11 +849,36 @@ const docTemplate = `{
                 }
             }
         },
-        "model.MutationResponse": {
+        "model.PresenceKind": {
+            "type": "integer",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "x-enum-varnames": [
+                "UserPresenceKindUnknown",
+                "UserPresenceKindChannel",
+                "UserPresenceKindWebPage"
+            ]
+        },
+        "model.PresenceModel": {
             "type": "object",
             "properties": {
-                "ok": {
-                    "type": "boolean"
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "$ref": "#/definitions/model.PresenceKind"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "ttl": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
@@ -943,7 +1018,7 @@ const docTemplate = `{
                     },
                     "x-omitempty": true
                 },
-                "createdAt": {
+                "created_at": {
                     "type": "integer"
                 },
                 "display_name": {

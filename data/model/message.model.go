@@ -28,6 +28,8 @@ type ModRequestMessageModel struct {
 	AuthorID   *primitive.ObjectID `json:"author_id"`
 	TargetKind int                 `json:"targetKind"`
 	TargetID   primitive.ObjectID  `json:"targetID"`
+	Read       bool                `json:"read"`
+	Wish       string              `json:"wish"`
 }
 
 type MessageKind string
@@ -64,5 +66,7 @@ func (m *modelizer) ModRequestMessage(v structures.Message[structures.MessageDat
 		AuthorID:   &v.AuthorID,
 		TargetKind: int(v.Data.TargetKind),
 		TargetID:   v.Data.TargetID,
+		Read:       v.Read,
+		Wish:       v.Data.Wish,
 	}
 }

@@ -134,9 +134,9 @@ func (r *Resolver) SendInboxMessage(ctx context.Context, recipientsArg []primiti
 	}
 
 	msg, err := r.Ctx.Inst().Query.Messages(ctx, bson.M{"_id": mb.Message.ID}, query.MessageQueryOptions{
-		Actor:        &actor,
-		Limit:        1,
-		ReturnUnread: true,
+		Actor:      &actor,
+		Limit:      1,
+		UnreadOnly: true,
 	}).First()
 	if err != nil {
 		return nil, err

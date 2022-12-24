@@ -2,6 +2,7 @@ package mutate
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -15,6 +16,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+)
+
+const (
+	EMOTE_SET_PERSONAL_MIN_EMOTE_LIFETIME       = time.Hour
+	EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT  int32 = 50
 )
 
 // SetEmote: enable, edit or disable active emotes in the set
@@ -83,6 +89,8 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			for _, ver := range e.Versions {
 				if v, ok := targetEmoteMap[ver.ID]; ok {
 					v.emote = e
+					v.version = ver
+					v.ChannelCount = ver.State.ChannelCount
 					targetEmoteMap[e.ID] = v
 				}
 			}
@@ -153,6 +161,11 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			continue
 		}
 
+		z := zap.S().With(
+			"EMOTE_ID", tgt.ID.Hex(),
+			"ACTOR_ID", actor.ID.Hex(),
+		)
+
 		initName := tgt.emote.Name
 
 		tgt.Name = utils.Ternary(tgt.Name != "", tgt.Name, tgt.emote.Name)
@@ -197,6 +210,102 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						"EMOTE_ID": tgt.ID.Hex(),
 					}).SetDetail("Private Emote")
 				}
+			}
+
+			// Personal Set: if emote is not personal use-approved, send a new mod request
+			if set.Flags.Has(structures.EmoteSetFlagPersonal) {
+				if tgt.version.State.AllowPersonal != nil && !*tgt.version.State.AllowPersonal {
+					return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+						"EMOTE_ID": tgt.ID.Hex(),
+					}).SetDetail("This emote has been rejected for use in personal sets")
+				}
+
+				// Acquire a lock. This prevents multiple personal use requests from being sent for the same emote
+				mx := m.redis.Mutex(m.redis.ComposeKey("api", "emote", tgt.ID.Hex(), "mod_request", "personal_use"), time.Minute)
+				if err := mx.LockContext(ctx); err != nil {
+					z.Errorw("failed to acquire lock", "error", err)
+				}
+
+				// Check for existing mod request
+				cur, err := m.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, mongo.Pipeline{
+					{{
+						Key: "$match",
+						Value: bson.M{ // find mod request messages targeting this emote
+							"kind":             structures.MessageKindModRequest,
+							"data.target_kind": structures.ObjectKindEmote,
+							"data.target_id":   tgt.emote.ID,
+						},
+					}},
+					{{
+						Key: "$lookup",
+						Value: mongo.Lookup{ // join with read states
+							From:         mongo.CollectionNameMessagesRead,
+							LocalField:   "_id",
+							ForeignField: "message_id",
+							As:           "read_states",
+						},
+					}},
+					{{
+						Key: "$project", // return true if read states exist
+						Value: bson.M{"is_pending": bson.M{
+							"$gt": bson.A{bson.M{"$size": bson.M{"$filter": bson.M{
+								"input": "$read_states",
+								"as":    "rs",
+								"cond":  bson.M{"$eq": bson.A{"$$rs.read", false}},
+							}}}, 0},
+						}},
+					}},
+				})
+				if err != nil {
+					z.Errorw("failed to check for existing mod request (aggregation couldn't be formulated)")
+
+					_, _ = mx.UnlockContext(ctx)
+
+					return errors.ErrInternalServerError()
+				}
+
+				states := []struct {
+					IsPending bool `bson:"is_pending"`
+				}{}
+				if err := cur.All(ctx, &states); err != nil {
+					z.Errorw("failed to check for existing mod request (could not return from cursor)")
+
+					_, _ = mx.UnlockContext(ctx)
+
+					return errors.ErrInternalServerError()
+				}
+
+				// If there is a pending mod request, skip
+				alreadyRequested := false
+
+				for _, state := range states {
+					if alreadyRequested = state.IsPending; alreadyRequested {
+						break
+					}
+				}
+
+				if !alreadyRequested {
+					if tgt.ChannelCount < EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT {
+						return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+							"EMOTE_ID": tgt.ID.Hex(),
+						}).SetDetail("You cannot request this emote for Personal Use because it is in less than %d channels", EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT)
+					}
+
+					// Construct & write new mod request
+					mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
+						SetKind(structures.MessageKindModRequest).
+						SetAuthorID(actor.ID).
+						SetData(structures.MessageDataModRequest{
+							TargetKind: structures.ObjectKindEmote,
+							TargetID:   tgt.emote.ID,
+							Wish:       "personal_use",
+						})
+					if err := m.SendModRequestMessage(ctx, mb); err != nil {
+						z.Errorw("failed to send personal_use mod request message", "error", err)
+					}
+				}
+
+				_, _ = mx.UnlockContext(ctx)
 			}
 
 			// Check zero-width permission
@@ -265,15 +374,20 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			// The emote must already be active
 			found := false
 
-			for _, e := range emotes {
-				if tgt.Action == structures.ListItemActionUpdate && e.Name == tgt.Name {
+			var (
+				ind int
+				ae  structures.ActiveEmote
+			)
+
+			for ind, ae = range emotes {
+				if tgt.Action == structures.ListItemActionUpdate && ae.Name == tgt.Name {
 					return errors.ErrEmoteNameConflict().SetFields(errors.Fields{
 						"EMOTE_ID":          tgt.ID.Hex(),
 						"CONFLICT_EMOTE_ID": tgt.ID.Hex(),
 					})
 				}
 
-				if e.ID == tgt.ID {
+				if ae.ID == tgt.ID {
 					found = true
 					break
 				}
@@ -285,59 +399,75 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				})
 			}
 
+			// In Personal Sets: the emote cannot be modified or deleted before the timer
+			if set.Flags.Has(structures.EmoteSetFlagPersonal) {
+				at := ae.Timestamp
+				if ae.TimestampUpdate != nil && ae.TimestampUpdate.After(at) {
+					at = *ae.TimestampUpdate
+				}
+
+				thresold := at.Add(EMOTE_SET_PERSONAL_MIN_EMOTE_LIFETIME)
+
+				if thresold.After(time.Now()) {
+					return errors.ErrRateLimited().SetDetail(
+						"This emote is locked in this set for %s minutes",
+						strconv.FormatFloat(-time.Since(thresold).Minutes(), 'f', 0, 64),
+					)
+				}
+			}
+
 			if tgt.Action == structures.ListItemActionUpdate {
 				// Modify active emote
-				ae, ind := esb.EmoteSet.GetEmote(tgt.ID)
-				if !ae.ID.IsZero() {
-					c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
-						New: structures.ActiveEmote{
-							ID:        tgt.ID,
-							Name:      tgt.Name,
-							Flags:     tgt.Flags,
-							Timestamp: ae.Timestamp,
-						},
-						Old: structures.ActiveEmote{
-							ID:        ae.ID,
-							Name:      ae.Name,
-							Flags:     ae.Flags,
-							Timestamp: ae.Timestamp,
-						},
-						Position: int32(ind),
-					})
-					esb.UpdateActiveEmote(tgt.ID, tgt.Name)
+				c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
+					New: structures.ActiveEmote{
+						ID:              tgt.ID,
+						Name:            tgt.Name,
+						Flags:           tgt.Flags,
+						Timestamp:       ae.Timestamp,
+						TimestampUpdate: utils.PointerOf(time.Now()),
+					},
+					Old: structures.ActiveEmote{
+						ID:              ae.ID,
+						Name:            ae.Name,
+						Flags:           ae.Flags,
+						Timestamp:       ae.Timestamp,
+						TimestampUpdate: ae.TimestampUpdate,
+					},
+					Position: int32(ind),
+				})
+				esb.UpdateActiveEmote(tgt.ID, tgt.Name)
 
-					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-						Type: events.EventTypeUpdateEmoteSet,
-						Conditions: []events.EventCondition{{
-							"object_id": esb.EmoteSet.ID.Hex(),
+				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+					Type: events.EventTypeUpdateEmoteSet,
+					Conditions: []events.EventCondition{{
+						"object_id": esb.EmoteSet.ID.Hex(),
+					}},
+					Body: events.ChangeMap{
+						ID:    esb.EmoteSet.ID,
+						Kind:  structures.ObjectKindEmoteSet,
+						Actor: m.modelizer.User(actor),
+						Updated: []events.ChangeField{{
+							Key:   "emotes",
+							Index: utils.PointerOf(int32(ind)),
+							Type:  events.ChangeFieldTypeObject,
+							OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
+								ID:        ae.ID,
+								Name:      ae.Name,
+								Flags:     ae.Flags,
+								Timestamp: ae.Timestamp,
+								ActorID:   ae.ActorID,
+							}),
+							Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
+								ID:        tgt.ID,
+								Name:      tgt.Name,
+								Flags:     tgt.Flags,
+								Timestamp: ae.Timestamp,
+								ActorID:   actor.ID,
+								Emote:     tgt.emote,
+							}),
 						}},
-						Body: events.ChangeMap{
-							ID:    esb.EmoteSet.ID,
-							Kind:  structures.ObjectKindEmoteSet,
-							Actor: m.modelizer.User(actor),
-							Updated: []events.ChangeField{{
-								Key:   "emotes",
-								Index: utils.PointerOf(int32(ind)),
-								Type:  events.ChangeFieldTypeObject,
-								OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
-									ID:        ae.ID,
-									Name:      ae.Name,
-									Flags:     ae.Flags,
-									Timestamp: ae.Timestamp,
-									ActorID:   ae.ActorID,
-								}),
-								Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
-									ID:        tgt.ID,
-									Name:      tgt.Name,
-									Flags:     tgt.Flags,
-									Timestamp: ae.Timestamp,
-									ActorID:   actor.ID,
-									Emote:     tgt.emote,
-								}),
-							}},
-						},
-					}).ToRaw())
-				}
+					},
+				}).ToRaw())
 			} else if tgt.Action == structures.ListItemActionRemove {
 				// Remove active emote
 				_, ind := esb.RemoveActiveEmote(tgt.ID)
@@ -398,4 +528,21 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	esb.MarkAsTainted()
 
 	return nil
+}
+
+type EmoteSetMutationSetEmoteOptions struct {
+	Actor    structures.User
+	Emotes   []EmoteSetMutationSetEmoteItem
+	Channels []primitive.ObjectID
+}
+
+type EmoteSetMutationSetEmoteItem struct {
+	Action       structures.ListItemAction
+	ID           primitive.ObjectID
+	Name         string
+	version      structures.EmoteVersion
+	ChannelCount int32
+	Flags        structures.BitField[structures.ActiveEmoteFlag]
+
+	emote *structures.Emote
 }

@@ -256,6 +256,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 					SetData(structures.MessageDataModRequest{
 						TargetKind: structures.ObjectKindEmote,
 						TargetID:   id,
+						Wish:       "list",
 					})
 				if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
 					zap.S().Errorw("failed to send mod request message for new emote",

@@ -2,7 +2,11 @@ extend type Query {
   announcement: String!
   inbox(user_id: ObjectID!, after_id: ObjectID, limit: Int): [InboxMessage!]!
     @hasPermissions
-  modRequests(after_id: ObjectID, limit: Int): [ModRequestMessage!]!
+  modRequests(
+    after_id: ObjectID
+    limit: Int
+    wish: String
+  ): ModRequestMessageList!
 }
 
 extend type Mutation {
@@ -26,6 +30,13 @@ interface Message {
   author_id: ObjectID
   read: Boolean!
   read_at: Time
+}
+
+enum MessageKind {
+  EMOTE_COMMENT
+  MOD_REQUEST
+  INBOX
+  NEWS
 }
 
 type InboxMessage implements Message {
@@ -54,11 +65,10 @@ type ModRequestMessage implements Message {
 
   target_kind: Int!
   target_id: ObjectID!
+  wish: String!
 }
 
-enum MessageKind {
-  EMOTE_COMMENT
-  MOD_REQUEST
-  INBOX
-  NEWS
+type ModRequestMessageList {
+  messages: [ModRequestMessage!]!
+  total: Int!
 }

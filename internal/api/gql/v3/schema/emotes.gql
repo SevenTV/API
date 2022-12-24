@@ -41,7 +41,9 @@ type Emote {
   host: ImageHost!
   versions: [EmoteVersion!]!
   activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
+  states: [EmoteVersionState!]!
   listed: Boolean!
+  personal_use: Boolean!
 
   reports: [Report!]!
     @goField(forceResolver: true)
@@ -59,6 +61,7 @@ type EmotePartial {
   owner_id: ObjectID!
   owner: UserPartial @goField(forceResolver: true)
   host: ImageHost!
+  states: [EmoteVersionState!]!
   listed: Boolean!
 }
 
@@ -81,7 +84,13 @@ type EmoteVersion {
   host: ImageHost!
   lifecycle: Int!
   error: String
+  states: [EmoteVersionState!]!
   listed: Boolean!
+}
+
+enum EmoteVersionState {
+  LISTED
+  ALLOW_PERSONAL
 }
 
 type EmoteCommonName {
@@ -118,5 +127,6 @@ input EmoteUpdate {
   owner_id: ObjectID
   tags: [String!]
   listed: Boolean
+  personal_use: Boolean
   deleted: Boolean
 }

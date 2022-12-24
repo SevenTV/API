@@ -310,6 +310,12 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				})
 			}
 
+			if ver.State.AllowPersonal != nil && oldVer.State.AllowPersonal != nil && *ver.State.AllowPersonal != *oldVer.State.AllowPersonal {
+				n["allow_personal"] = ver.State.AllowPersonal
+				o["allow_personal"] = oldVer.State.AllowPersonal
+				changeCount++
+			}
+
 			if changeCount > 0 {
 				c.WriteArrayUpdated(structures.AuditLogChangeSingleValue{
 					New:      n,
@@ -356,21 +362,23 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 		}
 
 		// Emit to the Event API
-		for _, ver := range emote.Versions {
-			go func(ver structures.EmoteVersion) {
-				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-					Type: events.EventTypeUpdateEmote,
-					Conditions: []events.EventCondition{{
-						"object_id": ver.ID.Hex(),
-					}},
-					Body: events.ChangeMap{
-						ID:      ver.ID,
-						Kind:    structures.ObjectKindEmote,
-						Actor:   m.modelizer.User(actor),
-						Updated: changeFields,
-					},
-				}).ToRaw())
-			}(ver)
+		if len(changeFields) > 0 {
+			for _, ver := range emote.Versions {
+				go func(ver structures.EmoteVersion) {
+					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+						Type: events.EventTypeUpdateEmote,
+						Conditions: []events.EventCondition{{
+							"object_id": ver.ID.Hex(),
+						}},
+						Body: events.ChangeMap{
+							ID:      ver.ID,
+							Kind:    structures.ObjectKindEmote,
+							Actor:   m.modelizer.User(actor),
+							Updated: changeFields,
+						},
+					}).ToRaw())
+				}(ver)
+			}
 		}
 	}
 
