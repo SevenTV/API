@@ -89,12 +89,13 @@ func UserConnectionModel(xm model.UserConnectionModel) *gql_model.UserConnection
 // GQL UserConnectionPartial
 func UserConnectionPartialModel(xm model.UserConnectionPartialModel) *gql_model.UserConnectionPartial {
 	return &gql_model.UserConnectionPartial{
-		ID:          xm.ID,
-		Platform:    gql_model.ConnectionPlatform(xm.Platform),
-		Username:    xm.Username,
-		DisplayName: xm.DisplayName,
-		LinkedAt:    time.UnixMilli(xm.LinkedAt),
-		EmoteSetID:  xm.EmoteSetID,
+		ID:            xm.ID,
+		Platform:      gql_model.ConnectionPlatform(xm.Platform),
+		Username:      xm.Username,
+		DisplayName:   xm.DisplayName,
+		LinkedAt:      time.UnixMilli(xm.LinkedAt),
+		EmoteCapacity: int(xm.EmoteCapacity),
+		EmoteSetID:    xm.EmoteSetID,
 	}
 }
 
