@@ -106,6 +106,10 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	if init.Capacity != esb.EmoteSet.Capacity {
 		var maxCapacity int32
 
+		if !actor.HasPermission(structures.RolePermissionSuperAdministrator) && esb.EmoteSet.Flags.Has(structures.EmoteSetFlagPersonal) {
+			return errors.ErrInsufficientPrivilege().SetDetail("The capacity of a Personal Emote Set cannot be modified")
+		}
+
 		if esb.EmoteSet.Owner != nil {
 			for _, c := range esb.EmoteSet.Owner.Connections {
 				if c.EmoteSlots > maxCapacity {
