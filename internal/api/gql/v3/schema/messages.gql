@@ -2,7 +2,11 @@ extend type Query {
   announcement: String!
   inbox(user_id: ObjectID!, after_id: ObjectID, limit: Int): [InboxMessage!]!
     @hasPermissions
-  modRequests(after_id: ObjectID, limit: Int): ModRequestMessageList!
+  modRequests(
+    after_id: ObjectID
+    limit: Int
+    wish: String
+  ): ModRequestMessageList!
 }
 
 extend type Mutation {
