@@ -125,15 +125,15 @@ func (r *Resolver) EditEmote(ctx context.Context, opt model.EmoteInput, reason *
 		}
 
 		// zero-width
-		if emote.HasFlag(structures.EmoteFlagsZeroWidth) && !utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityZeroWidth)) {
+		if emote.Flags.Has(structures.EmoteFlagsZeroWidth) && !utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityZeroWidth)) {
 			flags &= ^structures.EmoteFlagsZeroWidth
-		} else if !emote.HasFlag(structures.EmoteFlagsZeroWidth) && utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityZeroWidth)) {
+		} else if !emote.Flags.Has(structures.EmoteFlagsZeroWidth) && utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityZeroWidth)) {
 			flags |= structures.EmoteFlagsZeroWidth
 		}
 		// privacy
-		if emote.HasFlag(structures.EmoteFlagsPrivate) && !utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityPrivate)) {
+		if emote.Flags.Has(structures.EmoteFlagsPrivate) && !utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityPrivate)) {
 			flags &= ^structures.EmoteFlagsPrivate
-		} else if !emote.HasFlag(structures.EmoteFlagsPrivate) && utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityPrivate)) {
+		} else if !emote.Flags.Has(structures.EmoteFlagsPrivate) && utils.BitField.HasBits(vis, int64(v2structures.EmoteVisibilityPrivate)) {
 			flags |= structures.EmoteFlagsPrivate
 		}
 

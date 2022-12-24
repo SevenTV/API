@@ -5,6 +5,7 @@ import (
 
 	"github.com/seventv/api/data/model"
 	gql_model "github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -29,9 +30,12 @@ func EmoteModel(xm model.EmoteModel) *gql_model.Emote {
 	}
 
 	return &gql_model.Emote{
-		ID:        xm.ID,
-		Name:      xm.Name,
-		Flags:     int(xm.Flags),
+		ID:    xm.ID,
+		Name:  xm.Name,
+		Flags: int(xm.Flags),
+		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+			return gql_model.EmoteVersionState(x)
+		}),
 		Listed:    xm.Listed,
 		Lifecycle: int(xm.Lifecycle),
 		Tags:      xm.Tags,
@@ -58,9 +62,12 @@ func EmotePartialModel(xm model.EmotePartialModel) *gql_model.EmotePartial {
 	}
 
 	return &gql_model.EmotePartial{
-		ID:        xm.ID,
-		Name:      xm.Name,
-		Flags:     int(xm.Flags),
+		ID:    xm.ID,
+		Name:  xm.Name,
+		Flags: int(xm.Flags),
+		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+			return gql_model.EmoteVersionState(x)
+		}),
 		Listed:    xm.Listed,
 		Lifecycle: int(xm.Lifecycle),
 		Tags:      xm.Tags,
@@ -87,6 +94,9 @@ func EmoteVersionModel(xm model.EmoteVersionModel) *gql_model.EmoteVersion {
 		CreatedAt:   time.UnixMilli(xm.CreatedAt),
 		Host:        host,
 		Lifecycle:   int(xm.Lifecycle),
-		Listed:      xm.Listed,
+		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+			return gql_model.EmoteVersionState(x)
+		}),
+		Listed: xm.Listed,
 	}
 }

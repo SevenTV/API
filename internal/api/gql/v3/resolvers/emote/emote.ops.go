@@ -203,6 +203,11 @@ func (r *ResolverOps) Update(ctx context.Context, obj *model.EmoteOps, params mo
 			versionUpdated = true
 		}
 
+		if params.PersonalUse != nil {
+			ver.State.AllowPersonal = params.PersonalUse
+			versionUpdated = true
+		}
+
 		if params.VersionName != nil {
 			ver.Name = *params.VersionName
 			versionUpdated = true
