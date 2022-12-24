@@ -102,18 +102,3 @@ type EmoteSetMutationOptions struct {
 	Actor          structures.User
 	SkipValidation bool
 }
-
-type EmoteSetMutationSetEmoteOptions struct {
-	Actor    structures.User
-	Emotes   []EmoteSetMutationSetEmoteItem
-	Channels []primitive.ObjectID
-}
-
-type EmoteSetMutationSetEmoteItem struct {
-	Action structures.ListItemAction
-	ID     primitive.ObjectID
-	Name   string
-	Flags  structures.BitField[structures.ActiveEmoteFlag]
-
-	emote *structures.Emote
-}

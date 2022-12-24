@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	EMOTE_SET_PERSONAL_MIN_EMOTE_LIFETIME = time.Hour
+	EMOTE_SET_PERSONAL_MIN_EMOTE_LIFETIME       = time.Hour
+	EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT  int32 = 50
 )
 
 // SetEmote: enable, edit or disable active emotes in the set
@@ -88,6 +89,8 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			for _, ver := range e.Versions {
 				if v, ok := targetEmoteMap[ver.ID]; ok {
 					v.emote = e
+					v.version = ver
+					v.ChannelCount = ver.State.ChannelCount
 					targetEmoteMap[e.ID] = v
 				}
 			}
@@ -210,8 +213,8 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			}
 
 			// Personal Set: if emote is not personal use-approved, send a new mod request
-			if set.Flags.Has(structures.EmoteSetFlagPersonal) && !tgt.emote.Flags.Has(structures.EmoteFlagsPersonalUse) {
-				if tgt.emote.Flags.Has(structures.EmoteFlagsPersonalUseRejected) {
+			if set.Flags.Has(structures.EmoteSetFlagPersonal) {
+				if tgt.version.State.AllowPersonal != nil && !*tgt.version.State.AllowPersonal {
 					return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
 						"EMOTE_ID": tgt.ID.Hex(),
 					}).SetDetail("This emote has been rejected for use in personal sets")
@@ -282,6 +285,12 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 
 				if !alreadyRequested {
+					if tgt.ChannelCount < EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT {
+						return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+							"EMOTE_ID": tgt.ID.Hex(),
+						}).SetDetail("You cannot request this emote for Personal Use because it is in less than %d channels", EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT)
+					}
+
 					// Construct & write new mod request
 					mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
 						SetKind(structures.MessageKindModRequest).
@@ -519,4 +528,21 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	esb.MarkAsTainted()
 
 	return nil
+}
+
+type EmoteSetMutationSetEmoteOptions struct {
+	Actor    structures.User
+	Emotes   []EmoteSetMutationSetEmoteItem
+	Channels []primitive.ObjectID
+}
+
+type EmoteSetMutationSetEmoteItem struct {
+	Action       structures.ListItemAction
+	ID           primitive.ObjectID
+	Name         string
+	version      structures.EmoteVersion
+	ChannelCount int32
+	Flags        structures.BitField[structures.ActiveEmoteFlag]
+
+	emote *structures.Emote
 }

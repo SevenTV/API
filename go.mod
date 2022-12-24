@@ -12,7 +12,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/json-iterator/go v1.1.12
 	github.com/prometheus/client_golang v1.14.0
-	github.com/seventv/common v0.0.0-20221224113852-d1e655c2a0c6
+	github.com/seventv/common v0.0.0-20221224151857-66cf0bb8ad5c
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643

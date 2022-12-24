@@ -563,6 +563,12 @@ const docTemplate = `{
                     ],
                     "x-omitempty": true
                 },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
+                },
                 "tags": {
                     "type": "array",
                     "items": {
@@ -608,6 +614,12 @@ const docTemplate = `{
                         }
                     ],
                     "x-omitempty": true
+                },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
                 },
                 "tags": {
                     "type": "array",
@@ -766,8 +778,25 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "states": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.EmoteVersionState"
+                    }
                 }
             }
+        },
+        "model.EmoteVersionState": {
+            "type": "string",
+            "enum": [
+                "LISTED",
+                "ALLOW_PERSONAL"
+            ],
+            "x-enum-varnames": [
+                "EmoteVersionStateListed",
+                "EmoteVersionStateAllowPersonal"
+            ]
         },
         "model.ImageFile": {
             "type": "object",
