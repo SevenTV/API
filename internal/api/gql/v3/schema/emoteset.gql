@@ -21,6 +21,7 @@ type EmoteSetOps {
 type EmoteSet {
   id: ObjectID!
   name: String!
+  flags: Int!
   tags: [String!]!
   emotes(limit: Int, origins: Boolean): [ActiveEmote!]!
     @goField(forceResolver: true)

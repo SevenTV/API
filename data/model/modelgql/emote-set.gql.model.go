@@ -26,6 +26,7 @@ func EmoteSetModel(xm model.EmoteSetModel) *gql_model.EmoteSet {
 	return &gql_model.EmoteSet{
 		ID:         xm.ID,
 		Name:       xm.Name,
+		Flags:      int(xm.Flags),
 		Tags:       xm.Tags,
 		Emotes:     emotes,
 		EmoteCount: int(xm.EmoteCount),

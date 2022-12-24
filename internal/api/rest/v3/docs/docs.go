@@ -617,6 +617,21 @@ const docTemplate = `{
                 }
             }
         },
+        "model.EmoteSetFlagModel": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                4,
+                8
+            ],
+            "x-enum-varnames": [
+                "EmoteSetFlagImmutable",
+                "EmoteSetFlagPrivileged",
+                "EmoteSetFlagPersonal",
+                "EmoteSetFlagCommercial"
+            ]
+        },
         "model.EmoteSetModel": {
             "type": "object",
             "properties": {
@@ -633,6 +648,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/model.ActiveEmoteModel"
                     },
                     "x-omitempty": true
+                },
+                "flags": {
+                    "$ref": "#/definitions/model.EmoteSetFlagModel"
                 },
                 "id": {
                     "type": "string"
@@ -691,6 +709,9 @@ const docTemplate = `{
             "properties": {
                 "capacity": {
                     "type": "integer"
+                },
+                "flags": {
+                    "$ref": "#/definitions/model.EmoteSetFlagModel"
                 },
                 "id": {
                     "type": "string"
