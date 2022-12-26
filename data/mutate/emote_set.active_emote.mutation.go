@@ -513,6 +513,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 	).Decode(&esb.EmoteSet); err != nil {
 		zap.S().Errorw("mongo, failed to write changes to emote set",
 			"emote_set_id", esb.EmoteSet.ID.Hex(),
+			"error", err,
 		)
 
 		return errors.ErrInternalServerError()
