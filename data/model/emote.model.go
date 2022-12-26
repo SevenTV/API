@@ -79,7 +79,8 @@ type EmoteVersionState string
 
 const (
 	EmoteVersionStateListed        EmoteVersionState = "LISTED"
-	EmoteVersionStateAllowPersonal EmoteVersionState = "ALLOW_PERSONAL"
+	EmoteVersionStateAllowPersonal EmoteVersionState = "PERSONAL"
+	EmoteVersionStateNoPersonal    EmoteVersionState = "NO_PERSONAL"
 )
 
 func (x *modelizer) Emote(v structures.Emote) EmoteModel {
@@ -117,8 +118,8 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 				states.Add(EmoteVersionStateListed)
 			}
 
-			if ver.State.AllowPersonal != nil && *ver.State.AllowPersonal {
-				states.Add(EmoteVersionStateAllowPersonal)
+			if ver.State.AllowPersonal != nil {
+				states.Add(utils.Ternary(*ver.State.AllowPersonal, EmoteVersionStateAllowPersonal, EmoteVersionStateNoPersonal))
 			}
 		}
 
