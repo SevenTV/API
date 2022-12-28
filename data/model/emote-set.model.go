@@ -80,8 +80,6 @@ func (x *modelizer) EmoteSet(v structures.EmoteSet) EmoteSetModel {
 		u.Connections = nil // clear the connections field of emote set owners as it's not needed here
 
 		owner = &u
-	} else if !v.OwnerID.IsZero() {
-		owner = &UserPartialModel{ID: v.OwnerID}
 	}
 
 	if v.Tags == nil {
