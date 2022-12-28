@@ -139,7 +139,7 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 		if err = r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 			ID:      obj.ID,
 			Kind:    structures.ObjectKindUser,
-			Actor:   r.Ctx.Inst().Modelizer.User(actor),
+			Actor:   r.Ctx.Inst().Modelizer.User(actor).ToPartial(),
 			Updated: changeFields,
 		}, events.EventCondition{
 			"object_id": obj.ID.Hex(),

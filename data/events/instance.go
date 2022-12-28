@@ -53,7 +53,7 @@ var systemUser = model.UserModel{
 
 func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error {
 	if cm.Actor.ID.IsZero() {
-		cm.Actor = systemUser
+		cm.Actor = systemUser.ToPartial()
 	}
 
 	// Dedupe hash

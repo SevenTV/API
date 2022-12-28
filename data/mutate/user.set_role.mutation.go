@@ -41,7 +41,7 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 	cm := events.ChangeMap{
 		ID:    ub.User.ID,
 		Kind:  structures.ObjectKindUser,
-		Actor: m.modelizer.User(actor),
+		Actor: m.modelizer.User(actor).ToPartial(),
 	}
 
 	alb := structures.NewAuditLogBuilder(structures.AuditLog{}).

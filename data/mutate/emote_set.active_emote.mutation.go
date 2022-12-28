@@ -354,7 +354,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				Body: events.ChangeMap{
 					ID:    esb.EmoteSet.ID,
 					Kind:  structures.ObjectKindEmoteSet,
-					Actor: m.modelizer.User(actor),
+					Actor: m.modelizer.User(actor).ToPartial(),
 					Pushed: []events.ChangeField{{
 						Key:   "emotes",
 						Index: utils.PointerOf(int32(endPos)),
@@ -445,7 +445,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Body: events.ChangeMap{
 						ID:    esb.EmoteSet.ID,
 						Kind:  structures.ObjectKindEmoteSet,
-						Actor: m.modelizer.User(actor),
+						Actor: m.modelizer.User(actor).ToPartial(),
 						Updated: []events.ChangeField{{
 							Key:   "emotes",
 							Index: utils.PointerOf(int32(ind)),
@@ -483,7 +483,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					Body: events.ChangeMap{
 						ID:    esb.EmoteSet.ID,
 						Kind:  structures.ObjectKindEmoteSet,
-						Actor: m.modelizer.User(actor),
+						Actor: m.modelizer.User(actor).ToPartial(),
 						Pulled: []events.ChangeField{{
 							Key:   "emotes",
 							Index: utils.PointerOf(int32(ind)),

@@ -89,7 +89,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 		if err := m.events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 			ID:    ub.User.ID,
 			Kind:  structures.ObjectKindUser,
-			Actor: m.modelizer.User(actor),
+			Actor: m.modelizer.User(actor).ToPartial(),
 			Updated: []events.ChangeField{
 				{
 					Key:    "connections",
