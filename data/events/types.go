@@ -74,7 +74,7 @@ type ChangeMap struct {
 	// genuine creation, deletion, or update to the object
 	Contextual bool `json:"contextual,omitempty"`
 	// The user who made changes to the object
-	Actor model.UserModel `json:"actor,omitempty"`
+	Actor model.UserPartialModel `json:"actor,omitempty"`
 	// A list of added fields
 	Added []ChangeField `json:"added,omitempty"`
 	// A list of updated fields

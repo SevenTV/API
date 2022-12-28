@@ -41,6 +41,7 @@ func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data
 		UserID:    pm.userID,
 		IP:        opt.IP,
 		Authentic: opt.Authentic,
+		Known:     opt.Known,
 		Timestamp: time.Now(),
 		TTL:       time.Now().Add(ttl),
 		Kind:      pm.kind,
@@ -101,5 +102,6 @@ func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data
 
 type WritePresenceOptions struct {
 	Authentic bool
+	Known     bool
 	IP        string
 }

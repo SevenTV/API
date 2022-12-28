@@ -373,7 +373,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 						Body: events.ChangeMap{
 							ID:      ver.ID,
 							Kind:    structures.ObjectKindEmote,
-							Actor:   m.modelizer.User(actor),
+							Actor:   m.modelizer.User(actor).ToPartial(),
 							Updated: changeFields,
 						},
 					}).ToRaw())

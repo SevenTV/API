@@ -162,7 +162,7 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		if err := m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
 			ID:      esb.EmoteSet.ID,
 			Kind:    structures.ObjectKindEmoteSet,
-			Actor:   m.modelizer.User(actor),
+			Actor:   m.modelizer.User(actor).ToPartial(),
 			Updated: changeFields,
 		}, events.EventCondition{
 			"object_id": esb.EmoteSet.ID.Hex(),
