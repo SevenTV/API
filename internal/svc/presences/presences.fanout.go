@@ -19,8 +19,9 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	}
 
 	eventCond := events.EventCondition{
-		"ctx": "channel",
-		"id":  presence.Data.ID,
+		"ctx":      "channel",
+		"platform": string(presence.Data.Platform),
+		"id":       presence.Data.ID,
 	}
 
 	// Fetch user in presence
