@@ -10,6 +10,7 @@ import (
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
 )
@@ -66,32 +67,25 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.ErrInvalidRequest().SetDetail("invalid or missing channel presence data: %s", err.Error())
 		}
 
-		if pd.ConnectionID == "" {
-			return errors.ErrBadObjectID().SetDetail("missing connection ID")
+		if pd.ID == "" {
+			return errors.ErrBadObjectID().SetDetail("missing ID in channel presence data")
 		}
 
-		if pd.HostID.IsZero() {
-			return errors.ErrBadObjectID().SetDetail("invalid or missing host ID")
-		}
-
-		// Validate host user & connection (channel)
-		user, err := r.gctx.Inst().Loaders.UserByID().Load(pd.HostID)
-		if err != nil {
-			return errors.From(err).SetDetail("Host")
-		}
-
-		uc, ind := user.Connections.Get(pd.ConnectionID)
-		if ind == -1 {
-			return errors.ErrUnknownUser().SetDetail("Host Connection")
+		var known bool
+		if user, err := r.gctx.Inst().Loaders.UserByConnectionID(pd.Platform).Load(pd.ID); err == nil && !user.ID.IsZero() {
+			known = true
 		}
 
 		pm := r.gctx.Inst().Presences.ChannelPresence(ctx, userID)
 
-		p, err := pm.Write(ctx, time.Minute*5, structures.UserPresenceDataChannel{
-			HostID:       user.ID,
-			ConnectionID: uc.ID,
+		ttl := utils.Ternary(known, time.Minute*5, time.Minute*1) // set lower ttl for an unknown channel
+
+		p, err := pm.Write(ctx, ttl, structures.UserPresenceDataChannel{
+			Platform: pd.Platform,
+			ID:       pd.ID,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
+			Known:     known,
 			IP:        clientIP,
 		})
 		if err != nil {
