@@ -72,7 +72,7 @@ func userLoader[T comparable](ctx context.Context, x inst, keyName string) *data
 
 func userByConnectionLoader(ctx context.Context, x inst, platform structures.UserConnectionPlatform, key string) *dataloader.DataLoader[string, structures.User] {
 	return dataloader.New(dataloader.Config[string, structures.User]{
-		Wait:     time.Millisecond * 75,
+		Wait:     time.Millisecond * 25,
 		MaxBatch: 500,
 		Fetch: func(keys []string) ([]structures.User, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)

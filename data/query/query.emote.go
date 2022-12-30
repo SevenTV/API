@@ -2,12 +2,14 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -30,7 +32,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 			Key:   "$match",
 			Value: filter,
 		}},
-	})
+	}, options.MergeAggregateOptions().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
 

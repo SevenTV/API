@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -9,6 +10,7 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +40,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 				}},
 			},
 		}},
-	})
+	}, options.Aggregate().SetBatchSize(5).SetMaxAwaitTime(time.Second*30))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate users", "error", err)
 
