@@ -81,11 +81,6 @@ type UserSearchOptions struct {
 	Query string
 	Sort  bson.M
 }
-type aggregatedUsersResult struct {
-	Users            []structures.User                  `bson:"users"`
-	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
-	TotalCount       int                                `bson:"total_count"`
-}
 
 func (q *Query) UserEditorOf(ctx context.Context, id primitive.ObjectID) ([]structures.UserEditor, error) {
 	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{

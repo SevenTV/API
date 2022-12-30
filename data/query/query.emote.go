@@ -2,21 +2,17 @@ package query
 
 import (
 	"context"
-	"io"
-	"time"
 
-	"github.com/hashicorp/go-multierror"
-	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
 	qr := QueryResult[structures.Emote]{}
-	items := []structures.Emote{}
 
 	bans, err := q.Bans(ctx, BanQueryOptions{
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
@@ -34,92 +30,42 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 			Key:   "$match",
 			Value: filter,
 		}},
-		{{
-			Key: "$group",
-			Value: bson.M{
-				"_id": nil,
-				"emotes": bson.M{
-					"$push": "$$ROOT",
-				},
-			},
-		}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameUsers,
-				LocalField:   "emotes.owner_id",
-				ForeignField: "_id",
-				As:           "emote_owners",
-			},
-		}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "emote_owners._id",
-				ForeignField: "user_id",
-				As:           "role_entitlements",
-			},
-		}},
-		{{
-			Key: "$set",
-			Value: bson.M{
-				"role_entitlements": bson.M{
-					"$filter": bson.M{
-						"input": "$role_entitlements",
-						"as":    "ent",
-						"cond": bson.M{
-							"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
-						},
-					},
-				},
-			},
-		}},
-	}, options.Aggregate().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
+	})
 	if err != nil {
+		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
+
 		return qr.setError(err)
 	}
 
-	cur.Next(ctx)
+	items := []structures.Emote{}
 
-	v := &aggregatedEmotesResult{}
-	if err = cur.Decode(v); err != nil {
-		if err == io.EOF {
-			return qr.setError(errors.ErrNoItems())
-		}
+	if err := cur.All(ctx, &items); err != nil {
+		zap.S().Errorw("failed to decode emotes", "error", err)
 
-		return qr.setItems(items).setError(err)
-	}
-
-	// Map all objects
-	qb := &QueryBinder{ctx, q}
-
-	ownerMap, err := qb.MapUsers(v.EmoteOwners, v.RoleEntitlements...)
-	if err != nil {
 		return qr.setError(err)
 	}
 
-	for _, e := range v.Emotes { // iterate over emotes
-		// add owner
-		if _, banned := bans.MemoryHole[e.OwnerID]; banned {
-			e.OwnerID = primitive.NilObjectID
-		} else {
-			owner := ownerMap[e.OwnerID]
-			e.Owner = &owner
-		}
+	owners, err := q.Users(ctx, bson.M{"_id": bson.M{
+		"$in": utils.Map(items, func(x structures.Emote) primitive.ObjectID {
+			return x.OwnerID
+		}),
+	}}).Items()
+	if err != nil {
+		zap.S().Errorw("failed to fetch emote owners", "error", err)
 
-		items = append(items, e)
+		return qr.setError(err)
 	}
 
-	if err = multierror.Append(err, cur.Close(ctx)).ErrorOrNil(); err != nil {
-		qr.setError(err)
+	ownerMap := map[primitive.ObjectID]structures.User{}
+	for _, u := range owners {
+		ownerMap[u.ID] = u
+	}
+
+	for i := range items {
+		if owner, ok := ownerMap[items[i].OwnerID]; ok {
+			items[i].Owner = &owner
+		}
 	}
 
 	return qr.setItems(items)
-}
-
-type aggregatedEmotesResult struct {
-	Emotes           []structures.Emote                 `bson:"emotes"`
-	EmoteOwners      []structures.User                  `bson:"emote_owners"`
-	RoleEntitlements []structures.Entitlement[bson.Raw] `bson:"role_entitlements"`
 }
