@@ -93,6 +93,7 @@ func New(gctx global.Context) error {
 			ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
 			ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
+			ctx.Response.Header.Set("Vary", "Origin")
 
 			// cache cors
 			ctx.Response.Header.Set("Access-Control-Max-Age", "7200")
