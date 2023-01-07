@@ -33,10 +33,12 @@ const (
 
 	// User
 
-	EventTypeAnyUser           EventType = "user.*"
-	EventTypeCreateUser        EventType = "user.create"
-	EventTypeUpdateUser        EventType = "user.update"
-	EventTypeDeleteUser        EventType = "user.delete"
+	EventTypeAnyUser    EventType = "user.*"
+	EventTypeCreateUser EventType = "user.create"
+	EventTypeUpdateUser EventType = "user.update"
+	EventTypeDeleteUser EventType = "user.delete"
+
+	EventTypeAnyEntitlement    EventType = "entitlement.*"
 	EventTypeCreateEntitlement EventType = "entitlement.create"
 	EventTypeUpdateEntitlement EventType = "entitlement.update"
 	EventTypeDeleteEntitlement EventType = "entitlement.delete"
@@ -118,4 +120,10 @@ type SessionMutationEvent struct {
 	Action    structures.ListItemAction `json:"action"`
 	Type      EventType                 `json:"type"`
 	Condition map[string]string         `json:"condition"`
+}
+
+type SessionEffect struct {
+	AddSubscriptions    []SubscribePayload   `json:"add_subscriptions,omitempty"`
+	RemoveSubscriptions []UnsubscribePayload `json:"remove_subscriptions,omitempty"`
+	RemoveHashes        []uint32             `json:"remove_hashes,omitempty"`
 }
