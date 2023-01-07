@@ -179,11 +179,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	}
 
 	// Send delete events for any entitlements that are no longer active
-	for _, entitlement := range presence.Entitlements {
+	for _, ent := range presence.Entitlements {
 		found := false
 
 		for _, newEntitlement := range entitlements {
-			if newEntitlement.ID == entitlement.ID {
+			if newEntitlement.ID == ent.ID {
 				found = true
 				break
 			}
@@ -192,9 +192,16 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		if !found {
 			// Entitlement is no longer active, send delete event
 			_ = p.events.Dispatch(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
-				ID:         entitlement.ID,
+				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
+				Object: utils.ToJSON(p.modelizer.Entitlement(structures.Entitlement[structures.EntitlementDataBase]{
+					ID:   ent.ID,
+					Kind: ent.Kind,
+					Data: structures.EntitlementDataBase{
+						RefID: ent.RefID,
+					},
+				}.ToRaw(), user)),
 			}, eventCond, entEventCond)
 		}
 	}
