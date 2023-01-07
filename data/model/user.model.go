@@ -32,9 +32,9 @@ type UserPartialModel struct {
 	UserType    UserTypeModel                `json:"type,omitempty" enums:",BOT,SYSTEM"`
 	Username    string                       `json:"username"`
 	DisplayName string                       `json:"display_name"`
-	AvatarURL   string                       `json:"avatar_url"`
+	AvatarURL   string                       `json:"avatar_url,omitempty" extensions:"x-omitempty"`
 	Style       UserStyle                    `json:"style"`
-	RoleIDs     []primitive.ObjectID         `json:"roles"`
+	RoleIDs     []primitive.ObjectID         `json:"roles,omitempty" extensions:"x-omitempty"`
 	Connections []UserConnectionPartialModel `json:"connections,omitempty" extensions:"x-omitempty"`
 }
 

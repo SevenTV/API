@@ -27,11 +27,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	}
 
 	var (
-		user         structures.User
-		cosmetics    query.EntitlementQueryResult
-		entitlements []structures.UserPresenceEntitlement
-		msg          events.Message[events.DispatchPayload]
-		err          error
+		user            structures.User
+		cosmetics       query.EntitlementQueryResult
+		entitlements    []structures.UserPresenceEntitlement
+		dispatchFactory [](func() (events.Message[events.DispatchPayload], error))
+		err             error
 	)
 
 	wg := sync.WaitGroup{}
@@ -68,14 +68,16 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		}
 	}
 
-	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw], ent structures.Entitlement[structures.EntitlementDataBase]) {
+	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw]) {
 		// Cosmetic
 		_ = p.events.Dispatch(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
 			ID:     cos.ID,
 			Kind:   structures.ObjectKindCosmetic,
 			Object: utils.ToJSON(p.modelizer.Cosmetic(cos.ToRaw())),
 		}, eventCond)
+	}
 
+	dispatchEntitlement := func(ent structures.Entitlement[structures.EntitlementDataBase]) {
 		// Check dispatch hash map of previous entitlements
 		//
 		// If not present, it will be expired in the event api's dedupe cache
@@ -84,43 +86,49 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		}
 
 		// Dispatch: Entitlement
-		msg, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
-			ID:         ent.ID,
-			Kind:       structures.ObjectKindEntitlement,
-			Contextual: true,
-			Object:     utils.ToJSON(p.modelizer.Entitlement(ent.ToRaw(), user)),
-		}, &events.SessionEffect{
-			AddSubscriptions: []events.SubscribePayload{{
-				Type:      events.EventTypeAnyEntitlement,
-				Condition: map[string]string{"user_id": presence.UserID.Hex()},
-			}},
-			RemoveHashes: previousHashList.Values(),
-		}, eventCond, entEventCond)
+		dispatchFactory = append(dispatchFactory, func() (events.Message[events.DispatchPayload], error) {
+			msg, err := p.events.DispatchWithEffect(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
+				ID:         ent.ID,
+				Kind:       structures.ObjectKindEntitlement,
+				Contextual: true,
+				Object:     utils.ToJSON(p.modelizer.Entitlement(ent.ToRaw(), user)),
+			}, &events.SessionEffect{
+				AddSubscriptions: []events.SubscribePayload{{
+					Type:      events.EventTypeAnyEntitlement,
+					Condition: map[string]string{"user_id": presence.UserID.Hex()},
+				}},
+				RemoveHashes: previousHashList.Values(),
+			}, eventCond, entEventCond)
 
-		// Add to presence's entitlement refs
-		entRef := structures.UserPresenceEntitlement{
-			Kind:  ent.Kind,
-			ID:    ent.ID,
-			RefID: ent.Data.RefID,
-		}
-		if msg.Data.Hash != nil {
-			entRef.DispatchHash = *msg.Data.Hash
-		}
+			// Add to presence's entitlement refs
+			entRef := structures.UserPresenceEntitlement{
+				Kind:  ent.Kind,
+				ID:    ent.ID,
+				RefID: ent.Data.RefID,
+			}
+			if msg.Data.Hash != nil {
+				entRef.DispatchHash = *msg.Data.Hash
+			}
 
-		entitlements = append(entitlements, entRef)
+			entitlements = append(entitlements, entRef)
+
+			return msg, err
+		})
 	}
 
 	// Dispatch badge
 	if badge, badgeEnt, hasBadge := cosmetics.ActiveBadge(); hasBadge {
 		if ent, err := structures.ConvertEntitlement[structures.EntitlementDataBase](badgeEnt.ToRaw()); err == nil {
-			dispatchCosmetic(badge.ToRaw(), ent)
+			dispatchCosmetic(badge.ToRaw())
+			dispatchEntitlement(ent)
 		}
 	}
 
 	// Dispatch paint
 	if paint, paintEnt, hasPaint := cosmetics.ActivePaint(); hasPaint {
 		if ent, err := structures.ConvertEntitlement[structures.EntitlementDataBase](paintEnt.ToRaw()); err == nil {
-			dispatchCosmetic(paint.ToRaw(), ent)
+			dispatchCosmetic(paint.ToRaw())
+			dispatchEntitlement(ent)
 		}
 	}
 
@@ -156,19 +164,17 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			}, eventCond)
 
 			// Dispatch the Emote Set entitlement
-			_ = p.events.Dispatch(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
-				ID:         ent.ID,
-				Kind:       structures.ObjectKindEntitlement,
-				Contextual: true,
-				Object:     utils.ToJSON(p.modelizer.Entitlement(ent.ToRaw(), user)),
-			}, eventCond, entEventCond)
+			if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
+				dispatchEntitlement(entB)
+			}
+		}
+	}
 
-			// Add to presence's entitlement refs
-			entitlements = append(entitlements, structures.UserPresenceEntitlement{
-				Kind:  ent.Kind,
-				ID:    ent.ID,
-				RefID: ent.Data.RefID,
-			})
+	// Send entitlement dispatches
+	for _, f := range dispatchFactory {
+		_, err := f()
+		if err != nil {
+			return err
 		}
 	}
 
