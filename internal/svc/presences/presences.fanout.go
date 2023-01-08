@@ -191,7 +191,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 		if !found {
 			// Entitlement is no longer active, send delete event
-			_ = p.events.Dispatch(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
+			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
 				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
@@ -202,6 +202,8 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 						RefID: ent.RefID,
 					},
 				}.ToRaw(), user)),
+			}, &events.SessionEffect{
+				RemoveHashes: []uint32{ent.DispatchHash},
 			}, eventCond, entEventCond)
 		}
 	}
