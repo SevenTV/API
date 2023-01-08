@@ -179,8 +179,11 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, mongo.Pipeline{
 		{{Key: "$sort", Value: bson.M{"priority": -1}}},
 		{{Key: "$match", Value: bson.M{
-			"disabled":      bson.M{"$not": bson.M{"$eq": true}},
-			"data.selected": true,
+			"disabled": bson.M{"$not": bson.M{"$eq": true}},
+			"$or": bson.A{
+				bson.M{"kind": structures.EntitlementKindRole},
+				bson.M{"data.selected": true},
+			},
 			"kind": bson.M{"$in": []structures.EntitlementKind{
 				structures.EntitlementKindRole,
 				structures.EntitlementKindBadge,
