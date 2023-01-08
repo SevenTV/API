@@ -186,7 +186,7 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 				structures.EntitlementKindPaint,
 			}},
 		}}},
-	}, options.Aggregate().SetAllowDiskUse(true))
+	}, options.Aggregate().SetAllowDiskUse(true).SetMaxAwaitTime(5*time.Minute).SetBatchSize(25))
 	if err != nil {
 		ctx.Log().Errorw("mongo, failed to spawn cosmetic entitlements aggregation", "error", err)
 		return nil, errors.ErrInternalServerError()
