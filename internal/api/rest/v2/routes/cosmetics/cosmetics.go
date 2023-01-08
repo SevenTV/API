@@ -176,21 +176,18 @@ type cosmeticsChanResult struct {
 func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.CosmeticsMap, error) {
 	// Retrieve all users of badges
 	// Find entitlements
-	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Aggregate(ctx, mongo.Pipeline{
-		{{Key: "$sort", Value: bson.M{"priority": -1}}},
-		{{Key: "$match", Value: bson.M{
-			"disabled": bson.M{"$not": bson.M{"$eq": true}},
-			"$or": bson.A{
-				bson.M{"kind": structures.EntitlementKindRole},
-				bson.M{"data.selected": true},
-			},
-			"kind": bson.M{"$in": []structures.EntitlementKind{
-				structures.EntitlementKindRole,
-				structures.EntitlementKindBadge,
-				structures.EntitlementKindPaint,
-			}},
-		}}},
-	}, options.Aggregate().SetAllowDiskUse(true).SetBatchSize(25))
+	cur, err := r.Ctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).Find(ctx, bson.M{
+		"disabled": bson.M{"$not": bson.M{"$eq": true}},
+		"$or": bson.A{
+			bson.M{"kind": structures.EntitlementKindRole},
+			bson.M{"data.selected": true},
+		},
+		"kind": bson.M{"$in": []structures.EntitlementKind{
+			structures.EntitlementKindRole,
+			structures.EntitlementKindBadge,
+			structures.EntitlementKindPaint,
+		}},
+	}, options.Find().SetAllowDiskUse(true).SetBatchSize(10))
 	if err != nil {
 		ctx.Log().Errorw("mongo, failed to spawn cosmetic entitlements aggregation", "error", err)
 		return nil, errors.ErrInternalServerError()
