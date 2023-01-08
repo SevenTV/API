@@ -22,6 +22,11 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 	// Emote Sets that have this emote
 	setIDs := []primitive.ObjectID{}
 
+	emote, err := q.Emotes(ctx, bson.M{"versions.id": emoteID}).First()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	// Ping redis for a cached value
 	rKey := q.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:active_sets", emoteID.Hex()))
 	asv, err := q.redis.Get(ctx, rKey)
@@ -82,6 +87,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 
 			// Update the emote document
 			_, _ = q.mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
+				"_id":         emote.ID,
 				"versions.id": emoteID,
 			}, bson.M{
 				"$set": bson.M{
