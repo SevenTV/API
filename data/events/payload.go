@@ -42,11 +42,12 @@ type DispatchPayload struct {
 	Type EventType `json:"type"`
 	// Detailed changes to an object
 	Body ChangeMap `json:"body"`
-	// Contexts are a list of subscription IDs that this dispatch applies to
-	// (applied locally, do not send in publishes)
-	Contexts []string `json:"contexts,omitempty"`
 	// Hash is a hash of the target object, used for deduping
 	Hash *uint32 `json:"hash,omitempty"`
+	// A list of effects to apply to the session when this dispatch is received
+	Effect *SessionEffect `json:"effect,omitempty"`
+	// A list of subscriptions that match this dispatch
+	Matches []uint32 `json:"matches,omitempty"`
 	// A list of conditions where at least one must have all its fields match a subscription in order for this dispatch to be delivered
 	Conditions []EventCondition `json:"condition,omitempty"`
 }
@@ -63,6 +64,16 @@ func (evc EventCondition) Set(key string, value string) EventCondition {
 	evc[key] = value
 
 	return evc
+}
+
+func (evc EventCondition) Match(other EventCondition) bool {
+	for k, v := range evc {
+		if other[k] != v {
+			return false
+		}
+	}
+
+	return true
 }
 
 type SignalPayload struct {

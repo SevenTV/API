@@ -15,6 +15,7 @@ import (
 type Instance interface {
 	Publish(ctx context.Context, msg Message[json.RawMessage]) error
 	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error
+	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, effect *SessionEffect, cond ...EventCondition) (Message[DispatchPayload], error)
 }
 
 type eventsInst struct {
@@ -77,4 +78,33 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 	})
 
 	return inst.Publish(ctx, msg.ToRaw())
+}
+
+func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, effect *SessionEffect, cond ...EventCondition) (Message[DispatchPayload], error) {
+	if cm.Actor.ID.IsZero() {
+		cm.Actor = systemUser.ToPartial()
+	}
+
+	// Dedupe hash
+	var dedupeHash *uint32
+
+	if cm.Object != nil {
+		h := crc32.New(crc32.MakeTable(2596996162))
+
+		h.Write(cm.ID[:])
+		h.Write(utils.S2B(cm.Kind.String()))
+		h.Write(cm.Object)
+
+		dedupeHash = utils.PointerOf(h.Sum32())
+	}
+
+	msg := NewMessage(OpcodeDispatch, DispatchPayload{
+		Type:       t,
+		Body:       cm,
+		Hash:       dedupeHash,
+		Conditions: cond,
+		Effect:     effect,
+	})
+
+	return msg, inst.Publish(ctx, msg.ToRaw())
 }
