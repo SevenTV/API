@@ -157,7 +157,7 @@ jobs:
           output: k8s/deploy.yaml
 
       - name: Setup Kubectl
-        uses: azure/setup-kubectl@v3.0
+        uses: azure/setup-kubectl@v3.2
 
       - name: Deploy to k8s
         if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
