@@ -23,7 +23,7 @@ func (r *userRoute) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 300, []string{"s-maxage=600"}),
+			middleware.SetCacheControl(r.Ctx, 300, []string{"public"}),
 		},
 	}
 }

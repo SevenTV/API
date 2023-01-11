@@ -22,7 +22,7 @@ func (r *emote) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
+			middleware.SetCacheControl(r.Ctx, 604800, []string{"public"}),
 		},
 	}
 }

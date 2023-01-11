@@ -30,7 +30,7 @@ func (r *Route) Config() rest.RouteConfig {
 			newEmotes(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 600, []string{"s-maxage=600"}),
+			middleware.SetCacheControl(r.Ctx, 604800, []string{"public"}),
 		},
 	}
 }
