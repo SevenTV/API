@@ -202,7 +202,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 
 			// Get the largest image
 			for _, im := range imgFiles {
-				if im.Width > img.Width {
+				if im.Width > img.Width && im.Width <= 96 {
 					img = im
 				}
 			}
