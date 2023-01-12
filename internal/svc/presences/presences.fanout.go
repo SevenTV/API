@@ -156,11 +156,40 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 				continue // can't find linked entitlement
 			}
 
+			emoteIDs := utils.Map(es.Emotes, func(x structures.ActiveEmote) primitive.ObjectID {
+				return x.ID
+			})
+
+			// Fetch Emotes
+			emotes, errs := p.loaders.EmoteByID().LoadAll(emoteIDs)
+			if multierror.Append(nil, errs...).ErrorOrNil() != nil {
+				zap.S().Errorw("failed to load emotes", "emote_ids", emoteIDs)
+
+				continue
+			}
+
+			emoteMap := make(map[primitive.ObjectID]structures.Emote)
+			for _, emote := range emotes {
+				emoteMap[emote.ID] = emote
+			}
+
+			// Dispatch the Emote Set's Emotes
+			for i, ae := range es.Emotes {
+				if emote, ok := emoteMap[ae.ID]; ok {
+					es.Emotes[i].Emote = &emote
+				}
+			}
+
 			// Dispatch the Emote Set data
-			_ = p.events.Dispatch(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
+			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
 				ID:     es.ID,
 				Kind:   structures.ObjectKindEmoteSet,
 				Object: utils.ToJSON(p.modelizer.EmoteSet(es)),
+			}, &events.SessionEffect{
+				AddSubscriptions: []events.SubscribePayload{{
+					Type:      events.EventTypeAnyEmoteSet,
+					Condition: events.EventCondition{"object_id": es.ID.Hex()},
+				}},
 			}, eventCond)
 
 			// Dispatch the Emote Set entitlement
