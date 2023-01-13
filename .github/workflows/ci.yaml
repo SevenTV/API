@@ -86,6 +86,9 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node_modules-${{ hashFiles('yarn.lock') }}
 
+      - name: Make
+        run: sudo apt-get install make
+
       - name: Install Dependencies
         run: make deps
 
