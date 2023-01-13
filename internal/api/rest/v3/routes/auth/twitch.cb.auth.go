@@ -164,7 +164,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 		}}).Decode(&ub.User)
 		if err == mongo.ErrNoDocuments {
 			// User doesn't yet exist: create it
-			ucb.UserConnection.EmoteSlots = 300
+			ucb.UserConnection.EmoteSlots = 600
 			ub.SetUsername(twUser.Login).
 				SetDisplayName(twUser.DisplayName).
 				SetEmail(twUser.Email).
@@ -200,7 +200,7 @@ func (r *twitchCallback) Handler(ctx *rest.Ctx) rest.APIError {
 					ExpiresAt:    time.Now().Add(time.Second * time.Duration(grant.ExpiresIn)),
 				})
 			} else {
-				ucb.UserConnection.EmoteSlots = 300
+				ucb.UserConnection.EmoteSlots = 600
 				ub.AddConnection(ucb.UserConnection.ToRaw())
 			}
 
