@@ -36,7 +36,7 @@ func (r *avatars) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 3600, []string{"public"}),
+			middleware.SetCacheControl(r.Ctx, 10800, []string{"public"}),
 		},
 	}
 }
@@ -216,7 +216,7 @@ func (r *avatars) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	b, _ := json.Marshal(result)
-	if err := r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, utils.B2S(b), 10*time.Minute); err != nil {
+	if err := r.Ctx.Inst().Redis.SetEX(ctx, cacheKey, utils.B2S(b), 3*time.Hour); err != nil {
 		zap.S().Errorw("couldn't save cosmetics response to redis cache",
 			"map_to", mapTo,
 		)

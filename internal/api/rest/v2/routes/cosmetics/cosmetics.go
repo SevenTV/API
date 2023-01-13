@@ -40,12 +40,12 @@ func (r *Route) Config() rest.RouteConfig {
 			newAvatars(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 1200, []string{"public"}),
+			middleware.SetCacheControl(r.Ctx, 3600, []string{"public"}),
 		},
 	}
 }
 
-const COSMETICS_CACHE_LIFETIME = time.Minute * 10
+const COSMETICS_CACHE_LIFETIME = time.Hour
 
 // Get Cosmetics
 // @Summary Get Cosmetics
