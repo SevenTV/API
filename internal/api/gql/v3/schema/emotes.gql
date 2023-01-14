@@ -74,6 +74,7 @@ input EmoteSearchFilter {
   zero_width: Boolean
   authentic: Boolean
   aspect_ratio: String
+  personal_use: Boolean
 }
 
 type EmoteVersion {

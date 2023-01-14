@@ -243,6 +243,11 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 			extraDoc["versions.animated"] = true
 		}
 
+		// Personal Use
+		if filter.PersonalUse != nil {
+			extraDoc["versions.state.allow_personal"] = *filter.PersonalUse
+		}
+
 		result, totalCount, err = r.Ctx.Inst().Query.SearchEmotes(ctx, query.SearchEmotesOptions{
 			Actor: &actor,
 			Query: queryValue,

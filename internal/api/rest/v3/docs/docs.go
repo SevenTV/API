@@ -791,11 +791,13 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "LISTED",
-                "ALLOW_PERSONAL"
+                "PERSONAL",
+                "NO_PERSONAL"
             ],
             "x-enum-varnames": [
                 "EmoteVersionStateListed",
-                "EmoteVersionStateAllowPersonal"
+                "EmoteVersionStateAllowPersonal",
+                "EmoteVersionStateNoPersonal"
             ]
         },
         "model.ImageFile": {
@@ -1066,7 +1068,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar_url": {
-                    "type": "string"
+                    "type": "string",
+                    "x-omitempty": true
                 },
                 "connections": {
                     "type": "array",
@@ -1085,7 +1088,8 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "x-omitempty": true
                 },
                 "style": {
                     "$ref": "#/definitions/model.UserStyle"

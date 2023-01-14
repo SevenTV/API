@@ -285,10 +285,32 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 
 				if !alreadyRequested {
+					// Check if emote is in enough channels
 					if tgt.ChannelCount < EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT {
 						return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
 							"EMOTE_ID": tgt.ID.Hex(),
 						}).SetDetail("You cannot request this emote for Personal Use because it is in less than %d channels", EMOTE_SET_PERSONAL_MIN_CHANNEL_COUNT)
+					}
+
+					// Check if emote has correct proportions
+					var fi structures.ImageFile
+					for _, f := range tgt.version.ImageFiles {
+						if fi.Width < f.Width {
+							fi = f
+						}
+					}
+
+					// reject if ratio is 1.5x:1
+					if fi.Width > 0 && fi.Height > 0 && float64(fi.Width)/float64(fi.Height) > 1.5 {
+						return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+							"EMOTE_ID": tgt.ID.Hex(),
+						}).SetDetail("You cannot request this emote for Personal Use because it has an aspect ratio greater than %s", "1.5:1")
+					}
+
+					if !tgt.version.State.Listed {
+						return errors.ErrInsufficientPrivilege().SetFields(errors.Fields{
+							"EMOTE_ID": tgt.ID.Hex(),
+						}).SetDetail("You cannot request this emote for Personal Use because it is not publicly listed")
 					}
 
 					// Construct & write new mod request
