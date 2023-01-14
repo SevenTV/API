@@ -310,7 +310,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 				})
 			}
 
-			if ver.State.AllowPersonal != nil && oldVer.State.AllowPersonal != nil && *ver.State.AllowPersonal != *oldVer.State.AllowPersonal {
+			if ver.State.AllowPersonal == nil && oldVer.State.AllowPersonal != nil || ver.State.AllowPersonal != nil && oldVer.State.AllowPersonal != nil && *ver.State.AllowPersonal != *oldVer.State.AllowPersonal {
 				n["allow_personal"] = ver.State.AllowPersonal
 				o["allow_personal"] = oldVer.State.AllowPersonal
 				changeCount++
