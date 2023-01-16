@@ -3,6 +3,7 @@ package presences
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/data/events"
@@ -71,9 +72,10 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw]) {
 		// Cosmetic
 		_ = p.events.Dispatch(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-			ID:     cos.ID,
-			Kind:   structures.ObjectKindCosmetic,
-			Object: utils.ToJSON(p.modelizer.Cosmetic(cos.ToRaw())),
+			ID:         cos.ID,
+			Kind:       structures.ObjectKindCosmetic,
+			Contextual: true,
+			Object:     utils.ToJSON(p.modelizer.Cosmetic(cos.ToRaw())),
 		}, eventCond)
 	}
 
@@ -136,6 +138,8 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	{
 		entMap := make(map[primitive.ObjectID]structures.Entitlement[structures.EntitlementDataEmoteSet])
 		setIDs := make([]primitive.ObjectID, len(cosmetics.EmoteSets))
+		emoteFilter := make(utils.Set[string])
+		emoteFilter.Fill(presence.Data.Filter.Emotes...)
 
 		for i, ent := range cosmetics.EmoteSets {
 			setIDs[i] = ent.Data.RefID
@@ -156,14 +160,14 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 				continue // can't find linked entitlement
 			}
 
-			emoteIDs := utils.Map(es.Emotes, func(x structures.ActiveEmote) primitive.ObjectID {
-				return x.ID
-			})
-
 			// Fetch Emotes
-			emotes, errs := p.loaders.EmoteByID().LoadAll(emoteIDs)
+			emotes, errs := p.loaders.EmoteByID().LoadAll(
+				utils.Map(es.Emotes, func(x structures.ActiveEmote) primitive.ObjectID {
+					return x.ID
+				}),
+			)
 			if multierror.Append(nil, errs...).ErrorOrNil() != nil {
-				zap.S().Errorw("failed to load emotes", "emote_ids", emoteIDs)
+				zap.S().Errorw("failed to load emotes", "emote_set_id", es.ID, "errors", errs)
 
 				continue
 			}
@@ -174,23 +178,77 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			}
 
 			// Dispatch the Emote Set's Emotes
+			emoteDispatches := make([]events.ChangeField, len(es.Emotes))
+
+			// Filter emotes
+			pos := 0
 			for i, ae := range es.Emotes {
 				if emote, ok := emoteMap[ae.ID]; ok {
-					es.Emotes[i].Emote = &emote
+					ver, _ := emote.GetVersion(ae.ID)
+					if ver.ID.IsZero() || ver.State.AllowPersonal == nil || !*ver.State.AllowPersonal {
+						continue // emote is not permitted for personal use
+					}
+
+					if len(emoteFilter) > 0 && !emoteFilter.Has(ae.Name) {
+						continue // emote is not in the filters
+					}
+
+					ae.Emote = &emote
+					emoteDispatches[pos] = events.ChangeField{
+						Key:   "emotes",
+						Index: utils.PointerOf(int32(i)),
+						Type:  events.ChangeFieldTypeObject,
+						Value: p.modelizer.ActiveEmote(ae),
+					}
+
+					pos++
 				}
 			}
 
+			// Create a unique token with which we'll fan out emote push events to the set
+			setDispatchToken, err := utils.GenerateRandomString(8)
+			if err != nil {
+				zap.S().Errorw("failed to generate random string", "error", err)
+
+				return err
+			}
+
 			// Dispatch the Emote Set data
+			es.Emotes = make([]structures.ActiveEmote, 0)
 			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
-				ID:     es.ID,
-				Kind:   structures.ObjectKindEmoteSet,
-				Object: utils.ToJSON(p.modelizer.EmoteSet(es)),
+				ID:         es.ID,
+				Kind:       structures.ObjectKindEmoteSet,
+				Contextual: true,
+				Object:     utils.ToJSON(p.modelizer.EmoteSet(es)),
 			}, &events.SessionEffect{
-				AddSubscriptions: []events.SubscribePayload{{
-					Type:      events.EventTypeAnyEmoteSet,
-					Condition: events.EventCondition{"object_id": es.ID.Hex()},
-				}},
+				AddSubscriptions: []events.SubscribePayload{
+					// Subscribe to this set's future emote updates
+					{
+						Type:      events.EventTypeAnyEmoteSet,
+						Condition: events.EventCondition{"object_id": es.ID.Hex()},
+					},
+					// Create a temporary, unique subscription to deliver the set's emotes
+					{
+						Type: events.EventTypeUpdateEmoteSet,
+						Condition: events.EventCondition{
+							"object_id": es.ID.Hex(),
+							"token":     setDispatchToken,
+						},
+						TTL: time.Second * 5,
+					},
+				},
 			}, eventCond)
+
+			// Dispatch the Emote Set's Emotes
+			_ = p.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+				ID:         es.ID,
+				Kind:       structures.ObjectKindEmoteSet,
+				Contextual: true,
+				Pushed:     emoteDispatches[:pos],
+			}, events.EventCondition{ // deliver the set's emotes through an ephemeral subscription
+				"object_id": es.ID.Hex(),
+				"token":     setDispatchToken,
+			})
 
 			// Dispatch the Emote Set entitlement
 			if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {

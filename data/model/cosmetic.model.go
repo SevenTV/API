@@ -130,14 +130,20 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) C
 			{
 				Name:   "1x",
 				Format: ImageFormatWEBP,
+				Width:  18,
+				Height: 18,
 			},
 			{
 				Name:   "2x",
 				Format: ImageFormatWEBP,
+				Width:  36,
+				Height: 36,
 			},
 			{
 				Name:   "3x",
 				Format: ImageFormatWEBP,
+				Width:  72,
+				Height: 72,
 			},
 		},
 	}

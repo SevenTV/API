@@ -563,7 +563,7 @@ const docTemplate = `{
                     ],
                     "x-omitempty": true
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"
@@ -615,7 +615,7 @@ const docTemplate = `{
                     ],
                     "x-omitempty": true
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"
@@ -779,7 +779,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"

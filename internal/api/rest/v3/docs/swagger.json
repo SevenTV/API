@@ -559,7 +559,7 @@
                     ],
                     "x-omitempty": true
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"
@@ -611,7 +611,7 @@
                     ],
                     "x-omitempty": true
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"
@@ -775,7 +775,7 @@
                 "name": {
                     "type": "string"
                 },
-                "states": {
+                "state": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.EmoteVersionState"
