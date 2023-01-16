@@ -69,8 +69,8 @@ func (evc EventCondition) Set(key string, value string) EventCondition {
 }
 
 func (evc EventCondition) Match(other EventCondition) bool {
-	for k, v := range evc {
-		if other[k] != v {
+	for k, v := range other {
+		if evc[k] != v {
 			return false
 		}
 	}
