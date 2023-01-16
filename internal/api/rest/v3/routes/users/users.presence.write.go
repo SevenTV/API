@@ -83,6 +83,7 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		p, err := pm.Write(ctx, ttl, structures.UserPresenceDataChannel{
 			Platform: pd.Platform,
 			ID:       pd.ID,
+			Filter:   pd.Filter,
 		}, presences.WritePresenceOptions{
 			Authentic: authentic,
 			Known:     known,

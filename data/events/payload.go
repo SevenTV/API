@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -31,6 +32,7 @@ type HeartbeatPayload struct {
 type SubscribePayload struct {
 	Type      EventType         `json:"type"`
 	Condition map[string]string `json:"condition"`
+	TTL       time.Duration     `json:"ttl,omitempty"`
 }
 
 type UnsubscribePayload struct {
