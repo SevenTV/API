@@ -221,10 +221,14 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}
 
 				// Acquire a lock. This prevents multiple personal use requests from being sent for the same emote
-				mx := m.redis.Mutex(m.redis.ComposeKey("api", "emote", tgt.ID.Hex(), "mod_request", "personal_use"), time.Minute)
+				mx := m.redis.Mutex(m.redis.ComposeKey("api", "emote", tgt.ID.Hex(), "mod_request", "personal_use"), time.Second*10)
 				if err := mx.LockContext(ctx); err != nil {
 					z.Errorw("failed to acquire lock", "error", err)
 				}
+
+				defer func() {
+					_, _ = mx.UnlockContext(ctx)
+				}()
 
 				// Check for existing mod request
 				cur, err := m.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, mongo.Pipeline{
@@ -259,8 +263,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				if err != nil {
 					z.Errorw("failed to check for existing mod request (aggregation couldn't be formulated)")
 
-					_, _ = mx.UnlockContext(ctx)
-
 					return errors.ErrInternalServerError()
 				}
 
@@ -269,8 +271,6 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				}{}
 				if err := cur.All(ctx, &states); err != nil {
 					z.Errorw("failed to check for existing mod request (could not return from cursor)")
-
-					_, _ = mx.UnlockContext(ctx)
 
 					return errors.ErrInternalServerError()
 				}
