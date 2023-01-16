@@ -174,11 +174,25 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			}
 
 			// Dispatch the Emote Set's Emotes
-			for i, ae := range es.Emotes {
+			validatedEmotes := make([]structures.ActiveEmote, len(es.Emotes))
+
+			pos := 0
+			for _, ae := range es.Emotes {
 				if emote, ok := emoteMap[ae.ID]; ok {
-					es.Emotes[i].Emote = &emote
+					ver, _ := emote.GetVersion(ae.ID)
+					if ver.ID.IsZero() || ver.State.AllowPersonal == nil || !*ver.State.AllowPersonal {
+						continue // emote is not permitted for personal use
+					}
+
+					ae.Emote = &emote
+
+					validatedEmotes[pos] = ae
+					pos++
 				}
 			}
+
+			// Trim the emote list if we removed any
+			es.Emotes = validatedEmotes[:pos]
 
 			// Dispatch the Emote Set data
 			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{

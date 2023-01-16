@@ -41,7 +41,7 @@ type Emote {
   host: ImageHost!
   versions: [EmoteVersion!]!
   activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
-  states: [EmoteVersionState!]!
+  state: [EmoteVersionState!]!
   listed: Boolean!
   personal_use: Boolean!
 
@@ -61,7 +61,7 @@ type EmotePartial {
   owner_id: ObjectID!
   owner: UserPartial @goField(forceResolver: true)
   host: ImageHost!
-  states: [EmoteVersionState!]!
+  state: [EmoteVersionState!]!
   listed: Boolean!
 }
 
@@ -85,7 +85,7 @@ type EmoteVersion {
   host: ImageHost!
   lifecycle: Int!
   error: String
-  states: [EmoteVersionState!]!
+  state: [EmoteVersionState!]!
   listed: Boolean!
 }
 

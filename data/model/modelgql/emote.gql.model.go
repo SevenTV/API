@@ -33,7 +33,7 @@ func EmoteModel(xm model.EmoteModel) *gql_model.Emote {
 		ID:    xm.ID,
 		Name:  xm.Name,
 		Flags: int(xm.Flags),
-		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+		State: utils.Map(xm.State, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
 			return gql_model.EmoteVersionState(x)
 		}),
 		Listed:    xm.Listed,
@@ -65,7 +65,7 @@ func EmotePartialModel(xm model.EmotePartialModel) *gql_model.EmotePartial {
 		ID:    xm.ID,
 		Name:  xm.Name,
 		Flags: int(xm.Flags),
-		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+		State: utils.Map(xm.State, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
 			return gql_model.EmoteVersionState(x)
 		}),
 		Listed:    xm.Listed,
@@ -94,7 +94,7 @@ func EmoteVersionModel(xm model.EmoteVersionModel) *gql_model.EmoteVersion {
 		CreatedAt:   time.UnixMilli(xm.CreatedAt),
 		Host:        host,
 		Lifecycle:   int(xm.Lifecycle),
-		States: utils.Map(xm.States, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
+		State: utils.Map(xm.State, func(x model.EmoteVersionState) gql_model.EmoteVersionState {
 			return gql_model.EmoteVersionState(x)
 		}),
 		Listed: xm.Listed,
