@@ -103,6 +103,8 @@ func (op Opcode) String() string {
 		return "RESUME"
 	case OpcodeSubscribe:
 		return "SUBSCRIBE"
+	case OpcodeUnsubscribe:
+		return "UNSUBSCRIBE"
 	case OpcodeSignal:
 		return "SIGNAL"
 	default:
