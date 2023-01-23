@@ -185,7 +185,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			for i, ae := range es.Emotes {
 				if emote, ok := emoteMap[ae.ID]; ok {
 					ver, _ := emote.GetVersion(ae.ID)
-					if ver.ID.IsZero() || ver.State.AllowPersonal == nil || !*ver.State.AllowPersonal {
+					if ver.ID.IsZero() || ver.State.AllowPersonal != nil && !*ver.State.AllowPersonal {
 						continue // emote is not permitted for personal use
 					}
 
