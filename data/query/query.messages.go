@@ -148,6 +148,21 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 
 		cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 			matcherPipeline,
+			func() mongo.Pipeline {
+				if len(opt.MessageFilter) == 0 {
+					return mongo.Pipeline{}
+				}
+
+				return mongo.Pipeline{
+					{{
+						Key: "$match",
+						Value: bson.M{
+							"message": bson.M{
+								"$elemMatch": opt.MessageFilter,
+							},
+						},
+					}}}
+			}(),
 			mongo.Pipeline{{{Key: "$count", Value: "count"}}},
 		))
 		if err != nil {
@@ -172,7 +187,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 		matcherPipeline,
 		mongo.Pipeline{
-			{{Key: "$limit", Value: opt.Limit}},
 			{{
 				Key: "$set",
 				Value: bson.M{
@@ -207,6 +221,9 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 					Value: opt.MessageFilter,
 				}}}
 		}(),
+		mongo.Pipeline{
+			{{Key: "$limit", Value: opt.Limit}},
+		},
 	))
 	if err != nil {
 		zap.S().Errorw("failed to create messages aggregation", "error", err)
