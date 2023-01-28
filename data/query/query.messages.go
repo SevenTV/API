@@ -10,7 +10,6 @@ import (
 	"github.com/seventv/common/structures/v3/aggregations"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -42,35 +41,12 @@ func (q *Query) InboxMessages(ctx context.Context, opt InboxMessagesQueryOptions
 		}
 	}
 
-	// Fetch message read states where target user is recipient
-	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Find(ctx, bson.M{
+	return q.Messages(ctx, bson.M{
 		"recipient_id": user.ID,
 		"kind":         structures.MessageKindInbox,
-	}, options.Find().SetProjection(bson.M{"message_id": 1}))
-	if err != nil {
-		return qr.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
-	}
-
-	messageIDs := []primitive.ObjectID{}
-
-	for cur.Next(ctx) {
-		msg := &structures.MessageRead{}
-		if err = cur.Decode(msg); err != nil {
-			continue
-		}
-
-		messageIDs = append(messageIDs, msg.MessageID)
-	}
-
-	and := bson.A{bson.M{"_id": bson.M{"$in": messageIDs}}}
-	if !opt.AfterID.IsZero() {
-		and = append(and, bson.M{"_id": bson.M{"$gt": opt.AfterID}})
-	}
-
-	return q.Messages(ctx, bson.M{"$and": and}, MessageQueryOptions{
-		Actor:            actor,
-		Limit:            opt.Limit,
-		FilterRecipients: []primitive.ObjectID{user.ID},
+	}, MessageQueryOptions{
+		Actor: actor,
+		Limit: opt.Limit,
 	})
 }
 
@@ -148,6 +124,21 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 
 		cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 			matcherPipeline,
+			func() mongo.Pipeline {
+				if len(opt.MessageFilter) == 0 {
+					return mongo.Pipeline{}
+				}
+
+				return mongo.Pipeline{
+					{{
+						Key: "$match",
+						Value: bson.M{
+							"message": bson.M{
+								"$elemMatch": opt.MessageFilter,
+							},
+						},
+					}}}
+			}(),
 			mongo.Pipeline{{{Key: "$count", Value: "count"}}},
 		))
 		if err != nil {
@@ -172,7 +163,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 		matcherPipeline,
 		mongo.Pipeline{
-			{{Key: "$limit", Value: opt.Limit}},
 			{{
 				Key: "$set",
 				Value: bson.M{
@@ -207,6 +197,9 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 					Value: opt.MessageFilter,
 				}}}
 		}(),
+		mongo.Pipeline{
+			{{Key: "$limit", Value: opt.Limit}},
+		},
 	))
 	if err != nil {
 		zap.S().Errorw("failed to create messages aggregation", "error", err)
