@@ -5,6 +5,7 @@ import (
 
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
+	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/loaders"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -23,6 +24,7 @@ type inst struct {
 	mongo   mongo.Instance
 	loaders loaders.Instance
 	events  events.Instance
+	config  *configure.Config
 
 	modelizer model.Modelizer
 }
@@ -32,6 +34,7 @@ func New(opt Options) Instance {
 		mongo:   opt.Mongo,
 		loaders: opt.Loaders,
 		events:  opt.Events,
+		config:  opt.Config,
 
 		modelizer: opt.Modelizer,
 	}
@@ -41,6 +44,7 @@ type Options struct {
 	Mongo   mongo.Instance
 	Loaders loaders.Instance
 	Events  events.Instance
+	Config  *configure.Config
 
 	Modelizer model.Modelizer
 }

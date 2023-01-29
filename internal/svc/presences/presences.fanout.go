@@ -45,6 +45,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		wg.Done()
 	}()
 
+	fetchCosmetics := func() (query.EntitlementQueryResult, error) {
+		// Fetch user's active cosmetics
+		return p.loaders.EntitlementsLoader().Load(presence.UserID)
+	}
+
 	go func() {
 		// Fetch user's active cosmetics
 		cosmetics, err = p.loaders.EntitlementsLoader().Load(presence.UserID)
@@ -116,6 +121,53 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 			return msg, err
 		})
+	}
+
+	// BETA: grant special paint
+	if paintID, err := primitive.ObjectIDFromHex(p.config.Misceallenous.BetaPaintEntitlementID); err == nil {
+		owned := false
+
+		for _, ent := range cosmetics.Paints {
+			if ent.Data.RefID == paintID {
+				owned = true
+
+				break
+			}
+		}
+
+		if !owned {
+			eb := structures.NewEntitlementBuilder(structures.Entitlement[structures.EntitlementDataPaint]{}).
+				SetKind(structures.EntitlementKindPaint).
+				SetUserID(presence.UserID).
+				SetCondition(structures.EntitlementCondition{}).
+				SetData(structures.EntitlementDataPaint{
+					RefID:    paintID,
+					Selected: len(cosmetics.Paints) == 0, // only select if user has no paints
+				}).
+				SetApp(structures.EntitlementApp{
+					Name: "api",
+					State: map[string]any{
+						"source": "beta_tester",
+					},
+				})
+
+			_, err := p.mongo.Collection(mongo.CollectionNameEntitlements).InsertOne(ctx, eb.Entitlement)
+			if err != nil {
+				zap.S().Errorw("failed to grant beta paint entitlement",
+					"error", err,
+					"user_id", presence.UserID.Hex(),
+				)
+			}
+
+			// Refetch the user's cosmetics
+			cosmetics, err = fetchCosmetics()
+			if err != nil {
+				zap.S().Errorw("failed to refetch cosmetics after granting beta paint entitlement",
+					"error", err,
+					"user_id", presence.UserID.Hex(),
+				)
+			}
+		}
 	}
 
 	// Dispatch badge

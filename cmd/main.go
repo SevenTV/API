@@ -206,6 +206,7 @@ func main() {
 			Mongo:     gctx.Inst().Mongo,
 			Loaders:   gctx.Inst().Loaders,
 			Events:    gctx.Inst().Events,
+			Config:    config,
 			Modelizer: gctx.Inst().Modelizer,
 		})
 	}

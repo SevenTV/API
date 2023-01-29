@@ -294,6 +294,10 @@ type Config struct {
 		Namespace      string `mapstructure:"namespace" json:"namespace"`
 	} `mapstructure:"s3" json:"s3"`
 
+	Misceallenous struct {
+		BetaPaintEntitlementID string `mapstructure:"beta_paint_entitlement_id" json:"beta_paint_entitlement_id"`
+	} `mapstructure:"misc" json:"misc"`
+
 	Credentials struct {
 		JWTSecret string `mapstructure:"jwt_secret" json:"jwt_secret"`
 	} `mapstructure:"credentials" json:"credentials"`
