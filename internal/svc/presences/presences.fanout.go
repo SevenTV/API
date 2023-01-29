@@ -143,7 +143,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			eb := structures.NewEntitlementBuilder(structures.Entitlement[structures.EntitlementDataPaint]{}).
 				SetKind(structures.EntitlementKindPaint).
 				SetUserID(presence.UserID).
-				SetCondition(structures.EntitlementCondition{}).
+				SetCondition(structures.EntitlementCondition{NoLegacy: true}).
 				SetData(structures.EntitlementDataPaint{
 					RefID:    paintID,
 					Selected: len(cosmetics.Paints) == 0, // only select if user has no paints

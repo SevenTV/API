@@ -229,8 +229,8 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 	ents := make(map[structures.EntitlementKind][]structures.Entitlement[bson.Raw])
 
 	for _, ent := range entitlements {
-		if ent.Kind != structures.EntitlementKindRole && len(ent.Condition.AllRoles) == 0 {
-			continue // skip condition-less entitlements
+		if ent.Condition.NoLegacy {
+			continue
 		}
 
 		a := ents[ent.Kind]
