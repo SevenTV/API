@@ -78,7 +78,7 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 		pm := r.gctx.Inst().Presences.ChannelPresence(ctx, userID)
 
-		ttl := utils.Ternary(known, time.Hour*1, time.Minute*30) // set lower ttl for an unknown channel
+		ttl := utils.Ternary(known, time.Hour*24, time.Minute*12) // set lower ttl for an unknown channel
 
 		p, err := pm.Write(ctx, ttl, structures.UserPresenceDataChannel{
 			Platform: pd.Platform,
