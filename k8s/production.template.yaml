@@ -179,6 +179,9 @@ data:
         enabled: true
         api: http://compactdisc:3000
 
+    misc:
+      beta_paint_entitlement_id: 63bdff9723e3c08ccb76494c
+
     chatterino:
       version: 7.4.0
       stable:

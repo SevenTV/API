@@ -28,11 +28,12 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	}
 
 	var (
-		user            structures.User
-		cosmetics       query.EntitlementQueryResult
-		entitlements    []structures.UserPresenceEntitlement
-		dispatchFactory [](func() (events.Message[events.DispatchPayload], error))
-		err             error
+		user                 structures.User
+		cosmetics            query.EntitlementQueryResult
+		entitlements         []structures.UserPresenceEntitlement
+		lostEntitlementKinds = make(utils.Set[structures.EntitlementKind])
+		dispatchFactory      [](func() (events.Message[events.DispatchPayload], error))
+		err                  error
 	)
 
 	wg := sync.WaitGroup{}
@@ -44,6 +45,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 		wg.Done()
 	}()
+
+	fetchCosmetics := func() (query.EntitlementQueryResult, error) {
+		// Fetch user's active cosmetics
+		return p.loaders.EntitlementsLoader().Load(presence.UserID)
+	}
 
 	go func() {
 		// Fetch user's active cosmetics
@@ -63,6 +69,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 	for _, ent := range presence.Entitlements {
 		previousHashMap[ent.RefID] = ent.DispatchHash
+		lostEntitlementKinds.Add(ent.Kind)
 
 		if ent.DispatchHash > 0 {
 			previousHashList.Add(ent.DispatchHash)
@@ -94,12 +101,14 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
 				Object:     utils.ToJSON(p.modelizer.Entitlement(ent.ToRaw(), user)),
-			}, &events.SessionEffect{
-				AddSubscriptions: []events.SubscribePayload{{
-					Type:      events.EventTypeAnyEntitlement,
-					Condition: map[string]string{"user_id": presence.UserID.Hex()},
-				}},
-				RemoveHashes: previousHashList.Values(),
+			}, events.DispatchOptions{
+				Effect: &events.SessionEffect{
+					AddSubscriptions: []events.SubscribePayload{{
+						Type:      events.EventTypeAnyEntitlement,
+						Condition: map[string]string{"user_id": presence.UserID.Hex()},
+					}},
+					RemoveHashes: previousHashList.Values(),
+				},
 			}, eventCond, entEventCond)
 
 			// Add to presence's entitlement refs
@@ -118,11 +127,59 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		})
 	}
 
+	// BETA: grant special paint
+	if paintID, err := primitive.ObjectIDFromHex(p.config.Misceallenous.BetaPaintEntitlementID); err == nil {
+		owned := false
+
+		if c, _ := p.mongo.Collection(mongo.CollectionNameEntitlements).CountDocuments(ctx, bson.M{
+			"user_id":  presence.UserID,
+			"kind":     structures.EntitlementKindPaint,
+			"data.ref": paintID,
+		}); c > 0 {
+			owned = true
+		}
+
+		if !owned {
+			eb := structures.NewEntitlementBuilder(structures.Entitlement[structures.EntitlementDataPaint]{}).
+				SetKind(structures.EntitlementKindPaint).
+				SetUserID(presence.UserID).
+				SetCondition(structures.EntitlementCondition{}).
+				SetData(structures.EntitlementDataPaint{
+					RefID:    paintID,
+					Selected: len(cosmetics.Paints) == 0, // only select if user has no paints
+				}).
+				SetApp(structures.EntitlementApp{
+					Name: "api",
+					State: map[string]any{
+						"source": "beta_tester",
+					},
+				})
+
+			_, err := p.mongo.Collection(mongo.CollectionNameEntitlements).InsertOne(ctx, eb.Entitlement)
+			if err != nil {
+				zap.S().Errorw("failed to grant beta paint entitlement",
+					"error", err,
+					"user_id", presence.UserID.Hex(),
+				)
+			}
+
+			// Refetch the user's cosmetics
+			cosmetics, err = fetchCosmetics()
+			if err != nil {
+				zap.S().Errorw("failed to refetch cosmetics after granting beta paint entitlement",
+					"error", err,
+					"user_id", presence.UserID.Hex(),
+				)
+			}
+		}
+	}
+
 	// Dispatch badge
 	if badge, badgeEnt, hasBadge := cosmetics.ActiveBadge(); hasBadge {
 		if ent, err := structures.ConvertEntitlement[structures.EntitlementDataBase](badgeEnt.ToRaw()); err == nil {
 			dispatchCosmetic(badge.ToRaw())
 			dispatchEntitlement(ent)
+			lostEntitlementKinds.Delete(structures.EntitlementKindBadge)
 		}
 	}
 
@@ -131,15 +188,18 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		if ent, err := structures.ConvertEntitlement[structures.EntitlementDataBase](paintEnt.ToRaw()); err == nil {
 			dispatchCosmetic(paint.ToRaw())
 			dispatchEntitlement(ent)
+			lostEntitlementKinds.Delete(structures.EntitlementKindPaint)
 		}
 	}
 
 	// Dispatch personal emote sets
-	{
+	if len(cosmetics.EmoteSets) > 0 {
 		entMap := make(map[primitive.ObjectID]structures.Entitlement[structures.EntitlementDataEmoteSet])
 		setIDs := make([]primitive.ObjectID, len(cosmetics.EmoteSets))
 		emoteFilter := make(utils.Set[string])
 		emoteFilter.Fill(presence.Data.Filter.Emotes...)
+
+		lostEntitlementKinds.Delete(structures.EntitlementKindEmoteSet)
 
 		for i, ent := range cosmetics.EmoteSets {
 			setIDs[i] = ent.Data.RefID
@@ -182,6 +242,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 			// Filter emotes
 			pos := 0
+
 			for i, ae := range es.Emotes {
 				if emote, ok := emoteMap[ae.ID]; ok {
 					ver, _ := emote.GetVersion(ae.ID)
@@ -220,21 +281,23 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 				Kind:       structures.ObjectKindEmoteSet,
 				Contextual: true,
 				Object:     utils.ToJSON(p.modelizer.EmoteSet(es)),
-			}, &events.SessionEffect{
-				AddSubscriptions: []events.SubscribePayload{
-					// Subscribe to this set's future emote updates
-					{
-						Type:      events.EventTypeAnyEmoteSet,
-						Condition: events.EventCondition{"object_id": es.ID.Hex()},
-					},
-					// Create a temporary, unique subscription to deliver the set's emotes
-					{
-						Type: events.EventTypeUpdateEmoteSet,
-						Condition: events.EventCondition{
-							"object_id": es.ID.Hex(),
-							"token":     setDispatchToken,
+			}, events.DispatchOptions{
+				Effect: &events.SessionEffect{
+					AddSubscriptions: []events.SubscribePayload{
+						// Subscribe to this set's future emote updates
+						{
+							Type:      events.EventTypeAnyEmoteSet,
+							Condition: events.EventCondition{"object_id": es.ID.Hex()},
 						},
-						TTL: time.Second * 5,
+						// Create a temporary, unique subscription to deliver the set's emotes
+						{
+							Type: events.EventTypeUpdateEmoteSet,
+							Condition: events.EventCondition{
+								"object_id": es.ID.Hex(),
+								"token":     setDispatchToken,
+							},
+							TTL: time.Second * 5,
+						},
 					},
 				},
 			}, eventCond)
@@ -276,7 +339,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 			}
 		}
 
-		if !found {
+		if !found || lostEntitlementKinds.Has(ent.Kind) {
 			// Entitlement is no longer active, send delete event
 			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
 				ID:         ent.ID,
@@ -289,8 +352,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 						RefID: ent.RefID,
 					},
 				}.ToRaw(), user)),
-			}, &events.SessionEffect{
-				RemoveHashes: []uint32{ent.DispatchHash},
+			}, events.DispatchOptions{
+				Effect: &events.SessionEffect{
+					RemoveHashes: []uint32{ent.DispatchHash},
+				},
+				DisableDedupe: true,
 			}, eventCond, entEventCond)
 		}
 	}
