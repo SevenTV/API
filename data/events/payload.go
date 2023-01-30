@@ -10,7 +10,7 @@ import (
 type AnyPayload interface {
 	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ResumePayload |
 		SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload |
-		ErrorPayload | EndOfStreamPayload
+		ErrorPayload | EndOfStreamPayload | BridgedCommandPayload[json.RawMessage]
 }
 
 type HelloPayload struct {
@@ -56,6 +56,8 @@ type DispatchPayload struct {
 	Matches []uint32 `json:"matches,omitempty"`
 	// A list of conditions where at least one must have all its fields match a subscription in order for this dispatch to be delivered
 	Conditions []EventCondition `json:"condition,omitempty"`
+	// This dispatch is a whisper to a specific session, usually as a response to a command
+	Whisper string `json:"whisper,omitempty"`
 }
 
 type EventCondition map[string]string
@@ -103,4 +105,11 @@ type ErrorPayload struct {
 type EndOfStreamPayload struct {
 	Code    CloseCode `json:"code"`
 	Message string    `json:"message"`
+}
+
+type BridgedCommandPayload[T BridgedCommandBody] struct {
+	Command   string `json:"command"`
+	SessionID string `json:"sid"`
+	ClientIP  string `json:"ip"`
+	Body      T      `json:"body"`
 }

@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -19,8 +21,9 @@ type CosmeticModel[T CosmeticPaintModel | CosmeticBadgeModel | json.RawMessage] 
 type CosmeticKind string
 
 const (
-	CosmeticKindPaint CosmeticKind = "PAINT"
-	CosmeticKindBadge CosmeticKind = "BADGE"
+	CosmeticKindPaint  CosmeticKind = "PAINT"
+	CosmeticKindBadge  CosmeticKind = "BADGE"
+	CosmeticKindAvatar CosmeticKind = "AVATAR"
 )
 
 type CosmeticPaintModel struct {
@@ -62,6 +65,12 @@ type CosmeticBadgeModel struct {
 	Tag     string             `json:"tag"`
 	Tooltip string             `json:"tooltip"`
 	Host    ImageHost          `json:"host"`
+}
+
+type CosmeticAvatarModel struct {
+	ID     string             `json:"id"`
+	UserID primitive.ObjectID `json:"user_id"`
+	Host   ImageHost          `json:"host"`
 }
 
 func (x *modelizer) Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage] {
@@ -154,5 +163,42 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) C
 		Tooltip: v.Data.Tooltip,
 		Tag:     v.Data.Tag,
 		Host:    host,
+	}
+}
+
+func (x *modelizer) Avatar(v structures.User) CosmeticAvatarModel {
+	if v.Avatar != nil {
+		files := utils.Filter(v.Avatar.ImageFiles, func(fi structures.ImageFile) bool {
+			return (fi.ContentType == "image/webp" || fi.ContentType == "image/avif") && !strings.HasSuffix(fi.Name, "_static")
+		})
+
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Width < files[j].Width
+		})
+
+		return CosmeticAvatarModel{
+			ID:     v.Avatar.ID.Hex(),
+			UserID: v.ID,
+			Host: ImageHost{
+				URL: fmt.Sprintf("//%s/user/%s/av_%s", x.cdnURL, v.ID.Hex(), v.Avatar.ID.Hex()),
+				Files: utils.Map(files, func(img structures.ImageFile) ImageFile {
+					return x.Image(img)
+				}),
+			},
+		}
+	} else {
+		return CosmeticAvatarModel{
+			ID:     v.AvatarID,
+			UserID: v.ID,
+			Host: ImageHost{
+				URL: fmt.Sprintf("//%s/pp/%s", x.cdnURL, v.ID.Hex()),
+				Files: []ImageFile{{
+					Name:   v.AvatarID,
+					Width:  128,
+					Height: 128,
+					Format: ImageFormatWEBP,
+				}},
+			},
+		}
 	}
 }
