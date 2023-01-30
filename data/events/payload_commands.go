@@ -11,7 +11,7 @@ type BridgedCommandBody interface {
 }
 
 type CosmeticsCommandBody struct {
-	Platform   structures.UserConnectionPlatform `json:"platform"`
-	Identifier string                            `json:"identifier"`
-	Kinds      []structures.CosmeticKind         `json:"kinds"`
+	Platform    structures.UserConnectionPlatform `json:"platform"`
+	Identifiers []string                          `json:"identifier"`
+	Kinds       []structures.CosmeticKind         `json:"kinds"`
 }
