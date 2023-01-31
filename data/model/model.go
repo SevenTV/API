@@ -50,7 +50,9 @@ type ImageHost struct {
 }
 
 type ImageFile struct {
-	Name       string      `json:"name"`
+	Name string `json:"name"`
+	// deprecated
+	StaticName string      `json:"static_name"`
 	Width      int32       `json:"width"`
 	Height     int32       `json:"height"`
 	FrameCount int32       `json:"frame_count,omitempty"`
@@ -77,6 +79,7 @@ func (x *modelizer) Image(v structures.ImageFile) ImageFile {
 
 	return ImageFile{
 		Name:       fmt.Sprintf("%s.%s", v.Name, ext),
+		StaticName: fmt.Sprintf("%s_static.%s", v.Name, ext),
 		Format:     ImageFormat(format),
 		Width:      v.Width,
 		Height:     v.Height,
