@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/errors"
@@ -109,8 +108,14 @@ func handleCosmetics(gctx global.Context, ctx context.Context, body events.Cosme
 
 			wg.Done()
 
-			if len(errs) > 0 {
-				zap.S().Errorw("failed to load users for bridged cosmetics request command", "errors", multierror.Append(nil, errs...).Error())
+			for _, err := range errs {
+				if err == nil || errors.Compare(err, errors.ErrUnknownUser()) {
+					continue
+				}
+
+				zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
+
+				break
 			}
 		}(idType, identifiers)
 	}
@@ -124,7 +129,7 @@ func handleCosmetics(gctx global.Context, ctx context.Context, body events.Cosme
 
 	// Dispatch user avatar
 	for _, user := range users {
-		if kinds.Has(structures.CosmeticKindAvatar) {
+		if kinds.Has(structures.CosmeticKindAvatar) && (user.Avatar != nil || user.AvatarID != "") {
 			av := gctx.Inst().Modelizer.Avatar(user)
 
 			if _, err := gctx.Inst().Events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{

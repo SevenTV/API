@@ -19,7 +19,7 @@ type Modelizer interface {
 	Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage]
 	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel
 	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel
-	Avatar(v structures.User) CosmeticAvatarModel
+	Avatar(v structures.User) CosmeticModel[CosmeticAvatarModel]
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 	Role(v structures.Role) RoleModel
