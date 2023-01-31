@@ -129,7 +129,9 @@ func handleCosmetics(gctx global.Context, ctx context.Context, body events.Cosme
 
 	// Dispatch user avatar
 	for _, user := range users {
-		if kinds.Has(structures.CosmeticKindAvatar) && (user.Avatar != nil || user.AvatarID != "") {
+		if kinds.Has(structures.CosmeticKindAvatar) &&
+			(user.Avatar != nil || user.AvatarID != "") &&
+			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
 			av := gctx.Inst().Modelizer.Avatar(user)
 
 			if _, err := gctx.Inst().Events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
