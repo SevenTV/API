@@ -55,28 +55,7 @@ var (
 )
 
 func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel {
-	var (
-		displayName string
-		username    string
-	)
-
-	switch v.Platform {
-	case structures.UserConnectionPlatformTwitch:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](v); err == nil {
-			displayName = con.Data.DisplayName
-			username = con.Data.Login
-		}
-	case structures.UserConnectionPlatformYouTube:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataYoutube](v); err == nil {
-			displayName = con.Data.Title
-			username = con.Data.ID
-		}
-	case structures.UserConnectionPlatformDiscord:
-		if con, err := structures.ConvertUserConnection[structures.UserConnectionDataDiscord](v); err == nil {
-			displayName = con.Data.Username
-			username = con.Data.Username + "#" + con.Data.Discriminator
-		}
-	}
+	username, displayName := v.Username()
 
 	var set *EmoteSetModel
 

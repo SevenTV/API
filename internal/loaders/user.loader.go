@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/seventv/api/data/query"
@@ -68,9 +69,9 @@ func userLoader[T comparable](ctx context.Context, x inst, keyName string) *data
 	})
 }
 
-func userByConnectionLoader(ctx context.Context, x inst, platform structures.UserConnectionPlatform) *dataloader.DataLoader[string, structures.User] {
+func userByConnectionLoader(ctx context.Context, x inst, platform structures.UserConnectionPlatform, key string) *dataloader.DataLoader[string, structures.User] {
 	return dataloader.New(dataloader.Config[string, structures.User]{
-		Wait: time.Millisecond * 25,
+		Wait: time.Millisecond * 75,
 		Fetch: func(keys []string) ([]structures.User, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
@@ -85,8 +86,8 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 
 			// Fetch users
 			result := x.query.Users(ctx, bson.M{
-				"connections.id":       bson.M{"$in": keys},
-				"connections.platform": platform,
+				fmt.Sprintf("connections.%s", key): bson.M{"$in": keys},
+				"connections.platform":             platform,
 			})
 			if result.Empty() {
 				return items, errs
@@ -96,9 +97,20 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 			if err == nil {
 				m := make(map[string]structures.User)
 				for _, u := range users {
-					for _, c := range u.Connections {
-						if c.Platform == platform {
-							m[c.ID] = u
+					switch key {
+					case "data.login", "data.username":
+						for _, c := range u.Connections {
+							username, _ := c.Username()
+
+							if c.Platform == platform {
+								m[username] = u
+							}
+						}
+					default:
+						for _, c := range u.Connections {
+							if c.Platform == platform {
+								m[c.ID] = u
+							}
 						}
 					}
 				}
@@ -123,7 +135,7 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 
 func entitlementsLoader(ctx context.Context, x inst) *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult] {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, query.EntitlementQueryResult]{
-		Wait: time.Millisecond * 25,
+		Wait: time.Millisecond * 100,
 		Fetch: func(keys []primitive.ObjectID) ([]query.EntitlementQueryResult, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()

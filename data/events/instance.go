@@ -104,12 +104,14 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		Hash:       dedupeHash,
 		Conditions: cond,
 		Effect:     opt.Effect,
+		Whisper:    opt.Whisper,
 	})
 
 	return msg, inst.Publish(ctx, msg.ToRaw())
 }
 
 type DispatchOptions struct {
+	Whisper       string
 	Effect        *SessionEffect
 	DisableDedupe bool
 }

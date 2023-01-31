@@ -19,6 +19,7 @@ type Modelizer interface {
 	Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage]
 	Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) CosmeticPaintModel
 	Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) CosmeticBadgeModel
+	Avatar(v structures.User) CosmeticModel[CosmeticAvatarModel]
 	EmoteSet(v structures.EmoteSet) EmoteSetModel
 	ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel
 	Role(v structures.Role) RoleModel
@@ -50,7 +51,6 @@ type ImageHost struct {
 
 type ImageFile struct {
 	Name       string      `json:"name"`
-	StaticName string      `json:"static_name"`
 	Width      int32       `json:"width"`
 	Height     int32       `json:"height"`
 	FrameCount int32       `json:"frame_count,omitempty"`
@@ -66,12 +66,17 @@ const (
 )
 
 func (x *modelizer) Image(v structures.ImageFile) ImageFile {
-	ext := strings.Split(v.ContentType, "/")[1]
+	var ext string
+
+	mime := strings.Split(v.ContentType, "/")
+	if len(mime) == 2 {
+		ext = mime[1]
+	}
+
 	format := strings.ToUpper(ext)
 
 	return ImageFile{
 		Name:       fmt.Sprintf("%s.%s", v.Name, ext),
-		StaticName: strings.Replace(v.Name, ".", "_static.", 1),
 		Format:     ImageFormat(format),
 		Width:      v.Width,
 		Height:     v.Height,

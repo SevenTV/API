@@ -78,6 +78,7 @@ const (
 	OpcodeSubscribe   Opcode = 35 // S - Subscribe to an event
 	OpcodeUnsubscribe Opcode = 36 // S - Unsubscribe from an event
 	OpcodeSignal      Opcode = 37 // S - Emit a spectator signal
+	OpcodeBridge      Opcode = 38 // S - Send a special command
 )
 
 func (op Opcode) String() string {
@@ -107,6 +108,8 @@ func (op Opcode) String() string {
 		return "UNSUBSCRIBE"
 	case OpcodeSignal:
 		return "SIGNAL"
+	case OpcodeBridge:
+		return "BRIDGE"
 	default:
 		return "UNDOCUMENTED_OPERATION"
 	}

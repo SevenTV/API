@@ -19,6 +19,7 @@ type Instance interface {
 	UserByID() UserLoaderByID
 	UserByUsername() UserLoaderByUsername
 	UserByConnectionID(structures.UserConnectionPlatform) UserLoaderByConnectionID
+	UserByConnectionUsername(structures.UserConnectionPlatform) UserLoaderByConnectionUsername
 
 	EmoteByID() EmoteLoaderByID
 	EmoteByOwnerID() BatchEmoteLoaderByID
@@ -33,9 +34,10 @@ type Instance interface {
 
 type inst struct {
 	// User Loaders
-	userByID           UserLoaderByID
-	userByUsername     UserLoaderByUsername
-	userByConnectionID map[structures.UserConnectionPlatform]UserLoaderByConnectionID
+	userByID                 UserLoaderByID
+	userByUsername           UserLoaderByUsername
+	userByConnectionID       map[structures.UserConnectionPlatform]UserLoaderByConnectionID
+	userByConnectionUsername map[structures.UserConnectionPlatform]UserLoaderByConnectionUsername
 
 	// Emote Loaders
 	emoteByID      EmoteLoaderByID
@@ -68,10 +70,16 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.userByID = userLoader[primitive.ObjectID](ctx, l, "_id")
 	l.userByUsername = userLoader[string](ctx, l, "username")
 	l.userByConnectionID = map[structures.UserConnectionPlatform]*dataloader.DataLoader[string, structures.User]{
-		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch),
-		structures.UserConnectionPlatformYouTube: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformYouTube),
-		structures.UserConnectionPlatformDiscord: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformDiscord),
+		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch, "id"),
+		structures.UserConnectionPlatformYouTube: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformYouTube, "id"),
+		structures.UserConnectionPlatformDiscord: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformDiscord, "id"),
 	}
+	l.userByConnectionUsername = map[structures.UserConnectionPlatform]*dataloader.DataLoader[string, structures.User]{
+		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch, "data.login"),
+		structures.UserConnectionPlatformYouTube: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformYouTube, "data.username"),
+		structures.UserConnectionPlatformDiscord: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformDiscord, "data.username"),
+	}
+
 	l.emoteByID = emoteLoader(ctx, l, "versions.id")
 	l.emoteByOwnerID = batchEmoteLoader(ctx, l, "owner_id")
 	l.emoteSetByID = emoteSetByID(ctx, l)
@@ -97,6 +105,15 @@ func (l inst) UserByConnectionID(platform structures.UserConnectionPlatform) Use
 	loader, ok := l.userByConnectionID[platform]
 	if !ok {
 		return l.userByConnectionID[structures.UserConnectionPlatformTwitch]
+	}
+
+	return loader
+}
+
+func (l inst) UserByConnectionUsername(platform structures.UserConnectionPlatform) UserLoaderByConnectionUsername {
+	loader, ok := l.userByConnectionUsername[platform]
+	if !ok {
+		return l.userByConnectionUsername[structures.UserConnectionPlatformTwitch]
 	}
 
 	return loader
@@ -132,9 +149,10 @@ func (l *inst) EntitlementsLoader() EntitlementsLoader {
 }
 
 type (
-	UserLoaderByID           = *dataloader.DataLoader[primitive.ObjectID, structures.User]
-	UserLoaderByUsername     = *dataloader.DataLoader[string, structures.User]
-	UserLoaderByConnectionID = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByID                 = *dataloader.DataLoader[primitive.ObjectID, structures.User]
+	UserLoaderByUsername           = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByConnectionID       = *dataloader.DataLoader[string, structures.User]
+	UserLoaderByConnectionUsername = *dataloader.DataLoader[string, structures.User]
 
 	EmoteLoaderByID         = *dataloader.DataLoader[primitive.ObjectID, structures.Emote]
 	BatchEmoteLoaderByID    = *dataloader.DataLoader[primitive.ObjectID, []structures.Emote]

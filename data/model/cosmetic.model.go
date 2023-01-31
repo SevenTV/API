@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -10,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type CosmeticModel[T CosmeticPaintModel | CosmeticBadgeModel | json.RawMessage] struct {
+type CosmeticModel[T CosmeticPaintModel | CosmeticBadgeModel | CosmeticAvatarModel | json.RawMessage] struct {
 	ID   primitive.ObjectID `json:"id"`
 	Kind CosmeticKind       `json:"kind"`
 	Data T                  `json:"data"`
@@ -19,8 +21,9 @@ type CosmeticModel[T CosmeticPaintModel | CosmeticBadgeModel | json.RawMessage] 
 type CosmeticKind string
 
 const (
-	CosmeticKindPaint CosmeticKind = "PAINT"
-	CosmeticKindBadge CosmeticKind = "BADGE"
+	CosmeticKindPaint  CosmeticKind = "PAINT"
+	CosmeticKindBadge  CosmeticKind = "BADGE"
+	CosmeticKindAvatar CosmeticKind = "AVATAR"
 )
 
 type CosmeticPaintModel struct {
@@ -62,6 +65,13 @@ type CosmeticBadgeModel struct {
 	Tag     string             `json:"tag"`
 	Tooltip string             `json:"tooltip"`
 	Host    ImageHost          `json:"host"`
+}
+
+type CosmeticAvatarModel struct {
+	ID   string           `json:"id"`
+	User UserPartialModel `json:"user"`
+	As   string           `json:"as,omitempty"`
+	Host ImageHost        `json:"host"`
 }
 
 func (x *modelizer) Cosmetic(v structures.Cosmetic[bson.Raw]) CosmeticModel[json.RawMessage] {
@@ -155,4 +165,62 @@ func (x *modelizer) Badge(v structures.Cosmetic[structures.CosmeticDataBadge]) C
 		Tag:     v.Data.Tag,
 		Host:    host,
 	}
+}
+
+func (x *modelizer) Avatar(v structures.User) CosmeticModel[CosmeticAvatarModel] {
+	// Minimize the user data
+	usr := x.User(v).ToPartial()
+	usr.AvatarURL = ""
+	usr.RoleIDs = nil
+
+	for i, con := range usr.Connections {
+		con.EmoteSetID = nil
+
+		usr.Connections[i] = con
+	}
+
+	if v.Avatar != nil {
+		files := utils.Filter(v.Avatar.ImageFiles, func(fi structures.ImageFile) bool {
+			return (fi.ContentType == "image/webp" || fi.ContentType == "image/avif") && !strings.HasSuffix(fi.Name, "_static")
+		})
+
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Width < files[j].Width
+		})
+
+		return CosmeticModel[CosmeticAvatarModel]{
+			ID:   v.Avatar.ID,
+			Kind: CosmeticKindAvatar,
+			Data: CosmeticAvatarModel{
+				ID:   v.Avatar.ID.Hex(),
+				User: usr,
+				Host: ImageHost{
+					URL: fmt.Sprintf("//%s/user/%s/av_%s", x.cdnURL, v.ID.Hex(), v.Avatar.ID.Hex()),
+					Files: utils.Map(files, func(img structures.ImageFile) ImageFile {
+						return x.Image(img)
+					}),
+				},
+			},
+		}
+	} else if v.AvatarID != "" {
+		return CosmeticModel[CosmeticAvatarModel]{
+			ID:   v.ID,
+			Kind: CosmeticKindAvatar,
+			Data: CosmeticAvatarModel{
+				ID:   v.AvatarID,
+				User: usr,
+				Host: ImageHost{
+					URL: fmt.Sprintf("//%s/pp/%s", x.cdnURL, v.ID.Hex()),
+					Files: []ImageFile{{
+						Name:   v.AvatarID,
+						Width:  128,
+						Height: 128,
+						Format: ImageFormatWEBP,
+					}},
+				},
+			},
+		}
+	}
+
+	return CosmeticModel[CosmeticAvatarModel]{}
 }
