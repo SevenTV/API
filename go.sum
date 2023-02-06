@@ -60,8 +60,9 @@ github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0 h1:jfIu9sQUG6Ig
 github.com/arbovm/levenshtein v0.0.0-20160628152529-48b4e1c0c4d0/go.mod h1:t2tdKJDJF9BV14lnkjHmOQgcvEKgtqs5a1N3LNdJhGE=
 github.com/aws/aws-sdk-go v1.44.159 h1:9odtuHAYQE9tQKyuX6ny1U1MHeH5/yzeCJi96g9H4DU=
 github.com/aws/aws-sdk-go v1.44.159/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
-github.com/aws/aws-sdk-go-v2 v1.17.2 h1:r0yRZInwiPBNpQ4aDy/Ssh3ROWsGtKDwar2JS8Lm+N8=
 github.com/aws/aws-sdk-go-v2 v1.17.2/go.mod h1:uzbQtefpm44goOPmdKyAlXSNcwlRgF3ePWVW6EtJvvw=
+github.com/aws/aws-sdk-go-v2 v1.17.4 h1:wyC6p9Yfq6V2y98wfDsj6OnNQa4w2BLGCLIxzNhwOGY=
+github.com/aws/aws-sdk-go-v2 v1.17.4/go.mod h1:uzbQtefpm44goOPmdKyAlXSNcwlRgF3ePWVW6EtJvvw=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.26 h1:5WU31cY7m0tG+AiaXuXGoMzo2GBQ1IixtWa8Yywsgco=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.26/go.mod h1:2E0LdbJW6lbeU4uxjum99GZzI0ZjDpAb0CoSCM0oeEY=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.20 h1:WW0qSzDWoiWU2FS5DbKpxGilFVlCEJPwx4YtjdfI0Jw=
@@ -338,12 +339,6 @@ github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d h1:Q+gqLBOPkFGHyCJx
 github.com/savsgio/gotils v0.0.0-20220530130905-52f3993e8d6d/go.mod h1:Gy+0tqhJvgGlqnTF8CVGP0AaGRjwBtXs/a5PA0Y3+A4=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20230107175235-62dbd2e54c8e h1:8xWDsQCuh3nsTOzBHHt9o973xgIfZhrhIqFuVQdokBI=
-github.com/seventv/common v0.0.0-20230107175235-62dbd2e54c8e/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
-github.com/seventv/common v0.0.0-20230116115249-f964594e763d h1:ZdWCERo0DafeXbl+6vuh7qb8C4alVxBJSoiZoQrJOMs=
-github.com/seventv/common v0.0.0-20230116115249-f964594e763d/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
-github.com/seventv/common v0.0.0-20230129155616-db9a592960b7 h1:pbD9Xv3JLcODGTDiIaAW9ZmASatd1vuwUl/klf0l/Ww=
-github.com/seventv/common v0.0.0-20230129155616-db9a592960b7/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/common v0.0.0-20230130214444-1abfdcd7d4ce h1:+BxMGEJlfwsAI1TrkyButyGU1j2X+4JDMROJwL1qkj4=
 github.com/seventv/common v0.0.0-20230130214444-1abfdcd7d4ce/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48 h1:IqWrtt/yob45YnOQ5Wwkbf8qP22eKVtg0WzfyEkGnFg=
