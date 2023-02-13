@@ -159,7 +159,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		}
 
 		if len(or) > 0 {
-			fmt.Println("append!")
 			match = append(match, bson.E{Key: "$or", Value: or})
 			pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 		}
