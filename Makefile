@@ -32,7 +32,7 @@ deps:
 	go mod download
 
 dev_deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.51.1
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
 	yarn
 
 generate: 
