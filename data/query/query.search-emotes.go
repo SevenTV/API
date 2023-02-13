@@ -103,12 +103,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
 	cpargs := bson.A{}
 
-	if opt.Sort != nil && len(opt.Sort) > 0 {
-		pipeline = append(pipeline, bson.D{
-			{Key: "$sort", Value: opt.Sort},
-		})
-	}
-
 	// Handle exact match
 	if filter.ExactMatch != nil && *filter.ExactMatch {
 		// For an exact mathc we will use the $text operator
@@ -162,6 +156,12 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			match = append(match, bson.E{Key: "$or", Value: or})
 			pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 		}
+	}
+
+	if opt.Sort != nil && len(opt.Sort) > 0 {
+		pipeline = append(pipeline, bson.D{
+			{Key: "$sort", Value: opt.Sort},
+		})
 	}
 
 	mtx := q.mtx("SearchEmotes")
