@@ -136,7 +136,7 @@ jobs:
           endpoint: builders
 
       - name: Build docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         with:
           context: .
