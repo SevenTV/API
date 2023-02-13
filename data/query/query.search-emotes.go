@@ -94,11 +94,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	h.Write(utils.S2B(query))
 	h.Write([]byte{byte(privileged)})
 
-	if len(filter.Document) > 0 {
-		optBytes, _ := json.Marshal(filter.Document)
-		h.Write(optBytes)
-	}
-
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
 	cpargs := bson.A{}
 
@@ -114,6 +109,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		}})
 
 		sorter = bson.M{"score": bson.M{"$meta": "textScore"}}
+
+		h.Write(utils.S2B("FILTER_EXACT"))
 	}
 
 	if len(query) > 0 {
@@ -121,6 +118,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 		if filter.CaseSensitive != nil && *filter.CaseSensitive {
 			cpargs = append(cpargs, "$name", query)
+
+			h.Write(utils.S2B("FILTER_CASE_SENSITIVE"))
 		} else {
 			cpargs = append(cpargs, bson.M{"$toLower": "$name"}, strings.ToLower(query))
 		}
@@ -150,6 +149,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 					},
 				},
 			})
+
+			h.Write(utils.S2B("FILTER_IGNORE_TAGS"))
 		}
 
 		if len(or) > 0 {
@@ -159,6 +160,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	if opt.Sort != nil && len(opt.Sort) > 0 {
 		sorter = opt.Sort
+	}
+
+	if len(filter.Document) > 0 {
+		optBytes, _ := json.Marshal(filter.Document)
+		h.Write(optBytes)
 	}
 
 	mtx := q.mtx("SearchEmotes")
@@ -179,7 +185,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 			defer cancel()
 
-			totalCount, err := q.mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, match)
+			value, err := q.mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, match)
 			if err != nil {
 				zap.S().Errorw("mongo, failed to count emotes() gql query",
 					"error", err,
@@ -188,6 +194,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 				return
 			}
+
+			totalCount = int(value)
 
 			// Return total count & cache
 			dur := utils.Ternary(query == "", time.Hour*4, time.Hour*2)
