@@ -27,12 +27,12 @@ format:
 	yarn prettier --write .
 
 deps:
-	go install github.com/swaggo/swag/cmd/swag@v1.8.8
-	go install github.com/99designs/gqlgen@v0.17.22
+	go install github.com/swaggo/swag/cmd/swag@v1.8.10
+	go install github.com/99designs/gqlgen@v0.17.24
 	go mod download
 
 dev_deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
 	yarn
 
 generate: 

@@ -116,14 +116,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			{{Key: "$match", Value: match}},
 			{{Key: "$sort", Value: bson.M{"score": bson.M{"$meta": "textScore"}}}},
 		}...)
-
-		if opt.Sort != nil && len(opt.Sort) > 0 {
-			pipeline = append(pipeline, bson.D{
-				{Key: "$sort", Value: opt.Sort},
-			})
-		}
-	} else {
+	} else if len(query) > 0 {
 		or := bson.A{}
+
 		if filter.CaseSensitive != nil && *filter.CaseSensitive {
 			cpargs = append(cpargs, "$name", query)
 		} else {
@@ -157,13 +152,16 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			})
 		}
 
-		match = append(match, bson.E{Key: "$or", Value: or})
-		if opt.Sort != nil && len(opt.Sort) > 0 {
-			pipeline = append(pipeline, bson.D{
-				{Key: "$sort", Value: opt.Sort},
-			})
+		if len(or) > 0 {
+			match = append(match, bson.E{Key: "$or", Value: or})
+			pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 		}
-		pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
+	}
+
+	if opt.Sort != nil && len(opt.Sort) > 0 {
+		pipeline = append(pipeline, bson.D{
+			{Key: "$sort", Value: opt.Sort},
+		})
 	}
 
 	mtx := q.mtx("SearchEmotes")
