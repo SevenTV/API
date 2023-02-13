@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/seventv/api/internal/api/gql/v3/auth"
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
@@ -117,7 +117,7 @@ func (inst *limiterInst) Test(ctx context.Context, bucket string, limit int64, d
 	if !actor.ID.IsZero() {
 		identifier = actor.ID.Hex()
 	} else {
-		ip := ctx.Value(helpers.ClientIP)
+		ip := ctx.Value(constant.ClientIP)
 
 		switch v := ip.(type) {
 		case string:

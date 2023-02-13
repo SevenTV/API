@@ -3,6 +3,7 @@ package rest
 import (
 	"strconv"
 
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,7 +13,7 @@ type Param struct {
 	v interface{}
 }
 
-func (c *Ctx) UserValue(key Key) *Param {
+func (c *Ctx) UserValue(key constant.Key) *Param {
 	return &Param{c.RequestCtx.UserValue(string(key))}
 }
 

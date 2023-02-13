@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
@@ -19,7 +19,7 @@ import (
 func RateLimit(gctx global.Context, bucket string, limit int64, ex time.Duration) Middleware {
 	return func(ctx *fasthttp.RequestCtx) errors.APIError {
 		var identifier string
-		switch t := ctx.UserValue(string(helpers.ClientIP)).(type) {
+		switch t := ctx.UserValue(constant.ClientIP).(type) {
 		case string:
 			identifier = t
 		}
@@ -52,48 +52,6 @@ func RateLimit(gctx global.Context, bucket string, limit int64, ex time.Duration
 		ctx.Response.Header.Set("X-RateLimit-Limit", strconv.Itoa(int(limit)))
 		ctx.Response.Header.Set("X-RateLimit-Remaining", strconv.Itoa(int(remaining)))
 		ctx.Response.Header.Set("X-RateLimit-Reset", strconv.Itoa(int(ttl)))
-
-		if remaining < 1 {
-			return errors.ErrRateLimited()
-		}
-
-		return nil
-	}
-}
-
-type RateLimitFunc = func(ctx context.Context) error
-
-func RateLimitWS(gctx global.Context, bucket string, limit int64, ex time.Duration) RateLimitFunc {
-	return func(ctx context.Context) error {
-		var identifier string
-		switch t := ctx.Value(helpers.ClientIP).(type) {
-		case string:
-			identifier = t
-		}
-
-		var actor *structures.User
-		switch t := ctx.Value("user").(type) {
-		case *structures.User:
-			actor = t
-		}
-
-		if actor != nil {
-			identifier = actor.ID.Hex()
-		}
-
-		if identifier == "" {
-			return nil
-		}
-
-		_, remaining, _, err := DoRateLimit(gctx, ctx, bucket, limit, identifier, ex)
-		if err != nil {
-			switch e := err.(type) {
-			case errors.APIError:
-				return e
-			}
-
-			zap.S().Errorw("Error while rate limiting a request", "error", err)
-		}
 
 		if remaining < 1 {
 			return errors.ErrRateLimited()

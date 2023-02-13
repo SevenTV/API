@@ -3,6 +3,7 @@ package rest
 import (
 	"encoding/json"
 
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/valyala/fasthttp"
@@ -42,12 +43,12 @@ func (c *Ctx) StatusCode() HttpStatusCode {
 
 // Set the current authenticated user
 func (c *Ctx) SetActor(u structures.User) {
-	c.SetUserValue(string(AuthUserKey), u)
+	c.SetUserValue(string(constant.UserKey), u)
 }
 
 // Get the current authenticated user
 func (c *Ctx) GetActor() (structures.User, bool) {
-	v := c.UserValue(AuthUserKey).User()
+	v := c.UserValue(constant.UserKey).User()
 
 	return v, !v.ID.IsZero()
 }

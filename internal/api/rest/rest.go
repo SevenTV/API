@@ -7,8 +7,9 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/api/rest/portal"
-	"github.com/seventv/api/internal/api/rest/rest"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/middleware"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -51,7 +52,7 @@ func New(gctx global.Context) error {
 				ip = ctx.RemoteIP().String()
 			}
 
-			ctx.SetUserValue(string(rest.ClientIP), ip)
+			ctx.SetUserValue(constant.ClientIP, ip)
 
 			defer func() {
 				if err := recover(); err != nil {
@@ -106,6 +107,11 @@ func New(gctx global.Context) error {
 
 			// Routing
 			ctx.Response.Header.Set("Content-Type", "application/json") // default to JSON
+
+			if err := middleware.Auth(gctx)(ctx); err != nil {
+				ctx.Response.Header.Add("X-Auth-Failure", err.Message())
+			}
+
 			s.router.Handler(ctx)
 		},
 		ReadTimeout:                  time.Second * 600,

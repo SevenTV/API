@@ -36,7 +36,7 @@ func (r *emote) Config() rest.RouteConfig {
 // @Success 200 {object} model.Emote
 // @Router /emotes/{emote} [get]
 func (r *emote) Handler(ctx *rest.Ctx) errors.APIError {
-	emoteID, err := ctx.UserValue(rest.Key("emote")).ObjectID()
+	emoteID, err := ctx.UserValue("emote").ObjectID()
 	if err != nil {
 		return errors.From(err)
 	}
