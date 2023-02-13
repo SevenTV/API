@@ -19,7 +19,7 @@ build:
 	GOOS=linux GOARCH=amd64 go build -v -ldflags "-X 'main.Version=${VERSION}' -X 'main.Unix=$(shell date +%s)' -X 'main.User=${BUILDER}'" -o out/api cmd/*.go
 
 lint:
-	golangci-lint run --go=1.20
+	golangci-lint run --go=1.18
 	yarn prettier --check .
 
 format:
@@ -65,7 +65,7 @@ clean:
 		node_modules
 
 work:
-	echo -e "go 1.20\n\nuse (\n\t.\n\t../Common\n\t../message-queue/go\n\t../image-processor/go\n\t../CompactDisc\n)" > go.work
+	echo -e "go 1.18\n\nuse (\n\t.\n\t../Common\n\t../message-queue/go\n\t../image-processor/go\n\t../CompactDisc\n)" > go.work
 	go mod tidy
 
 dev:
