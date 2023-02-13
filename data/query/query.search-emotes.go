@@ -103,6 +103,12 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
 	cpargs := bson.A{}
 
+	if opt.Sort != nil && len(opt.Sort) > 0 {
+		pipeline = append(pipeline, bson.D{
+			{Key: "$sort", Value: opt.Sort},
+		})
+	}
+
 	// Handle exact match
 	if filter.ExactMatch != nil && *filter.ExactMatch {
 		// For an exact mathc we will use the $text operator
@@ -116,14 +122,9 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			{{Key: "$match", Value: match}},
 			{{Key: "$sort", Value: bson.M{"score": bson.M{"$meta": "textScore"}}}},
 		}...)
-
-		if opt.Sort != nil && len(opt.Sort) > 0 {
-			pipeline = append(pipeline, bson.D{
-				{Key: "$sort", Value: opt.Sort},
-			})
-		}
-	} else {
+	} else if len(query) > 0 {
 		or := bson.A{}
+
 		if filter.CaseSensitive != nil && *filter.CaseSensitive {
 			cpargs = append(cpargs, "$name", query)
 		} else {
@@ -157,13 +158,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			})
 		}
 
-		match = append(match, bson.E{Key: "$or", Value: or})
-		if opt.Sort != nil && len(opt.Sort) > 0 {
-			pipeline = append(pipeline, bson.D{
-				{Key: "$sort", Value: opt.Sort},
-			})
+		if len(or) > 0 {
+			fmt.Println("append!")
+			match = append(match, bson.E{Key: "$or", Value: or})
+			pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 		}
-		pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 	}
 
 	mtx := q.mtx("SearchEmotes")
