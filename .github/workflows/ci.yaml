@@ -59,6 +59,9 @@ jobs:
 
       - id: cache-paths
         run: |
+          echo $(go env GOCACHE)
+          echo $(go env GOMODCACHE)
+          echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
           echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
           echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
