@@ -204,6 +204,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		mtx.Unlock()
 	}
 
+	wg.Wait()
+
 	// Paginate and fetch the relevant emotes
 	result := []structures.Emote{}
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(
