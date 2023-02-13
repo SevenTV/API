@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 	"time"
@@ -15,9 +14,9 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/structures/v3/aggregations"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -55,24 +54,15 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	query := strings.Trim(opt.Query, " ")
 
 	// Set up db query
-	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
+	_, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
 		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
 	})
 	if err != nil {
 		return nil, 0, err
 	}
 
-	match := bson.D{
-		{Key: "versions.state.lifecycle", Value: structures.EmoteLifecycleLive},
-		{Key: "owner_id", Value: bson.M{"$not": bson.M{
-			"$in": bans.NoOwnership.KeySlice(),
-		}}},
-	}
-
-	if len(filter.Document) > 0 {
-		for k, v := range filter.Document {
-			match = append(match, bson.E{Key: k, Value: v})
-		}
+	stateMatch := bson.D{
+		{Key: "state.lifecycle", Value: structures.EmoteLifecycleLive},
 	}
 
 	// Apply permission checks
@@ -81,14 +71,23 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 		privileged = 0
 
-		match = append(match, bson.E{
-			Key:   "versions.state.listed",
+		stateMatch = append(stateMatch, bson.E{
+			Key:   "state.listed",
 			Value: true,
 		})
 	}
 
-	// Define the pipeline
-	pipeline := mongo.Pipeline{}
+	match := bson.D{
+		{Key: "versions", Value: bson.M{
+			"$elemMatch": stateMatch,
+		}},
+	}
+
+	if len(filter.Document) > 0 {
+		for k, v := range filter.Document {
+			match = append(match, bson.E{Key: k, Value: v})
+		}
+	}
 
 	// Apply name/tag query
 	h := sha256.New()
@@ -103,6 +102,8 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
 	cpargs := bson.A{}
 
+	sorter := bson.M{}
+
 	// Handle exact match
 	if filter.ExactMatch != nil && *filter.ExactMatch {
 		// For an exact mathc we will use the $text operator
@@ -112,11 +113,12 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			"$caseSensitive": filter.CaseSensitive != nil && *filter.CaseSensitive,
 		}})
 
-		pipeline = append(pipeline, []bson.D{
-			{{Key: "$match", Value: match}},
-			{{Key: "$sort", Value: bson.M{"score": bson.M{"$meta": "textScore"}}}},
-		}...)
-	} else if len(query) > 0 {
+		sorter = bson.M{"score": bson.M{"$meta": "textScore"}}
+	} else {
+
+	}
+
+	if len(query) > 0 {
 		or := bson.A{}
 
 		if filter.CaseSensitive != nil && *filter.CaseSensitive {
@@ -154,14 +156,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 		if len(or) > 0 {
 			match = append(match, bson.E{Key: "$or", Value: or})
-			pipeline = append(pipeline, bson.D{{Key: "$match", Value: match}})
 		}
 	}
 
 	if opt.Sort != nil && len(opt.Sort) > 0 {
-		pipeline = append(pipeline, bson.D{
-			{Key: "$sort", Value: opt.Sort},
-		})
+		sorter = opt.Sort
 	}
 
 	mtx := q.mtx("SearchEmotes")
@@ -182,30 +181,17 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 			defer cancel()
 
-			cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
-				pipeline,
-				mongo.Pipeline{
-					{{Key: "$count", Value: "count"}},
-				}),
-			)
-			result := make(map[string]int, 1)
+			totalCount, err := q.mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, match)
+			if err != nil {
+				zap.S().Errorw("mongo, failed to count emotes() gql query",
+					"error", err,
+					"match", match,
+				)
 
-			if err == nil {
-				cur.Next(ctx)
-
-				if err = cur.Decode(&result); err != nil {
-					if err != io.EOF {
-						zap.S().Errorw("mongo, couldn't count",
-							"error", err,
-						)
-					}
-				}
-
-				_ = cur.Close(ctx)
+				return
 			}
 
 			// Return total count & cache
-			totalCount = result["count"]
 			dur := utils.Ternary(query == "", time.Hour*4, time.Hour*2)
 
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
@@ -222,15 +208,24 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	// Paginate and fetch the relevant emotes
 	result := []structures.Emote{}
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, aggregations.Combine(
-		pipeline,
-		mongo.Pipeline{
-			{{Key: "$skip", Value: (page - 1) * limit}},
-			{{Key: "$limit", Value: limit}},
-		},
-	))
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(
+		ctx,
+		match,
+		options.Find().
+			SetSort(sorter).
+			SetSkip(int64((page-1)*limit)).
+			SetLimit(int64(limit)),
+	)
 
 	if err != nil {
+		zap.S().Errorw("mongo, failed to find emotes() gql query",
+			"error", err,
+			"match", match,
+			"sort", sorter,
+			"skip", (page-1)*limit,
+			"limit", limit,
+		)
+
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
