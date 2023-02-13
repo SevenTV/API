@@ -59,8 +59,8 @@ jobs:
 
       - id: cache-paths
         run: |
-          echo "go-build::$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod::$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
+          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
       - name: Go Build Cache
         uses: actions/cache@v3
