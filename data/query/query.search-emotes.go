@@ -114,8 +114,6 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		}})
 
 		sorter = bson.M{"score": bson.M{"$meta": "textScore"}}
-	} else {
-
 	}
 
 	if len(query) > 0 {
