@@ -105,6 +105,31 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 		// Create the user
 		if ub.User.ID.IsZero() {
+			ub.User = structures.User{
+				ID:           primitive.NewObjectIDFromTimestamp(time.Now()),
+				TokenVersion: 1.0,
+				RoleIDs:      []primitive.ObjectID{},
+				Editors:      []structures.UserEditor{},
+				Connections: []structures.UserConnection[bson.Raw]{{
+					ID:         id,
+					Platform:   platform,
+					LinkedAt:   time.Now(),
+					EmoteSlots: 600,
+					Data:       b,
+					Grant: &structures.UserConnectionGrant{
+						AccessToken:  grant.AccessToken,
+						RefreshToken: grant.RefreshToken,
+						Scope:        []string{},
+						ExpiresAt:    time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second),
+					},
+					EmoteSet: &structures.EmoteSet{},
+				}},
+				State: structures.UserState{
+					LastLoginDate: time.Now(),
+					LastVisitDate: time.Now(),
+				},
+			}
+
 			ub.User.SetDiscriminator("")
 			ub.User.InferUsername()
 
