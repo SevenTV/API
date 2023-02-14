@@ -187,7 +187,6 @@ func (a *authorizer) Cookie(key, token string, duration time.Duration) *fasthttp
 	cookie.SetExpire(time.Now().Add(duration))
 	cookie.SetHTTPOnly(true)
 	cookie.SetDomain(a.Domain)
-	cookie.SetPath("/v3")
 	cookie.SetSecure(a.Secure)
 
 	return cookie

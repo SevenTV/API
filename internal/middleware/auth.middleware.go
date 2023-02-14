@@ -49,14 +49,15 @@ func Auth(gctx global.Context) Middleware {
 			clientIP = v
 		}
 
-		if clientIP != "" && user.State.ClientIP != clientIP {
+		if clientIP != "" && user.State.ClientIP != clientIP || user.State.LastVisitDate.Before(time.Now().Add(-time.Hour*1)) {
 			user.State.ClientIP = clientIP
 
 			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
 				"_id": user.ID,
 			}, bson.M{
 				"$set": bson.M{
-					"state.client_ip": clientIP,
+					"state.client_ip":     clientIP,
+					"state.last_visit_at": time.Now(),
 				},
 			}); err != nil {
 				zap.S().Errorw("failed to update user client IP", "error", err)

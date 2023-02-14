@@ -116,6 +116,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		} else {
 			// User already exists; update their data
 			ub.User.UpdateConnectionData(id, b)
+			ub.User.State.LastLoginDate = time.Now()
 
 			if _, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 				"_id": ub.User.ID,
@@ -139,7 +140,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		ctx.Response.Header.SetCookie(authCookie)
 
 		// Redirect to site
-		ctx.Redirect(fmt.Sprintf("%s/auth/callback?platform=%s", r.gctx.Config().WebsiteURL, platform), http.StatusFound)
+		ctx.Redirect(fmt.Sprintf("%s/auth/callback?platform=%s&token=%s", r.gctx.Config().WebsiteURL, platform, token), http.StatusFound)
 	} else { // This is a request for an authorization URL
 		// Get csrf token
 		csrfValue, csrfToken, err := r.gctx.Inst().Auth.CreateCSRFToken(primitive.NilObjectID)
