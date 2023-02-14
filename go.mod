@@ -15,7 +15,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.14.0
-	github.com/seventv/common v0.0.0-20230213120321-7314dfcfad5d
+	github.com/seventv/common v0.0.0-20230214172306-8fddc2cfa0b2
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
@@ -28,11 +28,13 @@ require (
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/multierr v1.9.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/oauth2 v0.5.0
 	google.golang.org/api v0.109.0
 )
 
-require github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
+require (
+	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
+	golang.org/x/oauth2 v0.5.0 // indirect
+)
 
 require (
 	cloud.google.com/go/compute v1.18.0 // indirect

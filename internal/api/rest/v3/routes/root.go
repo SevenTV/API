@@ -6,7 +6,7 @@ import (
 
 	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
-	auth2 "github.com/seventv/api/internal/api/rest/v3/routes/auth2"
+	"github.com/seventv/api/internal/api/rest/v3/routes/auth"
 	"github.com/seventv/api/internal/api/rest/v3/routes/docs"
 	emote_sets "github.com/seventv/api/internal/api/rest/v3/routes/emote-sets"
 	"github.com/seventv/api/internal/api/rest/v3/routes/emotes"
@@ -30,9 +30,8 @@ func (r *Route) Config() rest.RouteConfig {
 		Method: rest.GET,
 		Children: []rest.Route{
 			docs.New(r.Ctx),
-			// auth.New(r.Ctx),
+			auth.New(r.Ctx),
 			emotes.New(r.Ctx),
-			auth2.New(r.Ctx),
 			emote_sets.New(r.Ctx),
 			users.New(r.Ctx),
 		},
