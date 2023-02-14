@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"strings"
 
 	"github.com/seventv/api/internal/api/gql/v2/gen/model"
 	"github.com/seventv/api/internal/api/gql/v2/helpers"
@@ -38,7 +39,15 @@ func (r *Resolver) SearchEmotes(
 	channel *string,
 	filterArg *model.EmoteFilter,
 ) ([]*model.Emote, error) {
-	if globalStateArg == nil || *globalStateArg != "ONLY" {
+	notAvailable := errors.ErrInsufficientPrivilege().SetDetail("This endpoint is no longer available. Please use V3")
+
+	if globalStateArg == nil {
+		return nil, notAvailable
+	}
+
+	state := strings.ToUpper(*globalStateArg)
+
+	if state != "ONLY" {
 		return nil, errors.ErrInsufficientPrivilege().SetDetail("This endpoint is no longer available. Please use V3")
 	}
 
