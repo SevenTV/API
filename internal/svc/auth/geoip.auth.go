@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -31,8 +30,6 @@ func (a *authorizer) LocateIP(ctx context.Context, addr string) (GeoIPResult, er
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return result, err
 	}
-
-	fmt.Println("country result", result)
 
 	return result, nil
 }

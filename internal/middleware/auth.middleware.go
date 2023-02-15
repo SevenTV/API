@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -49,9 +48,6 @@ func Auth(gctx global.Context) Middleware {
 		case string:
 			clientIP = v
 		}
-
-		geoip, errr := gctx.Inst().Auth.LocateIP(ctx, clientIP)
-		fmt.Println("ok", geoip, errr)
 
 		if clientIP != "" && user.State.ClientIP != clientIP || user.State.LastVisitDate.Before(time.Now().Add(-time.Hour*1)) {
 			user.State.ClientIP = clientIP
