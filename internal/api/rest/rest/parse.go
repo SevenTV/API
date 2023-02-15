@@ -14,7 +14,7 @@ type Param struct {
 }
 
 func (c *Ctx) UserValue(key constant.Key) *Param {
-	return &Param{c.RequestCtx.UserValue(key)}
+	return &Param{c.RequestCtx.UserValue(string(key))}
 }
 
 // String returns a string value of the param
