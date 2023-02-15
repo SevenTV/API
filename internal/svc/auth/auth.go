@@ -35,6 +35,7 @@ type Authorizer interface {
 	TwichUserData(grant string) (string, []byte, error)
 	DiscordUserData(grant string) (string, []byte, error)
 	UserData(provider structures.UserConnectionPlatform, token string) (id string, b []byte, err error)
+	LocateIP(ctx context.Context, ip string) (GeoIPResult, error)
 }
 
 type authorizer struct {

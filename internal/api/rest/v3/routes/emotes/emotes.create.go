@@ -219,6 +219,19 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		},
 	}
 
+	// Determine uploader's country
+	{
+		loc, err := r.Ctx.Inst().Auth.LocateIP(ctx, ctx.ClientIP())
+		if err != nil {
+			ctx.Log().Errorw("Failed to determine uploader's country",
+				zap.Error(err),
+			)
+		}
+
+		version.State.CountryName = loc.CountryName
+		version.State.CountryCode = loc.CountryCode
+	}
+
 	if args.ParentID == nil { // new upload
 		eb.SetName(name).
 			SetOwnerID(actor.ID).
