@@ -66,6 +66,8 @@ type ModRequestMessage implements Message {
   target_kind: Int!
   target_id: ObjectID!
   wish: String!
+  actor_country_name: String!
+  actor_country_code: String!
 }
 
 type ModRequestMessageList {
