@@ -136,7 +136,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			}
 		} else {
 			// User already exists; update their data
-			didUpdate := ub.User.UpdateConnectionData(id, b)
+			didUpdate := ub.UpdateConnection(id, b)
 			if !didUpdate { // if the connection didn't exist, create it
 				// Check that the connection isn't already owned by another user
 				count, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, bson.M{
@@ -175,9 +175,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 			if _, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
 				"_id": ub.User.ID,
-			}, bson.M{
-				"$set": ub.User,
-			}); err != nil {
+			}, ub.Update); err != nil {
 				ctx.Log().Errorw("auth, update user", "error", err)
 			}
 		}
