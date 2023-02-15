@@ -134,6 +134,9 @@ data:
       cookie:
         domain: 7tv.io
         secure: true
+        whitelist:
+          - https://7tv.app
+          - https://twitch.tv
 
     health:
       enabled: true

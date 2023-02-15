@@ -136,7 +136,7 @@ data:
         secure: true
         whitelist:
           - https://7tv.dev
-          - https://twitch.7tv
+          - https://twitch.tv
 
     health:
       enabled: true
