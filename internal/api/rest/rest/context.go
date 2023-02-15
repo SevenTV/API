@@ -72,7 +72,10 @@ func (c *Ctx) Log() *zap.SugaredLogger {
 }
 
 func (c *Ctx) ClientIP() string {
-	v, _ := c.UserValue(constant.ClientIP).String()
-
-	return v
+	switch v := c.RequestCtx.UserValue(constant.ClientIP).(type) {
+	case string:
+		return v
+	default:
+		return ""
+	}
 }
