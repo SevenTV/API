@@ -36,7 +36,6 @@ func (a *authorizer) LocateIP(ctx context.Context, addr string) (GeoIPResult, er
 
 type GeoIPResult struct {
 	IP          string `json:"ip"`
-	IPVersion   uint8  `json:"ip_version"`
 	CountryName string `json:"country_name"`
 	CountryCode string `json:"country_code2"`
 }
