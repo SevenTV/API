@@ -248,15 +248,32 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 					}},
 				})
 			} else {
+				// Determine actor's country
+				actorCountryName := ""
+				actorCountryCode := ""
+				if actorIP, err := epl.Ctx.Inst().Redis.Get(ctx, epl.Ctx.Inst().Redis.ComposeKey("api", "emote", evt.ID, "actor-ip")); err == nil {
+					loc, err := epl.Ctx.Inst().Auth.LocateIP(ctx, actorIP)
+					if err != nil {
+						zap.S().Errorw("failed to determine uploader's country",
+							zap.Error(err),
+						)
+					}
+
+					actorCountryName = loc.CountryName
+					actorCountryCode = loc.CountryCode
+				}
+
 				// Create a mod request for the new emote to be approved
 				mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
 					SetKind(structures.MessageKindModRequest).
 					SetAuthorID(eb.Emote.OwnerID).
 					SetTimestamp(time.Now()).
 					SetData(structures.MessageDataModRequest{
-						TargetKind: structures.ObjectKindEmote,
-						TargetID:   id,
-						Wish:       "list",
+						TargetKind:       structures.ObjectKindEmote,
+						TargetID:         id,
+						Wish:             "list",
+						ActorCountryName: actorCountryName,
+						ActorCountryCode: actorCountryCode,
 					})
 				if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
 					zap.S().Errorw("failed to send mod request message for new emote",
