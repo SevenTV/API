@@ -6,6 +6,7 @@ extend type Query {
     after_id: ObjectID
     limit: Int
     wish: String
+    country: String
   ): ModRequestMessageList!
 }
 

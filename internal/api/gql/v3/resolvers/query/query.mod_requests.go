@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"strings"
 
 	"github.com/seventv/api/data/model/modelgql"
 	"github.com/seventv/api/data/query"
@@ -14,7 +15,7 @@ import (
 )
 
 // ModRequests implements generated.QueryResolver
-func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID, limitArg *int, wish *string) (*model.ModRequestMessageList, error) {
+func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.ObjectID, limitArg *int, wish *string, country *string) (*model.ModRequestMessageList, error) {
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
@@ -32,6 +33,10 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 
 	if wish != nil {
 		match["data.wish"] = *wish
+	}
+
+	if country != nil {
+		match["data.actor_country_code"] = strings.ToUpper(*country)
 	}
 
 	limit := 50
