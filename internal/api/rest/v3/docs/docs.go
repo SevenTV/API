@@ -819,6 +819,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "static_name": {
+                    "description": "deprecated",
                     "type": "string"
                 },
                 "width": {
