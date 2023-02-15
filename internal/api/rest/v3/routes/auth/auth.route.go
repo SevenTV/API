@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
 	"github.com/seventv/api/internal/global"
@@ -151,7 +152,21 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 					return errors.ErrInsufficientPrivilege().SetDetail("This connection is already bound to another user")
 				}
 
-				ub.AddConnection(formatUserConnection(id, platform, b, grant))
+				con := formatUserConnection(id, platform, b, grant)
+				ub.AddConnection(con)
+
+				// eventapi: dispatch the connection create event
+				_ = r.gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+					ID:    ub.User.ID,
+					Kind:  structures.ObjectKindUser,
+					Actor: r.gctx.Inst().Modelizer.User(ub.User).ToPartial(),
+					Pushed: []events.ChangeField{{
+						Key:   "connections",
+						Index: utils.PointerOf(int32(len(ub.User.Connections) - 1)),
+						Type:  events.ChangeFieldTypeObject,
+						Value: r.gctx.Inst().Modelizer.UserConnection(con),
+					}},
+				}, events.EventCondition{"object_id": ub.User.ID.Hex()})
 			}
 
 			t := time.Now()
