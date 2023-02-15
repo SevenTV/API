@@ -65,7 +65,7 @@ func New(gctx global.Context) error {
 						"duration", int(time.Since(start)/time.Millisecond),
 						"method", utils.B2S(ctx.Method()),
 						"path", utils.B2S(ctx.Path()),
-						"ip", utils.B2S(ctx.Request.Header.Peek("Cf-Connecting-IP")),
+						"ip", ip,
 						"origin", utils.B2S(ctx.Request.Header.Peek("Origin")),
 					)
 				} else {

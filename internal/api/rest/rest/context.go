@@ -70,3 +70,9 @@ func (c *Ctx) Log() *zap.SugaredLogger {
 
 	return z
 }
+
+func (c *Ctx) ClientIP() string {
+	v, _ := c.UserValue(constant.ClientIP).String()
+
+	return v
+}

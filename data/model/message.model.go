@@ -22,14 +22,16 @@ type InboxMessageModel struct {
 }
 
 type ModRequestMessageModel struct {
-	ID         primitive.ObjectID  `json:"id"`
-	Kind       MessageKind         `json:"kind"`
-	CreatedAt  int64               `json:"createdAt"`
-	AuthorID   *primitive.ObjectID `json:"author_id"`
-	TargetKind int                 `json:"targetKind"`
-	TargetID   primitive.ObjectID  `json:"targetID"`
-	Read       bool                `json:"read"`
-	Wish       string              `json:"wish"`
+	ID               primitive.ObjectID  `json:"id"`
+	Kind             MessageKind         `json:"kind"`
+	CreatedAt        int64               `json:"createdAt"`
+	AuthorID         *primitive.ObjectID `json:"author_id"`
+	TargetKind       int                 `json:"targetKind"`
+	TargetID         primitive.ObjectID  `json:"targetID"`
+	Read             bool                `json:"read"`
+	Wish             string              `json:"wish"`
+	ActorCountryName string              `json:"actor_country_name"`
+	ActorCountryCode string              `json:"actor_country_code"`
 }
 
 type MessageKind string
@@ -60,13 +62,15 @@ func (m *modelizer) InboxMessage(v structures.Message[structures.MessageDataInbo
 
 func (m *modelizer) ModRequestMessage(v structures.Message[structures.MessageDataModRequest]) ModRequestMessageModel {
 	return ModRequestMessageModel{
-		ID:         v.ID,
-		Kind:       MessageKindModRequest,
-		CreatedAt:  v.CreatedAt.UnixMilli(),
-		AuthorID:   &v.AuthorID,
-		TargetKind: int(v.Data.TargetKind),
-		TargetID:   v.Data.TargetID,
-		Read:       v.Read,
-		Wish:       v.Data.Wish,
+		ID:               v.ID,
+		Kind:             MessageKindModRequest,
+		CreatedAt:        v.CreatedAt.UnixMilli(),
+		AuthorID:         &v.AuthorID,
+		TargetKind:       int(v.Data.TargetKind),
+		TargetID:         v.Data.TargetID,
+		Read:             v.Read,
+		Wish:             v.Data.Wish,
+		ActorCountryName: v.Data.ActorCountryName,
+		ActorCountryCode: v.Data.ActorCountryCode,
 	}
 }

@@ -302,6 +302,13 @@ func (r *create) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrMissingInternalDependency().SetDetail("Failed to establish connection with the CDN Service")
 	}
 
+	// Save the actor's IP address to the task
+	if err := r.Ctx.Inst().Redis.SetEX(ctx, r.Ctx.Inst().Redis.ComposeKey("api", "emote", id.Hex(), "actor-ip"), ctx.ClientIP(), time.Minute*5); err != nil {
+		ctx.Log().Errorw("failed to save actor IP address to redis",
+			"error", err,
+		)
+	}
+
 	taskData, err := json.Marshal(task.Task{
 		ID: id.Hex(),
 		Flags: task.TaskFlagAVIF |
