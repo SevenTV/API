@@ -134,6 +134,9 @@ data:
       cookie:
         domain: stage.7tv.io
         secure: true
+        whitelist:
+          - https://7tv.dev
+          - https://twitch.tv
 
     health:
       enabled: true

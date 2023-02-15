@@ -23,6 +23,7 @@ import (
 	middlewarev3 "github.com/seventv/api/internal/api/gql/v3/middleware"
 	"github.com/seventv/api/internal/api/gql/v3/resolvers"
 	"github.com/seventv/api/internal/api/gql/v3/types"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
@@ -96,8 +97,8 @@ func GqlHandlerV3(gCtx global.Context) func(ctx *fasthttp.RequestCtx) {
 	}
 
 	return func(ctx *fasthttp.RequestCtx) {
-		lCtx := context.WithValue(gCtx, helpers.UserKey, ctx.UserValue("user"))
-		lCtx = context.WithValue(lCtx, helpers.ClientIP, ctx.UserValue(string(helpers.ClientIP)))
+		lCtx := context.WithValue(gCtx, constant.UserKey, ctx.UserValue(constant.UserKey))
+		lCtx = context.WithValue(lCtx, constant.ClientIP, ctx.UserValue(string(constant.ClientIP)))
 
 		if ok := checkLimit(ctx); !ok {
 			return

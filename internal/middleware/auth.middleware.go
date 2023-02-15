@@ -5,38 +5,67 @@ import (
 	"time"
 
 	"github.com/seventv/api/data/query"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
-	"github.com/seventv/common/auth"
+	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
-func Auth(gCtx global.Context) Middleware {
+func Auth(gctx global.Context) Middleware {
 	return func(ctx *fasthttp.RequestCtx) errors.APIError {
-		// Parse token from header
-		h := utils.B2S(ctx.Request.Header.Peek("Authorization"))
-		if len(h) == 0 {
-			return nil
+		token := utils.B2S(ctx.Request.Header.Cookie(string(auth.COOKIE_AUTH)))
+		if token == "" {
+			// no token from cookie
+			// parse token from header
+			h := utils.B2S(ctx.Request.Header.Peek("Authorization"))
+			if len(h) == 0 {
+				return nil
+			}
+
+			s := strings.Split(h, "Bearer ")
+			if len(s) != 2 {
+				return errors.ErrUnauthorized().SetDetail("Bad Authorization Header")
+			}
+
+			token = s[1]
 		}
 
-		s := strings.Split(h, "Bearer ")
-		if len(s) != 2 {
-			return errors.ErrUnauthorized().SetDetail("Bad Authorization Header")
-		}
-
-		t := s[1]
-
-		user, err := DoAuth(gCtx, t)
-
-		ctx.SetUserValue("user", user)
-
+		user, err := DoAuth(gctx, token)
 		if err != nil {
 			return err
 		}
+
+		// Write current IP
+		clientIP := ""
+		switch v := ctx.UserValue(constant.ClientIP).(type) {
+		case string:
+			clientIP = v
+		}
+
+		if clientIP != "" && user.State.ClientIP != clientIP || user.State.LastVisitDate.Before(time.Now().Add(-time.Hour*1)) {
+			user.State.ClientIP = clientIP
+
+			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
+				"_id": user.ID,
+			}, bson.M{
+				"$set": bson.M{
+					"state.client_ip":     clientIP,
+					"state.last_visit_at": time.Now(),
+				},
+			}); err != nil {
+				zap.S().Errorw("failed to update user client IP", "error", err)
+			}
+		}
+
+		ctx.SetUserValue(constant.UserKey, user)
+		ctx.Response.Header.Set("X-Actor-ID", user.ID.Hex())
 
 		return nil
 	}
@@ -48,7 +77,7 @@ func DoAuth(ctx global.Context, t string) (structures.User, errors.APIError) {
 
 	user := structures.User{}
 
-	_, err := auth.VerifyJWT(ctx.Config().Credentials.JWTSecret, strings.Split(t, "."), claims)
+	_, err := ctx.Inst().Auth.VerifyJWT(strings.Split(t, "."), claims)
 	if err != nil {
 		return user, errors.ErrUnauthorized().SetDetail(err.Error())
 	}

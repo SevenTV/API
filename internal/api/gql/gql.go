@@ -5,46 +5,41 @@ import (
 	"time"
 
 	"github.com/fasthttp/router"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 
 	v2 "github.com/seventv/api/internal/api/gql/v2"
 	v3 "github.com/seventv/api/internal/api/gql/v3"
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
 )
 
-func New(gCtx global.Context) error {
-	port := gCtx.Config().Http.Ports.GQL
+func New(gctx global.Context) error {
+	port := gctx.Config().Http.Ports.GQL
 	if port == 0 {
 		port = 80
 	}
 
-	gqlv3 := v3.GqlHandlerV3(gCtx)
-	gqlv2 := v2.GqlHandlerV2(gCtx)
+	gqlv3 := v3.GqlHandlerV3(gctx)
+	gqlv2 := v2.GqlHandlerV2(gctx)
 
 	router := router.New()
 
 	router.RedirectTrailingSlash = true
 	v3Route := func(ctx *fasthttp.RequestCtx) {
-		if err := middleware.Auth(gCtx)(ctx); err != nil {
-			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
-		}
-
 		gqlv3(ctx)
 	}
 
-	router.GET(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), v3Route)
-	router.POST(fmt.Sprintf("/v3%s/gql", gCtx.Config().Http.VersionSuffix), v3Route)
-	router.POST(fmt.Sprintf("/v2%s/gql", gCtx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
-		if err := middleware.Auth(gCtx)(ctx); err != nil {
-			ctx.Response.Header.Add("X-Auth-Failure", err.Message())
-		}
-
+	router.GET(fmt.Sprintf("/v3%s/gql", gctx.Config().Http.VersionSuffix), v3Route)
+	router.POST(fmt.Sprintf("/v3%s/gql", gctx.Config().Http.VersionSuffix), v3Route)
+	router.POST(fmt.Sprintf("/v2%s/gql", gctx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
 		gqlv2(ctx)
 	})
+
+	doCORS := middleware.CORS(gctx)
+	doAuth := middleware.Auth(gctx)
 
 	router.HandleOPTIONS = true
 	server := fasthttp.Server{
@@ -57,7 +52,7 @@ func New(gCtx global.Context) error {
 				ip = ctx.RemoteIP().String()
 			}
 
-			ctx.SetUserValue(string(helpers.ClientIP), ip)
+			ctx.SetUserValue(constant.ClientIP, ip)
 
 			defer func() {
 				if err := recover(); err != nil {
@@ -94,21 +89,20 @@ func New(gCtx global.Context) error {
 				}
 			}()
 
-			reqHost := utils.B2S(ctx.Request.Header.Peek("Origin"))
+			ctx.Response.Header.Set("X-Node-Name", gctx.Config().K8S.NodeName)
+			ctx.Response.Header.Set("X-Pod-Name", gctx.Config().K8S.PodName)
 
-			ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
-			ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
-			ctx.Response.Header.Set("Access-Control-Expose-Headers", "X-Collection-Size")
-			ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
+			if err := doCORS(ctx); err != nil {
+				return
+			}
 
-			// cache cors
-			ctx.Response.Header.Set("Access-Control-Max-Age", "7200")
-
-			ctx.Response.Header.Set("X-Node-Name", gCtx.Config().K8S.NodeName)
-			ctx.Response.Header.Set("X-Pod-Name", gCtx.Config().K8S.PodName)
 			if ctx.IsOptions() {
 				ctx.SetStatusCode(fasthttp.StatusNoContent)
 				return
+			}
+
+			if err := doAuth(ctx); err != nil {
+				ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 			}
 
 			router.Handler(ctx)
@@ -122,10 +116,10 @@ func New(gCtx global.Context) error {
 	}
 
 	go func() {
-		<-gCtx.Done()
+		<-gctx.Done()
 
 		_ = server.Shutdown()
 	}()
 
-	return server.ListenAndServe(fmt.Sprintf("%s:%d", gCtx.Config().Http.Addr, port))
+	return server.ListenAndServe(fmt.Sprintf("%s:%d", gctx.Config().Http.Addr, port))
 }

@@ -7,8 +7,9 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/seventv/api/internal/api/rest/portal"
-	"github.com/seventv/api/internal/api/rest/rest"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/middleware"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -41,6 +42,9 @@ func New(gctx global.Context) error {
 	s.V3(gctx)
 	s.V2(gctx)
 
+	doAuth := middleware.Auth(gctx)
+	doCORS := middleware.CORS(gctx)
+
 	srv := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
 			start := time.Now()
@@ -51,7 +55,7 @@ func New(gctx global.Context) error {
 				ip = ctx.RemoteIP().String()
 			}
 
-			ctx.SetUserValue(string(rest.ClientIP), ip)
+			ctx.SetUserValue(constant.ClientIP, ip)
 
 			defer func() {
 				if err := recover(); err != nil {
@@ -87,25 +91,25 @@ func New(gctx global.Context) error {
 				}
 			}()
 
-			reqHost := utils.B2S(ctx.Request.Header.Peek("Origin"))
-
-			ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
-			ctx.Response.Header.Set("Access-Control-Allow-Headers", "*")
-			ctx.Response.Header.Set("Access-Control-Allow-Methods", "*")
-			ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
-			ctx.Response.Header.Set("Vary", "Origin")
-
-			// cache cors
-			ctx.Response.Header.Set("Access-Control-Max-Age", "7200")
-
 			ctx.Response.Header.Set("X-Node-Name", gctx.Config().K8S.NodeName)
 			ctx.Response.Header.Set("X-Pod-Name", gctx.Config().K8S.PodName)
+
+			if err := doCORS(ctx); err != nil {
+				return
+			}
+
 			if ctx.IsOptions() {
+				ctx.SetStatusCode(fasthttp.StatusNoContent)
 				return
 			}
 
 			// Routing
 			ctx.Response.Header.Set("Content-Type", "application/json") // default to JSON
+
+			if err := doAuth(ctx); err != nil {
+				ctx.Response.Header.Add("X-Auth-Failure", err.Message())
+			}
+
 			s.router.Handler(ctx)
 		},
 		ReadTimeout:                  time.Second * 600,

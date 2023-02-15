@@ -6,6 +6,7 @@ import (
 	"github.com/seventv/api/data/mutate"
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/loaders"
+	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/api/internal/svc/limiter"
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/api/internal/svc/prometheus"
@@ -20,6 +21,7 @@ import (
 type Instances struct {
 	Mongo        mongo.Instance
 	Redis        redis.Instance
+	Auth         auth.Authorizer
 	S3           s3.Instance
 	MessageQueue messagequeue.Instance
 	Prometheus   prometheus.Instance

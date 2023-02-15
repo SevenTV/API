@@ -214,32 +214,13 @@ type Config struct {
 		} `mapstructure:"proxied_endpoint" json:"proxied_endpoint"`
 
 		Cookie struct {
-			Domain string `mapstructure:"domain" json:"domain"`
-			Secure bool   `mapstructure:"secure" json:"secure"`
+			Domain    string   `mapstructure:"domain" json:"domain"`
+			Secure    bool     `mapstructure:"secure" json:"secure"`
+			Whitelist []string `mapstructure:"whitelist" json:"whitelist"`
 		} `mapstructure:"cookie" json:"cookie"`
 	} `mapstructure:"http" json:"http"`
 
-	Platforms struct {
-		Twitch struct {
-			ClientID     string `mapstructure:"client_id" json:"client_id"`
-			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
-			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
-		} `mapstructure:"twitch" json:"twitch"`
-		YouTube struct {
-			APIKey       string `mapstructure:"api_key" json:"api_key"`
-			ClientID     string `mapstructure:"client_id" json:"client_id"`
-			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
-			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
-		} `mapstructure:"youtube" json:"youtube"`
-		Discord struct {
-			ClientID     string `mapstructure:"client_id" json:"client_id"`
-			ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
-			RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
-
-			API      string            `mapstructure:"api" json:"api"`
-			Channels map[string]string `mapstructure:"channels" json:"channels"`
-		} `mapstructure:"discord" json:"discord"`
-	} `mapstructure:"platforms" json:"platforms"`
+	Platforms PlatformConfig `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {
 		Buckets struct {
@@ -301,6 +282,28 @@ type Config struct {
 	Credentials struct {
 		JWTSecret string `mapstructure:"jwt_secret" json:"jwt_secret"`
 	} `mapstructure:"credentials" json:"credentials"`
+}
+
+type PlatformConfig struct {
+	Twitch struct {
+		ClientID     string `mapstructure:"client_id" json:"client_id"`
+		ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+		RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
+	} `mapstructure:"twitch" json:"twitch"`
+	YouTube struct {
+		APIKey       string `mapstructure:"api_key" json:"api_key"`
+		ClientID     string `mapstructure:"client_id" json:"client_id"`
+		ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+		RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
+	} `mapstructure:"youtube" json:"youtube"`
+	Discord struct {
+		ClientID     string `mapstructure:"client_id" json:"client_id"`
+		ClientSecret string `mapstructure:"client_secret" json:"client_secret"`
+		RedirectURI  string `mapstructure:"redirect_uri" json:"redirect_uri"`
+
+		API      string            `mapstructure:"api" json:"api"`
+		Channels map[string]string `mapstructure:"channels" json:"channels"`
+	} `mapstructure:"discord" json:"discord"`
 }
 
 type Labels []struct {

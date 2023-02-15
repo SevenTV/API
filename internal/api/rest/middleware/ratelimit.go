@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/seventv/api/internal/api/gql/v3/helpers"
 	"github.com/seventv/api/internal/api/rest/rest"
+	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/seventv/common/errors"
@@ -14,7 +14,7 @@ import (
 
 func RateLimit(gctx global.Context, bucket string, rate [2]int64) rest.Middleware {
 	return func(ctx *rest.Ctx) rest.APIError {
-		identifier, _ := ctx.UserValue(rest.Key(helpers.ClientIP)).String()
+		identifier, _ := ctx.UserValue(constant.ClientIP).String()
 
 		actor, ok := ctx.GetActor()
 		if ok {

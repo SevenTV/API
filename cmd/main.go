@@ -22,6 +22,7 @@ import (
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/loaders"
+	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/api/internal/svc/health"
 	"github.com/seventv/api/internal/svc/limiter"
 	"github.com/seventv/api/internal/svc/monitoring"
@@ -148,6 +149,15 @@ func main() {
 				"error", err,
 			)
 		}
+	}
+
+	{
+		gctx.Inst().Auth = auth.New(auth.AuthorizerOptions{
+			JWTSecret: config.Credentials.JWTSecret,
+			Domain:    config.Http.Cookie.Domain,
+			Secure:    config.Http.Cookie.Secure,
+			Config:    config.Platforms,
+		})
 	}
 
 	{
