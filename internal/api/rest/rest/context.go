@@ -48,9 +48,13 @@ func (c *Ctx) SetActor(u structures.User) {
 
 // Get the current authenticated user
 func (c *Ctx) GetActor() (structures.User, bool) {
-	v := c.UserValue(constant.UserKey).User()
-
-	return v, !v.ID.IsZero()
+	v := c.RequestCtx.UserValue(constant.UserKey)
+	switch v := v.(type) {
+	case structures.User:
+		return v, true
+	default:
+		return structures.DeletedUser, false
+	}
 }
 
 func (c *Ctx) Log() *zap.SugaredLogger {

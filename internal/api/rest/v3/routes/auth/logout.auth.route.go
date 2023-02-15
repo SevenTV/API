@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/svc/auth"
@@ -18,7 +19,10 @@ func newLogout(gctx global.Context) rest.Route {
 func (r *logoutRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
 		URI:    "/logout",
-		Method: rest.GET,
+		Method: rest.POST,
+		Middleware: []rest.Middleware{
+			middleware.Auth(r.gctx, true),
+		},
 	}
 }
 
