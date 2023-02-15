@@ -25,13 +25,15 @@ func InboxMessageModel(xm model.InboxMessageModel) *gql_model.InboxMessage {
 
 func ModRequestMessageModel(xm model.ModRequestMessageModel) *gql_model.ModRequestMessage {
 	return &gql_model.ModRequestMessage{
-		ID:         xm.ID,
-		Kind:       gql_model.MessageKind(xm.Kind),
-		CreatedAt:  time.UnixMilli(xm.CreatedAt),
-		AuthorID:   xm.AuthorID,
-		TargetKind: int(xm.TargetKind),
-		TargetID:   xm.TargetID,
-		Read:       xm.Read,
-		Wish:       xm.Wish,
+		ID:               xm.ID,
+		Kind:             gql_model.MessageKind(xm.Kind),
+		CreatedAt:        time.UnixMilli(xm.CreatedAt),
+		AuthorID:         xm.AuthorID,
+		TargetKind:       int(xm.TargetKind),
+		TargetID:         xm.TargetID,
+		Read:             xm.Read,
+		Wish:             xm.Wish,
+		ActorCountryName: xm.ActorCountryName,
+		ActorCountryCode: xm.ActorCountryCode,
 	}
 }
