@@ -28,10 +28,10 @@ type Authorizer interface {
 	VerifyJWT(token []string, out jwt.Claims) (*jwt.Token, error)
 	CreateCSRFToken(targetID primitive.ObjectID) (value, token string, err error)
 	CreateAccessToken(targetID primitive.ObjectID, version float64) (string, time.Time, error)
-	ValidateCSRF(state string, cookieData string) (*fasthttp.Cookie, error)
+	ValidateCSRF(state string, cookieData string) (*fasthttp.Cookie, *JWTClaimOAuth2CSRF, error)
 	Cookie(key, token string, duration time.Duration) *fasthttp.Cookie
 	QueryValues(provider structures.UserConnectionPlatform, csrfToken string) (url.Values, error)
-	ExchangeCode(ctx context.Context, provider structures.UserConnectionPlatform, code string) (*OAuth2AuthorizedResponse, error)
+	ExchangeCode(ctx context.Context, provider structures.UserConnectionPlatform, code string) (OAuth2AuthorizedResponse, error)
 	TwichUserData(grant string) (string, []byte, error)
 	DiscordUserData(grant string) (string, []byte, error)
 	UserData(provider structures.UserConnectionPlatform, token string) (id string, b []byte, err error)
@@ -136,12 +136,12 @@ func (a *authorizer) CreateAccessToken(targetID primitive.ObjectID, version floa
 	return token, expireAt, nil
 }
 
-func (a *authorizer) ValidateCSRF(state string, cookieData string) (*fasthttp.Cookie, error) {
+func (a *authorizer) ValidateCSRF(state string, cookieData string) (*fasthttp.Cookie, *JWTClaimOAuth2CSRF, error) {
 	// Retrieve the CSRF token from cookies
 	csrfToken := strings.Split(cookieData, ".")
 
 	if len(csrfToken) != 3 {
-		return nil, fmt.Errorf("bad state (found %d segments when 3 were expected)", len(csrfToken))
+		return nil, nil, fmt.Errorf("bad state (found %d segments when 3 were expected)", len(csrfToken))
 	}
 
 	// Verify the token
@@ -149,34 +149,34 @@ func (a *authorizer) ValidateCSRF(state string, cookieData string) (*fasthttp.Co
 
 	token, err := a.VerifyJWT(csrfToken, csrfClaim)
 	if err != nil {
-		return nil, fmt.Errorf("invalid state: %s", err.Error())
+		return nil, csrfClaim, fmt.Errorf("invalid state: %s", err.Error())
 	}
 
 	{
 		b, err := json.Marshal(token.Claims)
 		if err != nil {
-			return nil, fmt.Errorf("invalid state: %s", err.Error())
+			return nil, csrfClaim, fmt.Errorf("invalid state: %s", err.Error())
 		}
 
 		if err = json.Unmarshal(b, csrfClaim); err != nil {
-			return nil, fmt.Errorf("invalid state: %s", err.Error())
+			return nil, csrfClaim, fmt.Errorf("invalid state: %s", err.Error())
 		}
 	}
 
 	// Validate: token date
 	if csrfClaim.CreatedAt.Before(time.Now().Add(-time.Minute * 5)) {
-		return nil, fmt.Errorf("expired state")
+		return nil, csrfClaim, fmt.Errorf("expired state")
 	}
 
 	// Check mismatch
 	if state != csrfClaim.State {
-		return nil, fmt.Errorf("mismatched state value")
+		return nil, csrfClaim, fmt.Errorf("mismatched state value")
 	}
 
 	// Udate the CSRF cookie (immediate expire)
 	cookie := a.Cookie(string(COOKIE_CSRF), "", 0)
 
-	return cookie, nil
+	return cookie, csrfClaim, nil
 }
 
 // Cookie returns a cookie
@@ -237,8 +237,10 @@ func (a *authorizer) QueryValues(provider structures.UserConnectionPlatform, csr
 }
 
 // ExchangeCode exchanges an OAuth2 code for an access token
-func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserConnectionPlatform, code string) (*OAuth2AuthorizedResponse, error) {
+func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserConnectionPlatform, code string) (OAuth2AuthorizedResponse, error) {
 	_, clientID, clientSecret, redirectURI := a.oauthCredentials(provider)
+
+	grant := OAuth2AuthorizedResponse{}
 
 	var (
 		req *http.Request
@@ -258,7 +260,7 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 			"error", err,
 		)
 
-		return nil, errors.ErrInternalServerError()
+		return grant, errors.ErrInternalServerError()
 	}
 
 	switch provider {
@@ -271,7 +273,7 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 				"provider", provider,
 			)
 
-			return nil, errors.ErrInternalServerError()
+			return grant, errors.ErrInternalServerError()
 		}
 
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -283,7 +285,7 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 				"provider", provider,
 			)
 
-			return nil, err
+			return grant, err
 		}
 	}
 
@@ -293,7 +295,7 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 			"provider", provider,
 		)
 
-		return nil, err
+		return grant, err
 	}
 
 	// Send the request
@@ -303,7 +305,7 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 			"error", err,
 		)
 
-		return nil, err
+		return grant, err
 	}
 
 	defer resp.Body.Close()
@@ -315,24 +317,23 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 				"error", err,
 			)
 
-			return nil, err
+			return grant, err
 		}
 
 		err = fmt.Errorf("bad resp from provider: %d - %s", resp.StatusCode, body)
 
-		return nil, err
+		return grant, err
 	}
 
 	// Decode the grant response and return the access token
-	grant := &OAuth2AuthorizedResponse{}
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		return nil, err
+		return grant, err
 	}
 
-	if err = json.Unmarshal(b, grant); err != nil {
-		return nil, err
+	if err = json.Unmarshal(b, &grant); err != nil {
+		return grant, err
 	}
 
 	return grant, nil

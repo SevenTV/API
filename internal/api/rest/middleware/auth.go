@@ -8,7 +8,7 @@ import (
 
 func Auth(gCtx global.Context, required bool) rest.Middleware {
 	return func(ctx *rest.Ctx) rest.APIError {
-		if _, ok := ctx.GetActor(); !ok {
+		if _, ok := ctx.GetActor(); !ok && required {
 			return errors.ErrUnauthorized().SetDetail("Sign-In Required")
 		}
 
