@@ -38,6 +38,9 @@ func New(gctx global.Context) error {
 		gqlv2(ctx)
 	})
 
+	doCORS := middleware.CORS(gctx)
+	doAuth := middleware.Auth(gctx)
+
 	router.HandleOPTIONS = true
 	server := fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -86,24 +89,19 @@ func New(gctx global.Context) error {
 				}
 			}()
 
-			reqHost := utils.B2S(ctx.Request.Header.Peek("Origin"))
-
-			ctx.Response.Header.Set("Access-Control-Allow-Credentials", "true")
-			ctx.Response.Header.Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, Authorization, Cookie")
-			ctx.Response.Header.Set("Access-Control-Expose-Headers", "X-Collection-Size")
-			ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
-
-			// cache cors
-			ctx.Response.Header.Set("Access-Control-Max-Age", "7200")
-
 			ctx.Response.Header.Set("X-Node-Name", gctx.Config().K8S.NodeName)
 			ctx.Response.Header.Set("X-Pod-Name", gctx.Config().K8S.PodName)
+
+			if err := doCORS(ctx); err != nil {
+				return
+			}
+
 			if ctx.IsOptions() {
 				ctx.SetStatusCode(fasthttp.StatusNoContent)
 				return
 			}
 
-			if err := middleware.Auth(gctx)(ctx); err != nil {
+			if err := doAuth(ctx); err != nil {
 				ctx.Response.Header.Add("X-Auth-Failure", err.Message())
 			}
 

@@ -214,8 +214,9 @@ type Config struct {
 		} `mapstructure:"proxied_endpoint" json:"proxied_endpoint"`
 
 		Cookie struct {
-			Domain string `mapstructure:"domain" json:"domain"`
-			Secure bool   `mapstructure:"secure" json:"secure"`
+			Domain    string   `mapstructure:"domain" json:"domain"`
+			Secure    bool     `mapstructure:"secure" json:"secure"`
+			Whitelist []string `mapstructure:"whitelist" json:"whitelist"`
 		} `mapstructure:"cookie" json:"cookie"`
 	} `mapstructure:"http" json:"http"`
 

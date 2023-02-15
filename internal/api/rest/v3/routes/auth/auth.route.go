@@ -122,7 +122,6 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 						Scope:        []string{},
 						ExpiresAt:    time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second),
 					},
-					EmoteSet: &structures.EmoteSet{},
 				}},
 				State: structures.UserState{
 					LastLoginDate: time.Now(),
