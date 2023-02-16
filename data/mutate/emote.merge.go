@@ -2,6 +2,8 @@ package mutate
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -23,7 +25,7 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 	// Check actor permissions
 	actor := opt.Actor
 	// Check actor's permission
-	if actor != nil {
+	if !actor.ID.IsZero() {
 		// User is not privileged
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			if eb.Emote.OwnerID.IsZero() { // Deny when emote has no owner
@@ -59,6 +61,10 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 		return errors.ErrDontBeSilly().SetDetail("It's not possible to merge an emote into itself")
 	}
 
+	if opt.NewEmote.ID.IsZero() {
+		return errors.ErrInternalIncompleteMutation()
+	}
+
 	// Update all emote sets with the target emote active
 	if _, err := m.mongo.Collection(mongo.CollectionNameEmoteSets).UpdateMany(ctx, bson.M{
 		"emotes.id": eb.Emote.ID,
@@ -66,7 +72,9 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 			"emotes.id": bson.M{"$not": bson.M{"$eq": in.Emote.ID}},
 		}},
 	}, bson.M{"$set": bson.M{
-		"emotes.$.id": in.Emote.ID,
+		"emotes.$.id":             in.Emote.ID,
+		"emotes.$.merged_from_id": eb.Emote.ID,
+		"emotes.$.merged_at":      time.Now(),
 	}}); err != nil {
 		zap.S().Errorw("mongo, couldn't modify emote sets",
 			"error", err,
@@ -75,11 +83,12 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 		return errors.ErrInternalServerError()
 	}
 
-	// TODO: Delete the target emote
+	// Delete the target emote
 	if err := m.DeleteEmote(ctx, eb, DeleteEmoteOptions{
 		Actor:          actor,
 		VersionID:      opt.VersionID,
-		Reason:         "",
+		ReplaceID:      in.Emote.ID,
+		Reason:         opt.Reason,
 		SkipValidation: false,
 	}); err != nil {
 		zap.S().Errorw("failed to delete the emote being merged",
@@ -89,13 +98,34 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 		)
 	}
 
+	// Clear channel counts
+	_, _ = m.redis.Del(ctx, m.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:active_sets", in.Emote.ID.Hex())))
+	_, _ = m.redis.Del(ctx, m.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:channel_count", in.Emote.ID.Hex())))
+
+	// Audit log
+	c := structures.NewAuditChange("new_emote_id").WriteSingleValues("", in.Emote.ID.Hex())
+	alb := structures.NewAuditLogBuilder(structures.AuditLog{
+		Changes: []*structures.AuditLogChange{c},
+		Reason:  opt.Reason,
+	}).
+		SetKind(structures.AuditLogKindMergeEmote).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmote).
+		SetTargetID(eb.Emote.ID)
+
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {
+		zap.S().Errorw("mongo, couldn't insert audit log",
+			"error", err,
+		)
+	}
+
 	eb.MarkAsTainted()
 
 	return nil
 }
 
 type MergeEmoteOptions struct {
-	Actor    *structures.User
+	Actor    structures.User
 	NewEmote structures.Emote
 	// If specified, only this version will be merged
 	//

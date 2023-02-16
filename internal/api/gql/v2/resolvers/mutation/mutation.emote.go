@@ -174,7 +174,7 @@ func (r *Resolver) DeleteEmote(ctx context.Context, id string, reason string) (*
 	eb := structures.NewEmoteBuilder(emote)
 
 	if err = r.Ctx.Inst().Mutate.DeleteEmote(ctx, eb, mutate.DeleteEmoteOptions{
-		Actor:  &actor,
+		Actor:  actor,
 		Reason: reason,
 	}); err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (r *Resolver) MergeEmote(ctx context.Context, oldIDArg string, newIDArg str
 	}
 
 	if err := r.Ctx.Inst().Mutate.MergeEmote(ctx, structures.NewEmoteBuilder(oldEmote), mutate.MergeEmoteOptions{
-		Actor:          &actor,
+		Actor:          actor,
 		NewEmote:       newEmote,
 		Reason:         reason,
 		SkipValidation: false,
