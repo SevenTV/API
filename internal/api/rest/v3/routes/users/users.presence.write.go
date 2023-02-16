@@ -6,7 +6,6 @@ import (
 
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/internal/api/rest/rest"
-	"github.com/seventv/api/internal/constant"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/common/errors"
@@ -56,7 +55,7 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInvalidRequest()
 	}
 
-	clientIP, _ := ctx.UserValue(constant.ClientIP).String()
+	clientIP := ctx.ClientIP()
 
 	var presence structures.UserPresence[bson.Raw]
 
