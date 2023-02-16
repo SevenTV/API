@@ -2,6 +2,7 @@ package mutate
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/seventv/common/errors"
@@ -60,6 +61,10 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 		return errors.ErrDontBeSilly().SetDetail("It's not possible to merge an emote into itself")
 	}
 
+	if opt.NewEmote.ID.IsZero() {
+		return errors.ErrInternalIncompleteMutation()
+	}
+
 	// Update all emote sets with the target emote active
 	if _, err := m.mongo.Collection(mongo.CollectionNameEmoteSets).UpdateMany(ctx, bson.M{
 		"emotes.id": eb.Emote.ID,
@@ -90,6 +95,27 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 			"error", err,
 			"target_emote_id", eb.Emote.ID,
 			"new_emote_id", in.Emote.ID,
+		)
+	}
+
+	// Clear channel counts
+	_, _ = m.redis.Del(ctx, m.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:active_sets", in.Emote.ID.Hex())))
+	_, _ = m.redis.Del(ctx, m.redis.ComposeKey("gql-v3", fmt.Sprintf("emote:%s:channel_count", in.Emote.ID.Hex())))
+
+	// Audit log
+	c := structures.NewAuditChange("new_emote_id").WriteSingleValues("", in.Emote.ID.Hex())
+	alb := structures.NewAuditLogBuilder(structures.AuditLog{
+		Changes: []*structures.AuditLogChange{c},
+		Reason:  opt.Reason,
+	}).
+		SetKind(structures.AuditLogKindMergeEmote).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmote).
+		SetTargetID(eb.Emote.ID)
+
+	if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {
+		zap.S().Errorw("mongo, couldn't insert audit log",
+			"error", err,
 		)
 	}
 

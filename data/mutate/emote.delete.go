@@ -167,9 +167,6 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 			}
 		}
 	}
-
-	// }
-
 	// Write audit log
 	alb := structures.NewAuditLogBuilder(structures.AuditLog{
 		Changes: []*structures.AuditLogChange{},
