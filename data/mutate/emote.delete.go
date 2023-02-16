@@ -29,7 +29,7 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 	// Check permissions
 	actor := opt.Actor
 	// Check actor's permission
-	if actor != nil {
+	if !actor.ID.IsZero() {
 		// User is not privileged
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			if eb.Emote.OwnerID.IsZero() { // Deny when emote has no owner
@@ -112,7 +112,12 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 		if ver.ID.IsZero() {
 			return errors.ErrUnknownEmote().SetDetail("Specified version does not exist")
 		}
+
 		ver.State.Lifecycle = lifecycle
+		if !opt.ReplaceID.IsZero() {
+			ver.State.ReplaceID = opt.ReplaceID
+		}
+
 		ver = setACL(ver, acl)
 		eb.UpdateVersion(ver.ID, ver)
 	}
@@ -186,7 +191,7 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 }
 
 type DeleteEmoteOptions struct {
-	Actor *structures.User
+	Actor structures.User
 	// If true, this is a un-delete operation
 	Undo bool
 	// If specified, only this version will be deleted
@@ -194,6 +199,8 @@ type DeleteEmoteOptions struct {
 	// by default, all versions will be deleted
 	VersionID primitive.ObjectID
 	// The reason given for the deletion: will appear in audit logs
-	Reason         string
+	Reason string
+	// If set, the emote will be given an instruction to be replaced with the specified emote
+	ReplaceID      primitive.ObjectID
 	SkipValidation bool
 }

@@ -18,6 +18,8 @@ type EmoteOps {
   id: ObjectID!
   update(params: EmoteUpdate!, reason: String): Emote!
     @goField(forceResolver: true)
+  merge(target_id: ObjectID!, reason: String): Emote!
+    @goField(forceResolver: true)
   rerun: Emote @goField(forceResolver: true)
 }
 

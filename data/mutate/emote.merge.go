@@ -2,6 +2,7 @@ package mutate
 
 import (
 	"context"
+	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -23,7 +24,7 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 	// Check actor permissions
 	actor := opt.Actor
 	// Check actor's permission
-	if actor != nil {
+	if !actor.ID.IsZero() {
 		// User is not privileged
 		if !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 			if eb.Emote.OwnerID.IsZero() { // Deny when emote has no owner
@@ -66,7 +67,9 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 			"emotes.id": bson.M{"$not": bson.M{"$eq": in.Emote.ID}},
 		}},
 	}, bson.M{"$set": bson.M{
-		"emotes.$.id": in.Emote.ID,
+		"emotes.$.id":             in.Emote.ID,
+		"emotes.$.merged_from_id": eb.Emote.ID,
+		"emotes.$.merged_at":      time.Now(),
 	}}); err != nil {
 		zap.S().Errorw("mongo, couldn't modify emote sets",
 			"error", err,
@@ -75,11 +78,12 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 		return errors.ErrInternalServerError()
 	}
 
-	// TODO: Delete the target emote
+	// Delete the target emote
 	if err := m.DeleteEmote(ctx, eb, DeleteEmoteOptions{
 		Actor:          actor,
 		VersionID:      opt.VersionID,
-		Reason:         "",
+		ReplaceID:      in.Emote.ID,
+		Reason:         opt.Reason,
 		SkipValidation: false,
 	}); err != nil {
 		zap.S().Errorw("failed to delete the emote being merged",
@@ -95,7 +99,7 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 }
 
 type MergeEmoteOptions struct {
-	Actor    *structures.User
+	Actor    structures.User
 	NewEmote structures.Emote
 	// If specified, only this version will be merged
 	//
