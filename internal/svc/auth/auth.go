@@ -190,6 +190,7 @@ func (a *authorizer) Cookie(key, token string, duration time.Duration) *fasthttp
 	cookie.SetDomain(a.Domain)
 	cookie.SetPath("/")
 	cookie.SetSecure(a.Secure)
+	cookie.SetSameSite(fasthttp.CookieSameSiteNoneMode)
 
 	return cookie
 }
