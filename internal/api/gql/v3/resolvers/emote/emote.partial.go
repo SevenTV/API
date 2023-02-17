@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/structures/v3"
 )
 
 type ResolverPartial struct {
@@ -20,8 +19,8 @@ func NewPartial(r types.Resolver) generated.EmotePartialResolver {
 }
 
 func (r *ResolverPartial) Owner(ctx context.Context, obj *model.EmotePartial) (*model.UserPartial, error) {
-	if obj.Owner != nil && obj.Owner.ID != structures.DeletedUser.ID {
-		return obj.Owner, nil
+	if obj.OwnerID.IsZero() {
+		return nil, nil
 	}
 
 	user, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.OwnerID)
