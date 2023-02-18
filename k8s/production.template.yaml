@@ -137,6 +137,7 @@ data:
         whitelist:
           - https://7tv.app
           - https://twitch.tv
+          - https://www.twitch.tv
 
     health:
       enabled: true
