@@ -31,6 +31,12 @@ func (a *authorizer) LocateIP(ctx context.Context, addr string) (GeoIPResult, er
 		return result, err
 	}
 
+	// Fix bad country names
+	switch result.CountryCode {
+	case "TW":
+		result.CountryName = "Taiwan (Republic of China)"
+	}
+
 	return result, nil
 }
 
