@@ -7,10 +7,10 @@ import (
 )
 
 type BridgedCommandBody interface {
-	json.RawMessage | CosmeticsCommandBody
+	json.RawMessage | UserStateCommandBody
 }
 
-type CosmeticsCommandBody struct {
+type UserStateCommandBody struct {
 	Platform    structures.UserConnectionPlatform `json:"platform"`
 	Identifiers []string                          `json:"identifiers"`
 	Kinds       []structures.CosmeticKind         `json:"kinds"`
