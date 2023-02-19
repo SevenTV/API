@@ -16,7 +16,7 @@ const SESSION_ID_KEY = utils.Key("session_id")
 func handle(gctx global.Context, name string, body []byte) error {
 	var err error
 
-	req := getCommandBody[events.CosmeticsCommandBody](body)
+	req := getCommandBody[events.UserStateCommandBody](body)
 
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
@@ -24,8 +24,8 @@ func handle(gctx global.Context, name string, body []byte) error {
 	defer cancel()
 
 	switch name {
-	case "cosmetics":
-		err = handleCosmetics(gctx, ctx, req.Body)
+	case "userstate", "cosmetics":
+		err = handleUserState(gctx, ctx, req.Body)
 	}
 
 	return err

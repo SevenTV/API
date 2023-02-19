@@ -21,7 +21,7 @@ const (
 	identifier_id               = "id"
 )
 
-func handleCosmetics(gctx global.Context, ctx context.Context, body events.CosmeticsCommandBody) error {
+func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) error {
 	var sid string
 	switch v := ctx.Value(SESSION_ID_KEY).(type) {
 	case string:
