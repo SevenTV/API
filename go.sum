@@ -141,8 +141,8 @@ github.com/go-redsync/redsync/v4 v4.8.1/go.mod h1:LmUAsQuQxhzZAoGY7JS6+dNhNmZyon
 github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0/go.mod h1:fyg7847qk6SyHyPtNmDHnmrv/HOrqktSC+C9fM+CJOE=
 github.com/golang-jwt/jwt v3.2.1+incompatible h1:73Z+4BJcrTC+KczS6WvTPvRGOp1WmfEP4Q1lOd9Z/+c=
 github.com/golang-jwt/jwt v3.2.1+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
-github.com/golang-jwt/jwt/v4 v4.4.3 h1:Hxl6lhQFj4AnOX6MLrsCb/+7tCj7DxP7VA+2rDIq5AU=
-github.com/golang-jwt/jwt/v4 v4.4.3/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
+github.com/golang-jwt/jwt/v4 v4.5.0 h1:7cYmW1XlMY7h7ii7UhUyChSgS5wUJEnm9uZVTGqOWzg=
+github.com/golang-jwt/jwt/v4 v4.5.0/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
 github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -336,10 +336,6 @@ github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee h1:8Iv5m6xEo1NR1Avp
 github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee/go.mod h1:qwtSXrKuJh/zsFQ12yEE89xfCrGKK63Rr7ctU/uCo4g=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20230215125853-1b6dc29a71eb h1:+x88AJpghXMI/wQjGFzc54uPvOz3i+HEgJa5MQbJwzI=
-github.com/seventv/common v0.0.0-20230215125853-1b6dc29a71eb/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
-github.com/seventv/common v0.0.0-20230216051002-cc5c455c5b02 h1:oGGlAPlASBIOjE1O0dWMGophF4GRyL/Y1TpgH6vfQ4o=
-github.com/seventv/common v0.0.0-20230216051002-cc5c455c5b02/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/common v0.0.0-20230219165435-8b3b037a12ce h1:8w6uxwWHBlS1R1zV9ZNVDsNV2VFjgiVc/RaDKnQiCjA=
 github.com/seventv/common v0.0.0-20230219165435-8b3b037a12ce/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48 h1:IqWrtt/yob45YnOQ5Wwkbf8qP22eKVtg0WzfyEkGnFg=
