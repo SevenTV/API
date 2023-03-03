@@ -126,6 +126,8 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Construct the final response structure
 	userModel := r.Ctx.Inst().Modelizer.User(user)
+	userModel.EmoteSets = userWithEntitledEmoteSets(r.Ctx, user)
+
 	userConnModel := r.Ctx.Inst().Modelizer.UserConnection(uc)
 	userConnModel.User = &userModel
 
