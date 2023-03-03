@@ -139,6 +139,10 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 
 			items[i].Paints[j].Data.RefObject = &x
 		}
+
+		items[i].EmoteSets = utils.Filter(items[i].EmoteSets, func(x structures.Entitlement[structures.EntitlementDataEmoteSet]) bool {
+			return x.Condition.IsMet(roleIDs)
+		})
 	}
 
 	r.setItems(items)
