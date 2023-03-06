@@ -46,11 +46,6 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 		wg.Done()
 	}()
 
-	fetchCosmetics := func() (query.EntitlementQueryResult, error) {
-		// Fetch user's active cosmetics
-		return p.loaders.EntitlementsLoader().Load(presence.UserID)
-	}
-
 	go func() {
 		// Fetch user's active cosmetics
 		cosmetics, err = p.loaders.EntitlementsLoader().Load(presence.UserID)
@@ -125,53 +120,6 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 			return msg, err
 		})
-	}
-
-	// BETA: grant special paint
-	if paintID, err := primitive.ObjectIDFromHex(p.config.Misceallenous.BetaPaintEntitlementID); err == nil {
-		owned := false
-
-		if c, _ := p.mongo.Collection(mongo.CollectionNameEntitlements).CountDocuments(ctx, bson.M{
-			"user_id":  presence.UserID,
-			"kind":     structures.EntitlementKindPaint,
-			"data.ref": paintID,
-		}); c > 0 {
-			owned = true
-		}
-
-		if !owned {
-			eb := structures.NewEntitlementBuilder(structures.Entitlement[structures.EntitlementDataPaint]{}).
-				SetKind(structures.EntitlementKindPaint).
-				SetUserID(presence.UserID).
-				SetCondition(structures.EntitlementCondition{NoLegacy: true}).
-				SetData(structures.EntitlementDataPaint{
-					RefID:    paintID,
-					Selected: len(cosmetics.Paints) == 0, // only select if user has no paints
-				}).
-				SetApp(structures.EntitlementApp{
-					Name: "api",
-					State: map[string]any{
-						"source": "beta_tester",
-					},
-				})
-
-			_, err := p.mongo.Collection(mongo.CollectionNameEntitlements).InsertOne(ctx, eb.Entitlement)
-			if err != nil {
-				zap.S().Errorw("failed to grant beta paint entitlement",
-					"error", err,
-					"user_id", presence.UserID.Hex(),
-				)
-			}
-
-			// Refetch the user's cosmetics
-			cosmetics, err = fetchCosmetics()
-			if err != nil {
-				zap.S().Errorw("failed to refetch cosmetics after granting beta paint entitlement",
-					"error", err,
-					"user_id", presence.UserID.Hex(),
-				)
-			}
-		}
 	}
 
 	// Dispatch badge
