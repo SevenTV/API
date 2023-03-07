@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -106,6 +107,16 @@ func (m *Mutate) CreateBan(ctx context.Context, bb *structures.BanBuilder, opt C
 			"ban_id", bb.Ban.ID.Hex(),
 		)
 	}
+
+	_, _ = m.cd.SendMessage("mod_actor_tracker", discordgo.MessageSend{
+		Content: fmt.Sprintf("**[ban]** **[%s]** 🔨 [%s](%s) until %s for reason '%s', with these effects: %s",
+			actor.Username, victim.Username,
+			victim.WebURL(m.id.Web),
+			bb.Ban.ExpireAt.Format(time.RFC1123),
+			bb.Ban.Reason,
+			bb.Ban.Effects.String(),
+		),
+	}, true)
 
 	bb.MarkAsTainted()
 
