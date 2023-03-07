@@ -392,7 +392,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			}
 
 			_, _ = m.cd.SendMessage("mod_actor_tracker", discordgo.MessageSend{
-				Content: fmt.Sprintf("**[edit]** **[%s]** ✏️ [%s](%s), %s", actor.Username, eb.Emote.Name, eb.Emote.WebURL(m.id.Web), cdContent.String()),
+				Content: fmt.Sprintf("**[edit]** **[%s]** ✏️ [%s](%s) %s", actor.Username, eb.Emote.Name, eb.Emote.WebURL(m.id.Web), cdContent.String()),
 			}, true)
 		}
 	}
