@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/bwmarrin/discordgo"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -183,6 +184,10 @@ func (m *Mutate) DeleteEmote(ctx context.Context, eb *structures.EmoteBuilder, o
 			"error", err,
 		)
 	}
+
+	_, _ = m.cd.SendMessage("mod_actor_tracker", discordgo.MessageSend{
+		Content: fmt.Sprintf("**[delete]** **[%s]** 🗑️ [%s](%s) (reason: '%s')", actor.Username, eb.Emote.Name, eb.Emote.WebURL(m.id.Web), opt.Reason),
+	}, true)
 
 	return nil
 }

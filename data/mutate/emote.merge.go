@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -118,6 +119,10 @@ func (m *Mutate) MergeEmote(ctx context.Context, eb *structures.EmoteBuilder, op
 			"error", err,
 		)
 	}
+
+	_, _ = m.cd.SendMessage("mod_actor_tracker", discordgo.MessageSend{
+		Content: fmt.Sprintf("**[merge]** **[%s]** 🔀 [%s](%s) to [%s](%s) (reason: '%s')", actor.Username, eb.Emote.Name, eb.Emote.WebURL(m.id.Web), in.Emote.Name, in.Emote.WebURL(m.id.Web), opt.Reason),
+	}, true)
 
 	eb.MarkAsTainted()
 

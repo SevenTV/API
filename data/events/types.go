@@ -6,6 +6,7 @@ import (
 
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/common/structures/v3"
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -98,6 +99,33 @@ type ChangeField struct {
 	Type     ChangeFieldType `json:"type"`
 	OldValue any             `json:"old_value,omitempty"`
 	Value    any             `json:"value"`
+}
+
+func (cf ChangeField) String() string {
+	s := strings.Builder{}
+
+	writeValue := func(key string, oldVal, val any) {
+		s.WriteString(key)
+		s.WriteString(": ")
+
+		if cf.OldValue != nil {
+			s.Write(utils.ToJSON(oldVal))
+			s.WriteString("->")
+		}
+
+		s.Write(utils.ToJSON(val))
+	}
+
+	switch v := cf.Value.(type) {
+	case []ChangeField:
+		for _, x := range v {
+			writeValue(cf.Key+"."+x.Key, x.OldValue, x.Value)
+		}
+	default:
+		writeValue(cf.Key, cf.OldValue, cf.Value)
+	}
+
+	return s.String()
 }
 
 type ChangeFieldType string

@@ -2,9 +2,12 @@ package mutate
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -361,10 +364,10 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			}()
 		}
 
-		// Emit to the Event API
 		if len(changeFields) > 0 {
 			for _, ver := range emote.Versions {
 				go func(ver structures.EmoteVersion) {
+					// Emit to the Event API
 					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
 						Type: events.EventTypeUpdateEmote,
 						Conditions: []events.EventCondition{{
@@ -379,6 +382,18 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 					}).ToRaw())
 				}(ver)
 			}
+
+			cdContent := strings.Builder{}
+
+			for _, cf := range changeFields {
+				cdContent.WriteString(cf.String())
+
+				cdContent.WriteString(" ")
+			}
+
+			_, _ = m.cd.SendMessage("mod_actor_tracker", discordgo.MessageSend{
+				Content: fmt.Sprintf("**[edit]** **[%s]** ✏️ [%s](%s) %s", actor.Username, eb.Emote.Name, eb.Emote.WebURL(m.id.Web), cdContent.String()),
+			}, true)
 		}
 	}
 

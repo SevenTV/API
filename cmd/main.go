@@ -184,6 +184,7 @@ func main() {
 	{
 		id := svc.AppIdentity{
 			Name: "API",
+			Web:  config.WebsiteURL,
 			CDN:  config.CdnURL,
 		}
 		gctx.Inst().Events = events.NewPublisher(gctx, gctx.Inst().Redis)
