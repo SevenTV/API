@@ -19,6 +19,7 @@ import (
 type ChannelPresenceFanoutOptions struct {
 	Presence structures.UserPresence[structures.UserPresenceDataChannel]
 	Whisper  string
+	Passive  bool
 }
 
 func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFanoutOptions) error {
@@ -322,18 +323,20 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 	}
 
 	// Update presence
-	if _, err := p.mongo.Collection(mongo.CollectionNameUserPresences).UpdateOne(ctx, bson.M{
-		"_id": presence.ID,
-	}, bson.M{
-		"$set": bson.M{
-			"entitlements": entitlements,
-		},
-	}); err != nil {
-		zap.S().Errorw("failed to update presence entitlements",
-			"presence_id", presence.ID.Hex(),
-			"user_id", presence.UserID.Hex(),
-			"error", err.Error(),
-		)
+	if !opt.Passive {
+		if _, err := p.mongo.Collection(mongo.CollectionNameUserPresences).UpdateOne(ctx, bson.M{
+			"_id": presence.ID,
+		}, bson.M{
+			"$set": bson.M{
+				"entitlements": entitlements,
+			},
+		}); err != nil {
+			zap.S().Errorw("failed to update presence entitlements",
+				"presence_id", presence.ID.Hex(),
+				"user_id", presence.UserID.Hex(),
+				"error", err.Error(),
+			)
+		}
 	}
 
 	return nil
