@@ -17,7 +17,7 @@ import (
 type Instance interface {
 	// ChannelPresence returns a PresenceManager for the given actorID, with only Channel presence data.
 	ChannelPresence(ctx context.Context, actorID primitive.ObjectID) PresenceManager[structures.UserPresenceDataChannel]
-	ChannelPresenceFanout(ctx context.Context, presence structures.UserPresence[structures.UserPresenceDataChannel]) error
+	ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFanoutOptions) error
 }
 
 type inst struct {
