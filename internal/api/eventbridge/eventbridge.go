@@ -23,12 +23,14 @@ func handle(gctx global.Context, name string, body []byte) error {
 
 	defer cancel()
 
-	switch name {
-	case "userstate", "cosmetics":
-		err = handleUserState(gctx, ctx, getCommandBody[events.UserStateCommandBody](body))
-	case "presence":
-		err = handlePresence(gctx, ctx, getCommandBody[events.PresenceCommandBody](body))
-	}
+	go func() {
+		switch name {
+		case "userstate", "cosmetics":
+			err = handleUserState(gctx, ctx, getCommandBody[events.UserStateCommandBody](body))
+		case "presence":
+			err = handlePresence(gctx, ctx, getCommandBody[events.PresenceCommandBody](body))
+		}
+	}()
 
 	return err
 }
@@ -65,11 +67,9 @@ func New(gctx global.Context) <-chan interface{} {
 					continue
 				}
 
-				go func() {
-					if err := handle(gctx, cmd, body); err != nil {
-						zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
-					}
-				}()
+				if err := handle(gctx, cmd, body); err != nil {
+					zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
+				}
 			}
 		}
 	}()
