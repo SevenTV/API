@@ -108,8 +108,9 @@ type EndOfStreamPayload struct {
 }
 
 type BridgedCommandPayload[T BridgedCommandBody] struct {
-	Command   string `json:"command"`
-	SessionID string `json:"sid"`
-	ClientIP  string `json:"ip"`
-	Body      T      `json:"body"`
+	Command   string             `json:"command"`
+	SessionID string             `json:"sid"`
+	ClientIP  string             `json:"ip"`
+	ActorID   primitive.ObjectID `json:"actor_id"`
+	Body      T                  `json:"body"`
 }

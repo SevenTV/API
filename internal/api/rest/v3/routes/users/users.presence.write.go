@@ -96,7 +96,9 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		presence = p.ToRaw()
 
 		go func() {
-			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, p); err != nil {
+			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
+				Presence: p,
+			}); err != nil {
 				zap.S().Errorw("failed to fanout channel presence", "error", err)
 			}
 		}()

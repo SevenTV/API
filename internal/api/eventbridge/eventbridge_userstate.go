@@ -21,7 +21,9 @@ const (
 	identifier_id               = "id"
 )
 
-func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) error {
+func handleUserState(gctx global.Context, ctx context.Context, cmd events.BridgedCommandPayload[events.UserStateCommandBody]) error {
+	body := cmd.Body
+
 	var sid string
 	switch v := ctx.Value(SESSION_ID_KEY).(type) {
 	case string:
