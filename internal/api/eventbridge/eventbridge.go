@@ -21,9 +21,9 @@ func handle(gctx global.Context, name string, body []byte) error {
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
 
-	defer cancel()
-
 	go func() {
+		defer cancel()
+
 		switch name {
 		case "userstate", "cosmetics":
 			err = handleUserState(gctx, ctx, getCommandBody[events.UserStateCommandBody](body))
