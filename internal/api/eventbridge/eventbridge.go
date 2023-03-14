@@ -21,16 +21,14 @@ func handle(gctx global.Context, name string, body []byte) error {
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
 
-	go func() {
-		defer cancel()
+	defer cancel()
 
-		switch name {
-		case "userstate", "cosmetics":
-			err = handleUserState(gctx, ctx, getCommandBody[events.UserStateCommandBody](body))
-		case "presence":
-			err = handlePresence(gctx, ctx, getCommandBody[events.PresenceCommandBody](body))
-		}
-	}()
+	switch name {
+	case "userstate", "cosmetics":
+		err = handleUserState(gctx, ctx, getCommandBody[events.UserStateCommandBody](body))
+	case "presence":
+		err = handlePresence(gctx, ctx, getCommandBody[events.PresenceCommandBody](body))
+	}
 
 	return err
 }
@@ -47,29 +45,31 @@ func New(gctx global.Context) <-chan interface{} {
 			case <-gctx.Done():
 				return
 			case msg := <-ch:
-				sp := strings.SplitN(msg, ":", 2)
-				if len(sp) != 2 {
-					zap.S().Errorw("invalid eventapi bridge message",
-						"reason", "bad length",
-						"msg", msg,
-					)
+				go func(m string) {
+					sp := strings.SplitN(m, ":", 2)
+					if len(sp) != 2 {
+						zap.S().Errorw("invalid eventapi bridge message",
+							"reason", "bad length",
+							"msg", m,
+						)
 
-					continue
-				}
+						return
+					}
 
-				cmd := sp[0]
-				bodyStr := sp[1]
+					cmd := sp[0]
+					bodyStr := sp[1]
 
-				var body json.RawMessage
-				if err := json.Unmarshal(utils.S2B(bodyStr), &body); err != nil {
-					zap.S().Errorw("invalid eventapi bridge message", "msg", msg, "err", err)
+					var body json.RawMessage
+					if err := json.Unmarshal(utils.S2B(bodyStr), &body); err != nil {
+						zap.S().Errorw("invalid eventapi bridge message", "msg", m, "err", err)
 
-					continue
-				}
+						return
+					}
 
-				if err := handle(gctx, cmd, body); err != nil {
-					zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
-				}
+					if err := handle(gctx, cmd, body); err != nil {
+						zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
+					}
+				}(msg)
 			}
 		}
 	}()
