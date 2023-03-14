@@ -65,9 +65,11 @@ func New(gctx global.Context) <-chan interface{} {
 					continue
 				}
 
-				if err := handle(gctx, cmd, body); err != nil {
-					zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
-				}
+				go func() {
+					if err := handle(gctx, cmd, body); err != nil {
+						zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
+					}
+				}()
 			}
 		}
 	}()
