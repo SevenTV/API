@@ -35,22 +35,28 @@ func handle(gctx global.Context, name string, body []byte) error {
 
 // The EventAPI Bridge allows passing commands from the eventapi via the websocket
 func New(gctx global.Context) <-chan interface{} {
+	ch := make(chan string, 1024)
+
 	// EventAPI Bridge
+	go gctx.Inst().Redis.Subscribe(gctx, ch, gctx.Inst().Redis.ComposeKey("eventapi", "bridge"))
 	go func() {
-		ch := make(chan string, 1024)
-		go gctx.Inst().Redis.Subscribe(gctx, ch, gctx.Inst().Redis.ComposeKey("eventapi", "bridge"))
+		defer close(ch)
+
+		var (
+			s string
+		)
 
 		for {
 			select {
 			case <-gctx.Done():
 				return
-			case msg := <-ch:
-				go func(m string) {
-					sp := strings.SplitN(m, ":", 2)
+			case s = <-ch:
+				go func(msg string) {
+					sp := strings.SplitN(msg, ":", 2)
 					if len(sp) != 2 {
 						zap.S().Errorw("invalid eventapi bridge message",
 							"reason", "bad length",
-							"msg", m,
+							"msg", msg,
 						)
 
 						return
@@ -61,7 +67,7 @@ func New(gctx global.Context) <-chan interface{} {
 
 					var body json.RawMessage
 					if err := json.Unmarshal(utils.S2B(bodyStr), &body); err != nil {
-						zap.S().Errorw("invalid eventapi bridge message", "msg", m, "err", err)
+						zap.S().Errorw("invalid eventapi bridge message", "msg", msg, "err", err)
 
 						return
 					}
@@ -69,7 +75,7 @@ func New(gctx global.Context) <-chan interface{} {
 					if err := handle(gctx, cmd, body); err != nil {
 						zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
 					}
-				}(msg)
+				}(s)
 			}
 		}
 	}()
