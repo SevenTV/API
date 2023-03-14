@@ -55,13 +55,11 @@ func handlePresence(gctx global.Context, ctx context.Context, cmd events.Bridged
 			return errors.From(err)
 		}
 
-		go func() {
-			if err := gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
-				Presence: p,
-			}); err != nil {
-				zap.S().Errorw("failed to fanout channel presence", "error", err)
-			}
-		}()
+		if err := gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
+			Presence: p,
+		}); err != nil {
+			zap.S().Errorw("failed to fanout channel presence", "error", err)
+		}
 	}
 
 	return nil
