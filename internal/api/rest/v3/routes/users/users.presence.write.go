@@ -80,7 +80,9 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 		ttl := utils.Ternary(known, time.Hour*24, time.Minute*12) // set lower ttl for an unknown channel
 
-		p, err := pm.Write(ctx, ttl, structures.UserPresenceDataChannel{
+		var p structures.UserPresence[structures.UserPresenceDataChannel]
+
+		p, err = pm.Write(ctx, ttl, structures.UserPresenceDataChannel{
 			Platform: pd.Platform,
 			ID:       pd.ID,
 			Filter:   pd.Filter,
@@ -88,6 +90,7 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			Authentic: authentic,
 			Known:     known,
 			IP:        clientIP,
+			Passive:   body.Passive,
 		})
 		if err != nil {
 			return errors.From(err)
@@ -96,7 +99,11 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		presence = p.ToRaw()
 
 		go func() {
-			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, p); err != nil {
+			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
+				Presence: p,
+				Whisper:  body.SessionID,
+				Passive:  body.Passive,
+			}); err != nil {
 				zap.S().Errorw("failed to fanout channel presence", "error", err)
 			}
 		}()
@@ -107,5 +114,9 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 type userPresenceWriteBody struct {
 	Kind model.PresenceKind `json:"kind"`
-	Data json.RawMessage    `json:"data"`
+	// if specified, fanout will only be sent to this event session
+	SessionID string `json:"session_id"`
+	// if true, the presence will not be written to the database or update entitlements
+	Passive bool            `json:"passive"`
+	Data    json.RawMessage `json:"data"`
 }

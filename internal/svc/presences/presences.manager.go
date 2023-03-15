@@ -79,6 +79,10 @@ func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data
 		}
 	}
 
+	if opt.Passive {
+		return p, nil
+	}
+
 	// Write the presence
 	err := pm.inst.mongo.Collection(mongo.CollectionNameUserPresences).FindOneAndUpdate(
 		ctx,
@@ -104,4 +108,5 @@ type WritePresenceOptions struct {
 	Authentic bool
 	Known     bool
 	IP        string
+	Passive   bool
 }
