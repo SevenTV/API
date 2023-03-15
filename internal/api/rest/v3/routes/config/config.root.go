@@ -47,8 +47,8 @@ func (r *Route) Handler(ctx *rest.Ctx) rest.APIError {
 	switch name {
 	case "extension":
 		t = sys.Config.Extension
-	case "extension-beta":
-		t = sys.Config.ExtensionBeta
+	case "extension-nightly", "extension-beta":
+		t = sys.Config.ExtensionNightly
 	default:
 		return errors.ErrInvalidRequest().SetDetail("Invalid config name")
 	}

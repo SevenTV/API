@@ -16,7 +16,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.UserPresence[structures.UserPresenceDataChannel]) error {
+type ChannelPresenceFanoutOptions struct {
+	Presence structures.UserPresence[structures.UserPresenceDataChannel]
+	Whisper  string
+	Passive  bool
+}
+
+func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFanoutOptions) error {
+	presence := opt.Presence
+
 	eventCond := events.EventCondition{
 		"ctx":      "channel",
 		"platform": string(presence.Data.Platform),
@@ -73,11 +81,13 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 
 	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw]) {
 		// Cosmetic
-		_ = p.events.Dispatch(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+		_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
 			ID:         cos.ID,
 			Kind:       structures.ObjectKindCosmetic,
 			Contextual: true,
 			Object:     utils.ToJSON(p.modelizer.Cosmetic(cos.ToRaw())),
+		}, events.DispatchOptions{
+			Whisper: opt.Whisper,
 		}, eventCond)
 	}
 
@@ -104,6 +114,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 					}},
 					RemoveHashes: previousHashList.Values(),
 				},
+				Whisper: opt.Whisper,
 			}, eventCond, entEventCond)
 
 			// Add to presence's entitlement refs
@@ -230,6 +241,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 				Contextual: true,
 				Object:     utils.ToJSON(p.modelizer.EmoteSet(es)),
 			}, events.DispatchOptions{
+				Whisper: opt.Whisper,
 				Effect: &events.SessionEffect{
 					AddSubscriptions: []events.SubscribePayload{
 						// Subscribe to this set's future emote updates
@@ -301,6 +313,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 					},
 				}.ToRaw(), user)),
 			}, events.DispatchOptions{
+				Whisper: opt.Whisper,
 				Effect: &events.SessionEffect{
 					RemoveHashes: []uint32{ent.DispatchHash},
 				},
@@ -310,18 +323,20 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, presence structures.Us
 	}
 
 	// Update presence
-	if _, err := p.mongo.Collection(mongo.CollectionNameUserPresences).UpdateOne(ctx, bson.M{
-		"_id": presence.ID,
-	}, bson.M{
-		"$set": bson.M{
-			"entitlements": entitlements,
-		},
-	}); err != nil {
-		zap.S().Errorw("failed to update presence entitlements",
-			"presence_id", presence.ID.Hex(),
-			"user_id", presence.UserID.Hex(),
-			"error", err.Error(),
-		)
+	if !opt.Passive {
+		if _, err := p.mongo.Collection(mongo.CollectionNameUserPresences).UpdateOne(ctx, bson.M{
+			"_id": presence.ID,
+		}, bson.M{
+			"$set": bson.M{
+				"entitlements": entitlements,
+			},
+		}); err != nil {
+			zap.S().Errorw("failed to update presence entitlements",
+				"presence_id", presence.ID.Hex(),
+				"user_id", presence.UserID.Hex(),
+				"error", err.Error(),
+			)
+		}
 	}
 
 	return nil
