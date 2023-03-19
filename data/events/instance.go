@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"hash/crc32"
 	"strings"
+	"time"
 
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.uber.org/zap"
 )
 
 type Instance interface {
@@ -21,25 +23,56 @@ type Instance interface {
 type eventsInst struct {
 	ctx   context.Context
 	redis redis.Instance
+
+	publishQueue utils.Queue[Message[json.RawMessage]]
 }
 
 func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
-	return &eventsInst{
-		ctx:   ctx,
-		redis: redis,
+	ticker := time.NewTicker(50 * time.Millisecond)
+
+	inst := &eventsInst{
+		ctx:          ctx,
+		redis:        redis,
+		publishQueue: utils.NewQueue[Message[json.RawMessage]](10),
 	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if inst.publishQueue.IsEmpty() {
+					continue
+				}
+
+				p := redis.RawClient().Pipeline()
+				for _, m := range inst.publishQueue.Items() {
+					j, err := json.Marshal(m)
+					if err != nil {
+						continue
+					}
+
+					k := redis.ComposeKey("events", "op", strings.ToLower(m.Op.String()))
+					p.Publish(ctx, k.String(), j)
+				}
+
+				inst.publishQueue.Clear()
+
+				if _, err := p.Exec(ctx); err != nil {
+					zap.S().Warnw("failed to publish events",
+						"error", err.Error(),
+					)
+				}
+			}
+		}
+	}()
+
+	return inst
 }
 
 func (inst *eventsInst) Publish(ctx context.Context, msg Message[json.RawMessage]) error {
-	j, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	k := inst.redis.ComposeKey("events", "op", strings.ToLower(msg.Op.String()))
-	if _, err = inst.redis.RawClient().Publish(ctx, k.String(), j).Result(); err != nil {
-		return err
-	}
+	inst.publishQueue.Add(msg)
 
 	return nil
 }
