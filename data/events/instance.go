@@ -103,11 +103,12 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 
 	k := CreateDispatchKey(msg.Data.Type, msg.Data.Conditions)
 
-	// this will block
-	_, _ = inst.dl.Load(DataloaderPayload{
-		Key:  k,
-		Data: utils.B2S(j),
-	})
+	go func() {
+		_, _ = inst.dl.Load(DataloaderPayload{
+			Key:  k,
+			Data: utils.B2S(j),
+		})
+	}()
 }
 
 func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
@@ -148,11 +149,12 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 
 	k := CreateDispatchKey(msg.Data.Type, msg.Data.Conditions)
 
-	// this will block
-	_, _ = inst.dl.Load(DataloaderPayload{
-		Key:  k,
-		Data: utils.B2S(j),
-	})
+	go func() {
+		_, _ = inst.dl.Load(DataloaderPayload{
+			Key:  k,
+			Data: utils.B2S(j),
+		})
+	}()
 
 	return msg
 }
