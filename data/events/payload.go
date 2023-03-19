@@ -66,7 +66,7 @@ func CreateDispatchKey(t EventType, conditions []EventCondition) string {
 
 	s.WriteString(OpcodeDispatch.PublishKey())
 	s.WriteString(":type:")
-	s.WriteString(string(t))
+	s.WriteString(t.ObjectName())
 
 	return s.String()
 }
