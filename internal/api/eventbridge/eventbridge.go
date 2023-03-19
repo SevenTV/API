@@ -13,6 +13,8 @@ import (
 
 const SESSION_ID_KEY = utils.Key("session_id")
 
+const DISABLED = true
+
 func handle(gctx global.Context, name string, body []byte) error {
 	var err error
 
@@ -22,6 +24,10 @@ func handle(gctx global.Context, name string, body []byte) error {
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
 
 	defer cancel()
+
+	if DISABLED {
+		return nil
+	}
 
 	switch name {
 	case "userstate", "cosmetics":
