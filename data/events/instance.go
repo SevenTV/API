@@ -47,6 +47,7 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 				}
 
 				p := redis.RawClient().Pipeline()
+
 				for _, m := range inst.publishQueue.Items() {
 					j, err := json.Marshal(m)
 					if err != nil {
