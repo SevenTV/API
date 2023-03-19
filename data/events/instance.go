@@ -135,6 +135,7 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 	})
 
 	inst.dispatchQueue.Add(msg)
+
 	return msg
 }
 
