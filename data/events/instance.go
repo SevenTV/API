@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/seventv/api/data/model"
+	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -18,55 +19,42 @@ type Instance interface {
 	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload]
 }
 
+type DataloaderPayload struct {
+	Key  string
+	Data string
+}
+
 type eventsInst struct {
 	ctx   context.Context
 	redis redis.Instance
 
-	dispatchQueue utils.Queue[Message[DispatchPayload]]
+	dl *dataloader.DataLoader[DataloaderPayload, struct{}]
 }
 
 func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
-	ticker := time.NewTicker(50 * time.Millisecond)
-
 	inst := &eventsInst{
-		ctx:           ctx,
-		redis:         redis,
-		dispatchQueue: utils.NewQueue[Message[DispatchPayload]](10),
-	}
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if inst.dispatchQueue.IsEmpty() {
-					continue
-				}
-
+		ctx:   ctx,
+		redis: redis,
+		dl: dataloader.New(dataloader.Config[DataloaderPayload, struct{}]{
+			Fetch: func(keys []DataloaderPayload) ([]struct{}, []error) {
 				p := redis.RawClient().Pipeline()
 
-				for _, m := range inst.dispatchQueue.Items() {
-					j, err := json.Marshal(m)
-					if err != nil {
-						continue
-					}
-
-					k := CreateDispatchKey(m.Data.Type, m.Data.Conditions)
-
-					p.Publish(ctx, k, j)
+				for _, k := range keys {
+					p.Publish(ctx, k.Key, k.Data)
 				}
-
-				inst.dispatchQueue.Clear()
 
 				if _, err := p.Exec(ctx); err != nil {
 					zap.S().Warnw("failed to publish events",
 						"error", err.Error(),
 					)
 				}
-			}
-		}
-	}()
+
+				return make([]struct{}, len(keys)), nil
+			},
+			Wait:     time.Duration(50) * time.Millisecond,
+			MaxBatch: 1000,
+		}),
+	}
 
 	return inst
 }
@@ -104,7 +92,22 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		Conditions: cond,
 	})
 
-	inst.dispatchQueue.Add(msg)
+	j, err := json.Marshal(msg)
+	if err != nil {
+		zap.S().Warnw("failed to marshal event",
+			"error", err.Error(),
+		)
+
+		return
+	}
+
+	k := CreateDispatchKey(msg.Data.Type, msg.Data.Conditions)
+
+	// this will block
+	_, _ = inst.dl.Load(DataloaderPayload{
+		Key:  k,
+		Data: utils.B2S(j),
+	})
 }
 
 func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
@@ -134,7 +137,22 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		Whisper:    opt.Whisper,
 	})
 
-	inst.dispatchQueue.Add(msg)
+	j, err := json.Marshal(msg)
+	if err != nil {
+		zap.S().Warnw("failed to marshal event",
+			"error", err.Error(),
+		)
+
+		return msg
+	}
+
+	k := CreateDispatchKey(msg.Data.Type, msg.Data.Conditions)
+
+	// this will block
+	_, _ = inst.dl.Load(DataloaderPayload{
+		Key:  k,
+		Data: utils.B2S(j),
+	})
 
 	return msg
 }
