@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,6 +59,16 @@ type DispatchPayload struct {
 	Conditions []EventCondition `json:"condition,omitempty"`
 	// This dispatch is a whisper to a specific session, usually as a response to a command
 	Whisper string `json:"whisper,omitempty"`
+}
+
+func CreateDispatchKey(t EventType, conditions []EventCondition) string {
+	s := strings.Builder{}
+
+	s.WriteString(OpcodeDispatch.PublishKey())
+	s.WriteString(":type:")
+	s.WriteString(string(t))
+
+	return s.String()
 }
 
 type EventCondition map[string]string

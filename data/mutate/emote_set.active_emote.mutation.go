@@ -368,30 +368,26 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			})
 
 			// Publish a message to the Event API
-			_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-				Type: events.EventTypeUpdateEmoteSet,
-				Conditions: []events.EventCondition{{
-					"object_id": esb.EmoteSet.ID.Hex(),
+			m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+				ID:    esb.EmoteSet.ID,
+				Kind:  structures.ObjectKindEmoteSet,
+				Actor: m.modelizer.User(actor).ToPartial(),
+				Pushed: []events.ChangeField{{
+					Key:   "emotes",
+					Index: utils.PointerOf(int32(endPos)),
+					Type:  events.ChangeFieldTypeObject,
+					Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
+						ID:        tgt.ID,
+						Name:      tgt.Name,
+						Flags:     tgt.Flags,
+						Timestamp: at,
+						ActorID:   actor.ID,
+						Emote:     tgt.emote,
+					}),
 				}},
-				Body: events.ChangeMap{
-					ID:    esb.EmoteSet.ID,
-					Kind:  structures.ObjectKindEmoteSet,
-					Actor: m.modelizer.User(actor).ToPartial(),
-					Pushed: []events.ChangeField{{
-						Key:   "emotes",
-						Index: utils.PointerOf(int32(endPos)),
-						Type:  events.ChangeFieldTypeObject,
-						Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
-							ID:        tgt.ID,
-							Name:      tgt.Name,
-							Flags:     tgt.Flags,
-							Timestamp: at,
-							ActorID:   actor.ID,
-							Emote:     tgt.emote,
-						}),
-					}},
-				},
-			}).ToRaw())
+			}, events.EventCondition{
+				"object_id": esb.EmoteSet.ID.Hex(),
+			})
 		case structures.ListItemActionUpdate, structures.ListItemActionRemove:
 			// The emote must already be active
 			found := false
@@ -459,37 +455,33 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				})
 				esb.UpdateActiveEmote(tgt.ID, tgt.Name)
 
-				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-					Type: events.EventTypeUpdateEmoteSet,
-					Conditions: []events.EventCondition{{
-						"object_id": esb.EmoteSet.ID.Hex(),
+				m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+					ID:    esb.EmoteSet.ID,
+					Kind:  structures.ObjectKindEmoteSet,
+					Actor: m.modelizer.User(actor).ToPartial(),
+					Updated: []events.ChangeField{{
+						Key:   "emotes",
+						Index: utils.PointerOf(int32(ind)),
+						Type:  events.ChangeFieldTypeObject,
+						OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
+							ID:        ae.ID,
+							Name:      ae.Name,
+							Flags:     ae.Flags,
+							Timestamp: ae.Timestamp,
+							ActorID:   ae.ActorID,
+						}),
+						Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
+							ID:        tgt.ID,
+							Name:      tgt.Name,
+							Flags:     tgt.Flags,
+							Timestamp: ae.Timestamp,
+							ActorID:   actor.ID,
+							Emote:     tgt.emote,
+						}),
 					}},
-					Body: events.ChangeMap{
-						ID:    esb.EmoteSet.ID,
-						Kind:  structures.ObjectKindEmoteSet,
-						Actor: m.modelizer.User(actor).ToPartial(),
-						Updated: []events.ChangeField{{
-							Key:   "emotes",
-							Index: utils.PointerOf(int32(ind)),
-							Type:  events.ChangeFieldTypeObject,
-							OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
-								ID:        ae.ID,
-								Name:      ae.Name,
-								Flags:     ae.Flags,
-								Timestamp: ae.Timestamp,
-								ActorID:   ae.ActorID,
-							}),
-							Value: m.modelizer.ActiveEmote(structures.ActiveEmote{
-								ID:        tgt.ID,
-								Name:      tgt.Name,
-								Flags:     tgt.Flags,
-								Timestamp: ae.Timestamp,
-								ActorID:   actor.ID,
-								Emote:     tgt.emote,
-							}),
-						}},
-					},
-				}).ToRaw())
+				}, events.EventCondition{
+					"object_id": esb.EmoteSet.ID.Hex(),
+				})
 			} else if tgt.Action == structures.ListItemActionRemove {
 				// Remove active emote
 				_, ind := esb.RemoveActiveEmote(tgt.ID)
@@ -497,27 +489,23 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					ID: tgt.ID,
 				})
 
-				_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-					Type: events.EventTypeUpdateEmoteSet,
-					Conditions: []events.EventCondition{{
-						"object_id": esb.EmoteSet.ID.Hex(),
+				m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+					ID:    esb.EmoteSet.ID,
+					Kind:  structures.ObjectKindEmoteSet,
+					Actor: m.modelizer.User(actor).ToPartial(),
+					Pulled: []events.ChangeField{{
+						Key:   "emotes",
+						Index: utils.PointerOf(int32(ind)),
+						Type:  events.ChangeFieldTypeObject,
+						OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
+							ID:      tgt.ID,
+							Name:    tgt.Name,
+							ActorID: actor.ID,
+						}),
 					}},
-					Body: events.ChangeMap{
-						ID:    esb.EmoteSet.ID,
-						Kind:  structures.ObjectKindEmoteSet,
-						Actor: m.modelizer.User(actor).ToPartial(),
-						Pulled: []events.ChangeField{{
-							Key:   "emotes",
-							Index: utils.PointerOf(int32(ind)),
-							Type:  events.ChangeFieldTypeObject,
-							OldValue: m.modelizer.ActiveEmote(structures.ActiveEmote{
-								ID:      tgt.ID,
-								Name:    tgt.Name,
-								ActorID: actor.ID,
-							}),
-						}},
-					},
-				}).ToRaw())
+				}, events.EventCondition{
+					"object_id": esb.EmoteSet.ID.Hex(),
+				})
 			}
 		}
 	}

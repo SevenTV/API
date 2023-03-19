@@ -368,18 +368,14 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			for _, ver := range emote.Versions {
 				go func(ver structures.EmoteVersion) {
 					// Emit to the Event API
-					_ = m.events.Publish(ctx, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
-						Type: events.EventTypeUpdateEmote,
-						Conditions: []events.EventCondition{{
-							"object_id": ver.ID.Hex(),
-						}},
-						Body: events.ChangeMap{
-							ID:      ver.ID,
-							Kind:    structures.ObjectKindEmote,
-							Actor:   m.modelizer.User(actor).ToPartial(),
-							Updated: changeFields,
-						},
-					}).ToRaw())
+					m.events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
+						ID:      ver.ID,
+						Kind:    structures.ObjectKindEmote,
+						Actor:   m.modelizer.User(actor).ToPartial(),
+						Updated: changeFields,
+					}, events.EventCondition{
+						"object_id": ver.ID.Hex(),
+					})
 				}(ver)
 			}
 

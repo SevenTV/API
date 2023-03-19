@@ -134,16 +134,14 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
 			av := gctx.Inst().Modelizer.Avatar(user)
 
-			if _, err := gctx.Inst().Events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+			_ = gctx.Inst().Events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
 				ID:         user.ID,
 				Kind:       structures.ObjectKindCosmetic,
 				Contextual: true,
 				Object:     utils.ToJSON(av),
 			}, events.DispatchOptions{
 				Whisper: sid,
-			}); err != nil {
-				return err
-			}
+			})
 		}
 	}
 

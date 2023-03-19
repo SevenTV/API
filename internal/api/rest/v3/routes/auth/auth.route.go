@@ -156,7 +156,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 				ub.AddConnection(con)
 
 				// eventapi: dispatch the connection create event
-				_ = r.gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+				r.gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 					ID:    ub.User.ID,
 					Kind:  structures.ObjectKindUser,
 					Actor: r.gctx.Inst().Modelizer.User(ub.User).ToPartial(),

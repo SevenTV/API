@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"hash/crc32"
-	"strings"
 	"time"
 
 	"github.com/seventv/api/data/model"
@@ -15,25 +14,24 @@ import (
 )
 
 type Instance interface {
-	Publish(ctx context.Context, msg Message[json.RawMessage]) error
-	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error
-	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) (Message[DispatchPayload], error)
+	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition)
+	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload]
 }
 
 type eventsInst struct {
 	ctx   context.Context
 	redis redis.Instance
 
-	publishQueue utils.Queue[Message[json.RawMessage]]
+	dispatchQueue utils.Queue[Message[DispatchPayload]]
 }
 
 func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 	ticker := time.NewTicker(50 * time.Millisecond)
 
 	inst := &eventsInst{
-		ctx:          ctx,
-		redis:        redis,
-		publishQueue: utils.NewQueue[Message[json.RawMessage]](10),
+		ctx:           ctx,
+		redis:         redis,
+		dispatchQueue: utils.NewQueue[Message[DispatchPayload]](10),
 	}
 
 	go func() {
@@ -42,23 +40,24 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				if inst.publishQueue.IsEmpty() {
+				if inst.dispatchQueue.IsEmpty() {
 					continue
 				}
 
 				p := redis.RawClient().Pipeline()
 
-				for _, m := range inst.publishQueue.Items() {
+				for _, m := range inst.dispatchQueue.Items() {
 					j, err := json.Marshal(m)
 					if err != nil {
 						continue
 					}
 
-					k := redis.ComposeKey("events", "op", strings.ToLower(m.Op.String()))
-					p.Publish(ctx, k.String(), j)
+					k := CreateDispatchKey(m.Data.Type, m.Data.Conditions)
+
+					p.Publish(ctx, k, j)
 				}
 
-				inst.publishQueue.Clear()
+				inst.dispatchQueue.Clear()
 
 				if _, err := p.Exec(ctx); err != nil {
 					zap.S().Warnw("failed to publish events",
@@ -72,12 +71,6 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 	return inst
 }
 
-func (inst *eventsInst) Publish(ctx context.Context, msg Message[json.RawMessage]) error {
-	inst.publishQueue.Add(msg)
-
-	return nil
-}
-
 // systemUser is a placeholder for the ChangeMap actor when no actor was provided
 var systemUser = model.UserModel{
 	ID:          structures.SystemUser.ID,
@@ -86,7 +79,7 @@ var systemUser = model.UserModel{
 	DisplayName: structures.SystemUser.DisplayName,
 }
 
-func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error {
+func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -111,10 +104,10 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		Conditions: cond,
 	})
 
-	return inst.Publish(ctx, msg.ToRaw())
+	inst.dispatchQueue.Add(msg)
 }
 
-func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) (Message[DispatchPayload], error) {
+func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -141,7 +134,8 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		Whisper:    opt.Whisper,
 	})
 
-	return msg, inst.Publish(ctx, msg.ToRaw())
+	inst.dispatchQueue.Add(msg)
+	return msg
 }
 
 type DispatchOptions struct {
