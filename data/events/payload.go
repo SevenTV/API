@@ -1,10 +1,13 @@
 package events
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"time"
 
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -61,12 +64,24 @@ type DispatchPayload struct {
 	Whisper string `json:"whisper,omitempty"`
 }
 
-func CreateDispatchKey(t EventType, conditions []EventCondition) string {
+func CreateDispatchKey(t EventType, condition EventCondition) string {
 	s := strings.Builder{}
 
 	s.WriteString(OpcodeDispatch.PublishKey())
 	s.WriteString(":type:")
 	s.WriteString(t.ObjectName())
+
+	if len(condition) > 0 {
+		s.WriteString(":")
+
+		h := sha256.New()
+		for k, v := range condition {
+			h.Write(utils.S2B(k))
+			h.Write(utils.S2B(v))
+		}
+
+		s.WriteString(hex.EncodeToString(h.Sum(nil)))
+	}
 
 	return s.String()
 }
