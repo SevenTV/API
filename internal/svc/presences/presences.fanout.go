@@ -22,8 +22,6 @@ type ChannelPresenceFanoutOptions struct {
 	Passive  bool
 }
 
-var DISABLED = true
-
 func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFanoutOptions) error {
 	presence := opt.Presence
 
@@ -265,20 +263,24 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 			}, eventCond)
 
 			// Dispatch the Emote Set's Emotes
-			p.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
-				ID:         es.ID,
-				Kind:       structures.ObjectKindEmoteSet,
-				Contextual: true,
-				Pushed:     emoteDispatches[:pos],
-			}, events.EventCondition{ // deliver the set's emotes through an ephemeral subscription
-				"object_id": es.ID.Hex(),
-				"token":     setDispatchToken,
-			})
+			go func(es structures.EmoteSet) {
+				p.events.DispatchWithEffect(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+					ID:         es.ID,
+					Kind:       structures.ObjectKindEmoteSet,
+					Contextual: true,
+					Pushed:     emoteDispatches[:pos],
+				}, events.DispatchOptions{
+					Delay: time.Millisecond * 200,
+				}, events.EventCondition{ // deliver the set's emotes through an ephemeral subscription
+					"object_id": es.ID.Hex(),
+					"token":     setDispatchToken,
+				})
 
-			// Dispatch the Emote Set entitlement
-			if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
-				dispatchEntitlement(entB)
-			}
+				// Dispatch the Emote Set entitlement
+				if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
+					dispatchEntitlement(entB)
+				}
+			}(es)
 		}
 	}
 

@@ -165,6 +165,10 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 	}
 
 	go func() {
+		if opt.Delay > 0 {
+			<-time.After(opt.Delay)
+		}
+
 		for _, p := range payloads {
 			_, _ = inst.dl.Load(p)
 		}
@@ -174,6 +178,7 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 }
 
 type DispatchOptions struct {
+	Delay         time.Duration
 	Whisper       string
 	Effect        *SessionEffect
 	DisableDedupe bool
