@@ -39,6 +39,10 @@ func (r *userPresenceWriteRoute) Config() rest.RouteConfig {
 // @Success 200 {object} model.PresenceModel
 // @Router /users/{user.id}/presences [post]
 func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
+	if r.gctx.Config().Http.DisablePresences {
+		return errors.ErrNothingHappened().SetDetail("Presences are currently disabled")
+	}
+
 	var body userPresenceWriteBody
 
 	userID, err := ctx.UserValue("user.id").ObjectID()

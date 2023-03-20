@@ -53,6 +53,10 @@ func New(gctx global.Context) <-chan interface{} {
 			case <-gctx.Done():
 				return
 			case s = <-ch:
+				if gctx.Config().Http.DisableEventBridge {
+					continue
+				}
+
 				go func(msg string) {
 					sp := strings.SplitN(msg, ":", 2)
 					if len(sp) != 2 {

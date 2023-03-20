@@ -131,6 +131,8 @@ data:
         gql: 3000
         rest: 3100
 
+      disable_event_bridge: true
+
       cookie:
         domain: 7tv.io
         secure: true

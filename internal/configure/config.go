@@ -208,6 +208,9 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
+		DisablePresences   bool `mapstructure:"disable_presences" json:"disable_presences"`
+		DisableEventBridge bool `mapstructure:"disable_event_bridge" json:"disable_event_bridge"`
+
 		ProxiedEndpoint struct {
 			URL         string `mapstructure:"url" json:"url"`
 			BypassToken string `mapstructure:"bypass_token" json:"bypass_token"`
