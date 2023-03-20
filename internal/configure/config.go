@@ -226,6 +226,8 @@ type Config struct {
 	Platforms PlatformConfig `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {
+		MaxPage int `mapstructure:"max_page" json:"max_page"`
+
 		Buckets struct {
 			GQL2            [2]int64 `mapstructure:"gql_v2" json:"gql_v2"`
 			GQL3            [2]int64 `mapstructure:"gql_v3" json:"gql_v3"`

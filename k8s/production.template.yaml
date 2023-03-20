@@ -154,6 +154,8 @@ data:
       bind: 0.0.0.0:9300
 
     limits:
+      max_page: 100
+
       buckets:
         gql_v3: [250, 2]
         gql_v2: [250, 3]
