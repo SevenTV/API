@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/99designs/gqlgen v0.17.24
-	github.com/aws/aws-sdk-go v1.44.199
+	github.com/aws/aws-sdk-go v1.44.225
 	github.com/aws/aws-sdk-go-v2 v1.17.4
 	github.com/bugsnag/panicwrap v1.3.4
 	github.com/fasthttp/router v1.4.16
