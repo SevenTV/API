@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"sort"
 	"strings"
 	"time"
 
@@ -74,8 +75,20 @@ func CreateDispatchKey(t EventType, condition EventCondition) string {
 	if len(condition) > 0 {
 		s.WriteString(":")
 
+		sorted := make([]string, len(condition))
+
+		i := 0
+		for k := range condition {
+			sorted[i] = k
+			i++
+		}
+
+		sort.Strings(sorted)
+
 		h := sha256.New()
-		for k, v := range condition {
+		for _, k := range sorted {
+			v := condition[k]
+
 			h.Write(utils.S2B(k))
 			h.Write(utils.S2B(v))
 		}
