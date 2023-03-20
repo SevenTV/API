@@ -51,8 +51,8 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 
 				return make([]struct{}, len(keys)), nil
 			},
-			Wait:     time.Duration(50) * time.Millisecond,
-			MaxBatch: 1000,
+			Wait:     time.Duration(100) * time.Millisecond,
+			MaxBatch: 128,
 		}),
 	}
 
