@@ -76,8 +76,10 @@ func CreateDispatchKey(t EventType, condition EventCondition) string {
 		s.WriteString(":")
 
 		sorted := make([]string, len(condition))
+		h := sha256.New()
 
 		i := 0
+
 		for k := range condition {
 			sorted[i] = k
 			i++
@@ -85,7 +87,6 @@ func CreateDispatchKey(t EventType, condition EventCondition) string {
 
 		sort.Strings(sorted)
 
-		h := sha256.New()
 		for _, k := range sorted {
 			v := condition[k]
 
