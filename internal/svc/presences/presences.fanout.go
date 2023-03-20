@@ -22,7 +22,13 @@ type ChannelPresenceFanoutOptions struct {
 	Passive  bool
 }
 
+var DISABLED = true
+
 func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFanoutOptions) error {
+	if DISABLED {
+		return nil
+	}
+
 	presence := opt.Presence
 
 	eventCond := events.EventCondition{
