@@ -262,6 +262,11 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 				},
 			}, eventCond)
 
+			// Dispatch the Emote Set entitlement
+			if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
+				dispatchEntitlement(entB)
+			}
+
 			// Dispatch the Emote Set's Emotes
 			go func(es structures.EmoteSet) {
 				p.events.DispatchWithEffect(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
@@ -275,11 +280,6 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 					"object_id": es.ID.Hex(),
 					"token":     setDispatchToken,
 				})
-
-				// Dispatch the Emote Set entitlement
-				if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
-					dispatchEntitlement(entB)
-				}
 			}(es)
 		}
 	}
