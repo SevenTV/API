@@ -285,7 +285,8 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	return &model.EmoteSearchResult{
-		Count: totalCount,
-		Items: models,
+		Count:   totalCount,
+		MaxPage: r.Ctx.Config().Limits.MaxPage,
+		Items:   models,
 	}, nil
 }

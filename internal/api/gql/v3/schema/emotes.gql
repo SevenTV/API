@@ -113,6 +113,7 @@ enum EmoteSearchCategory {
 
 type EmoteSearchResult {
   count: Int!
+  max_page: Int!
   items: [Emote]!
 }
 
