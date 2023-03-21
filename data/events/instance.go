@@ -40,6 +40,10 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 				p := redis.RawClient().Pipeline()
 
 				for _, k := range keys {
+					if k.Data == "" {
+						continue
+					}
+
 					p.Publish(ctx, k.Key, k.Data)
 				}
 
