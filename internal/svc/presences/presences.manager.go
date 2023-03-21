@@ -88,7 +88,9 @@ func (pm *presenceManager[T]) Write(ctx context.Context, ttl time.Duration, data
 		ctx,
 		bson.M{
 			"actor_id": pm.userID,
-			"data":     data,
+			"data": bson.M{
+				"$elemMatch": data,
+			},
 		},
 		bson.M{"$set": p},
 		options.FindOneAndUpdate().

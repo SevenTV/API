@@ -27,7 +27,6 @@ type Instance interface {
 	EmoteSetByUserID() BatchEmoteSetLoaderByID
 
 	PresenceByActorID() PresenceLoaderByID
-	PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID
 
 	EntitlementsLoader() EntitlementsLoader
 }
@@ -48,8 +47,7 @@ type inst struct {
 	emoteSetByUserID BatchEmoteSetLoaderByID
 
 	// Presence Loaders
-	presenceByActorID             PresenceLoaderByID
-	presenceOfChannelKindByHostID ChannelPresenceLoaderByID
+	presenceByActorID PresenceLoaderByID
 
 	// Entitlements
 	entitlements EntitlementsLoader
@@ -86,7 +84,6 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 	l.emoteSetByUserID = emoteSetByUserID(ctx, l)
 
 	l.presenceByActorID = presenceLoader[bson.Raw](ctx, l, structures.UserPresenceKindUnknown, "actor_id")
-	l.presenceOfChannelKindByHostID = presenceLoader[structures.UserPresenceDataChannel](ctx, l, structures.UserPresenceKindChannel, "data.host_id")
 
 	l.entitlements = entitlementsLoader(ctx, l)
 
@@ -140,10 +137,6 @@ func (l *inst) PresenceByActorID() PresenceLoaderByID {
 	return l.presenceByActorID
 }
 
-func (l *inst) PresenceOfChannelKindByHostID() ChannelPresenceLoaderByID {
-	return l.presenceOfChannelKindByHostID
-}
-
 func (l *inst) EntitlementsLoader() EntitlementsLoader {
 	return l.entitlements
 }
@@ -159,8 +152,7 @@ type (
 	EmoteSetLoaderByID      = *dataloader.DataLoader[primitive.ObjectID, structures.EmoteSet]
 	BatchEmoteSetLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.EmoteSet]
 
-	PresenceLoaderByID        = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
-	ChannelPresenceLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[structures.UserPresenceDataChannel]]
+	PresenceLoaderByID = *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[bson.Raw]]
 
 	EntitlementsLoader = *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult]
 )
