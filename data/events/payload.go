@@ -13,7 +13,7 @@ import (
 )
 
 type AnyPayload interface {
-	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ResumePayload |
+	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ReconnectPayload | ResumePayload |
 		SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload |
 		ErrorPayload | EndOfStreamPayload | BridgedCommandPayload[json.RawMessage]
 }
@@ -32,6 +32,10 @@ type AckPayload struct {
 
 type HeartbeatPayload struct {
 	Count uint64 `json:"count"`
+}
+
+type ReconnectPayload struct {
+	Reason string `json:"reason"`
 }
 
 type ResumePayload struct {
