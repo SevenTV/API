@@ -101,15 +101,15 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		return
 	}
 
-	payloads := make([]DataloaderPayload, len(cond)*2)
+	payloads := []DataloaderPayload{}
 	s := utils.B2S(j)
 
-	for i, c := range cond {
-		for i2, b := range []bool{false, true} {
-			payloads[i+i2] = DataloaderPayload{
+	for _, c := range cond {
+		for _, b := range []bool{false, true} {
+			payloads = append(payloads, DataloaderPayload{
 				Key:  CreateDispatchKey(t, c, b),
 				Data: s,
-			}
+			})
 		}
 	}
 
@@ -156,15 +156,15 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		return msg
 	}
 
-	payloads := make([]DataloaderPayload, len(cond)*2)
+	payloads := []DataloaderPayload{}
 	s := utils.B2S(j)
 
-	for i, c := range cond {
-		for i2, b := range []bool{false, true} {
-			payloads[i+i2] = DataloaderPayload{
+	for _, c := range cond {
+		for _, b := range []bool{false, true} {
+			payloads = append(payloads, DataloaderPayload{
 				Key:  CreateDispatchKey(t, c, b),
 				Data: s,
-			}
+			})
 		}
 	}
 
