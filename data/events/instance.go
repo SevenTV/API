@@ -40,10 +40,6 @@ func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
 				p := redis.RawClient().Pipeline()
 
 				for _, k := range keys {
-					if k.Data == "" {
-						continue
-					}
-
 					p.Publish(ctx, k.Key, k.Data)
 				}
 
@@ -105,13 +101,15 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		return
 	}
 
-	payloads := make([]DataloaderPayload, len(cond))
+	payloads := make([]DataloaderPayload, len(cond)*2)
 	s := utils.B2S(j)
 
 	for i, c := range cond {
-		payloads[i] = DataloaderPayload{
-			Key:  CreateDispatchKey(t, c),
-			Data: s,
+		for i2, b := range []bool{false, true} {
+			payloads[i+i2] = DataloaderPayload{
+				Key:  CreateDispatchKey(t, c, b),
+				Data: s,
+			}
 		}
 	}
 
@@ -158,13 +156,15 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		return msg
 	}
 
-	payloads := make([]DataloaderPayload, len(cond))
+	payloads := make([]DataloaderPayload, len(cond)*2)
 	s := utils.B2S(j)
 
 	for i, c := range cond {
-		payloads[i] = DataloaderPayload{
-			Key:  CreateDispatchKey(t, c),
-			Data: s,
+		for i2, b := range []bool{false, true} {
+			payloads[i+i2] = DataloaderPayload{
+				Key:  CreateDispatchKey(t, c, b),
+				Data: s,
+			}
 		}
 	}
 
