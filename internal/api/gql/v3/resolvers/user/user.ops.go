@@ -138,7 +138,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				return nil, errors.ErrInternalServerError()
 			}
 
-			_ = r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+			r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 				ID:    obj.ID,
 				Kind:  structures.ObjectKindUser,
 				Actor: r.Ctx.Inst().Modelizer.User(ub.User).ToPartial(),

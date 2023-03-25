@@ -13,7 +13,7 @@ import (
 
 func presenceLoader[T structures.UserPresenceData](ctx context.Context, x inst, kind structures.UserPresenceKind, key string) *dataloader.DataLoader[primitive.ObjectID, []structures.UserPresence[T]] {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, []structures.UserPresence[T]]{
-		Wait: time.Millisecond * 25,
+		Wait: time.Millisecond * 75,
 		Fetch: func(keys []primitive.ObjectID) ([][]structures.UserPresence[T], []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()

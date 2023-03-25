@@ -117,11 +117,9 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 	}
 
 	// Emit a event
-	if err := m.events.Dispatch(ctx, events.EventTypeUpdateUser, cm, events.EventCondition{
+	m.events.Dispatch(ctx, events.EventTypeUpdateUser, cm, events.EventCondition{
 		"object_id": ub.User.ID.Hex(),
-	}); err != nil {
-		zap.S().Errorw("failed to dispatch event for user role update", "error", err)
-	}
+	})
 
 	ub.MarkAsTainted()
 

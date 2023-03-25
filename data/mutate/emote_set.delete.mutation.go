@@ -55,15 +55,13 @@ func (m *Mutate) DeleteEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	}
 
 	// Emit event
-	if err := m.events.Dispatch(ctx, events.EventTypeDeleteEmoteSet, events.ChangeMap{
+	m.events.Dispatch(ctx, events.EventTypeDeleteEmoteSet, events.ChangeMap{
 		ID:    esb.EmoteSet.OwnerID,
 		Kind:  structures.ObjectKindEmoteSet,
 		Actor: m.modelizer.User(actor).ToPartial(),
 	}, events.EventCondition{
 		"object_id": esb.EmoteSet.ID.Hex(),
-	}); err != nil {
-		zap.S().Errorw("failed to dispatch event", "error", err)
-	}
+	})
 
 	// Write audit log
 	alb := structures.NewAuditLogBuilder(structures.AuditLog{

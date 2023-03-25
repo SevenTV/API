@@ -12,7 +12,6 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.uber.org/zap"
 )
 
 type userPresenceWriteRoute struct {
@@ -40,6 +39,10 @@ func (r *userPresenceWriteRoute) Config() rest.RouteConfig {
 // @Success 200 {object} model.PresenceModel
 // @Router /users/{user.id}/presences [post]
 func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
+	if r.gctx.Config().Http.DisablePresences {
+		return errors.ErrNothingHappened().SetDetail("Presences are currently disabled")
+	}
+
 	var body userPresenceWriteBody
 
 	userID, err := ctx.UserValue("user.id").ObjectID()
@@ -99,13 +102,11 @@ func (r *userPresenceWriteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		presence = p.ToRaw()
 
 		go func() {
-			if err := r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
+			_ = r.gctx.Inst().Presences.ChannelPresenceFanout(ctx, presences.ChannelPresenceFanoutOptions{
 				Presence: p,
 				Whisper:  body.SessionID,
 				Passive:  body.Passive,
-			}); err != nil {
-				zap.S().Errorw("failed to fanout channel presence", "error", err)
-			}
+			})
 		}()
 	}
 

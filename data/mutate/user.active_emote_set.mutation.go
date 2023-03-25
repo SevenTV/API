@@ -86,7 +86,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 		newSet.Emotes = nil // don't send the emotes with the event
 		oldSet.Emotes = nil
 
-		if err := m.events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+		m.events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 			ID:    ub.User.ID,
 			Kind:  structures.ObjectKindUser,
 			Actor: m.modelizer.User(actor).ToPartial(),
@@ -113,9 +113,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 			},
 		}, events.EventCondition{
 			"object_id": ub.User.ID.Hex(),
-		}); err != nil {
-			zap.S().Errorw("failed to dispatch event", "error", err)
-		}
+		})
 	}()
 
 	ub.MarkAsTainted()

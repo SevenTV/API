@@ -134,6 +134,7 @@ const (
 	CloseCodeAlreadySubscribed     CloseCode = 4009 // the client tried to subscribe to an event twice
 	CloseCodeNotSubscribed         CloseCode = 4010 // the client tried to unsubscribe from an event they weren't subscribing to
 	CloseCodeInsufficientPrivilege CloseCode = 4011 // the client did something that they did not have permission for
+	CloseCodeReconnect             CloseCode = 4012 // the client should reconnect
 )
 
 func (c CloseCode) String() string {
@@ -162,6 +163,8 @@ func (c CloseCode) String() string {
 		return "Not Subscribed"
 	case CloseCodeInsufficientPrivilege:
 		return "Insufficient Privilege"
+	case CloseCodeReconnect:
+		return "Reconnect"
 	default:
 		return "Undocumented Closure"
 	}

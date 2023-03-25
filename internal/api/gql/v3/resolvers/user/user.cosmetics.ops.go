@@ -136,16 +136,14 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 	}
 
 	if res.ModifiedCount > 0 {
-		if err = r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+		r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
 			ID:      obj.ID,
 			Kind:    structures.ObjectKindUser,
 			Actor:   r.Ctx.Inst().Modelizer.User(actor).ToPartial(),
 			Updated: changeFields,
 		}, events.EventCondition{
 			"object_id": obj.ID.Hex(),
-		}); err != nil {
-			r.Z().Errorw("failed to dispatch event", "error", err)
-		}
+		})
 	}
 
 	return utils.PointerOf(true), nil

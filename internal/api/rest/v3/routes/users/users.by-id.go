@@ -101,8 +101,6 @@ func (r *userRoute) Handler(ctx *rest.Ctx) rest.APIError {
 func userWithEntitledEmoteSets(gctx global.Context, user structures.User) []model.EmoteSetPartialModel {
 	ents, err := gctx.Inst().Loaders.EntitlementsLoader().Load(user.ID)
 	if err != nil {
-		zap.S().Errorw("failed to load entitlements of user", "error", err)
-
 		return nil
 	}
 
@@ -118,8 +116,6 @@ func userWithEntitledEmoteSets(gctx global.Context, user structures.User) []mode
 
 	sets, errs := gctx.Inst().Loaders.EmoteSetByID().LoadAll(setIDs)
 	if err = multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
-		zap.S().Errorw("failed to load entitled emote sets", "error", err)
-
 		return nil
 	}
 

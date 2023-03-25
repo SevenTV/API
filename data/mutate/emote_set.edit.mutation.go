@@ -159,16 +159,14 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		}
 
 		// Dispatch an event
-		if err := m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+		m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
 			ID:      esb.EmoteSet.ID,
 			Kind:    structures.ObjectKindEmoteSet,
 			Actor:   m.modelizer.User(actor).ToPartial(),
 			Updated: changeFields,
 		}, events.EventCondition{
 			"object_id": esb.EmoteSet.ID.Hex(),
-		}); err != nil {
-			zap.S().Errorw("failed to dispatch event", "error", err)
-		}
+		})
 
 		// Write audit log
 		if _, err := m.mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, alb.AuditLog); err != nil {

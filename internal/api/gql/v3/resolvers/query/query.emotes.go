@@ -102,6 +102,10 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 		page = 1
 	}
 
+	if page > r.Ctx.Config().Limits.MaxPage {
+		page = r.Ctx.Config().Limits.MaxPage
+	}
+
 	// Retrieve sorting options
 	sortopt := &model.Sort{
 		Value: "popularity",
@@ -281,7 +285,8 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 	}
 
 	return &model.EmoteSearchResult{
-		Count: totalCount,
-		Items: models,
+		Count:   totalCount,
+		MaxPage: r.Ctx.Config().Limits.MaxPage,
+		Items:   models,
 	}, nil
 }

@@ -208,6 +208,9 @@ type Config struct {
 			REST int `mapstructure:"rest" json:"rest"`
 		} `mapstructure:"ports" json:"ports"`
 
+		DisablePresences   bool `mapstructure:"disable_presences" json:"disable_presences"`
+		DisableEventBridge bool `mapstructure:"disable_event_bridge" json:"disable_event_bridge"`
+
 		ProxiedEndpoint struct {
 			URL         string `mapstructure:"url" json:"url"`
 			BypassToken string `mapstructure:"bypass_token" json:"bypass_token"`
@@ -223,6 +226,8 @@ type Config struct {
 	Platforms PlatformConfig `mapstructure:"platforms" json:"platforms"`
 
 	Limits struct {
+		MaxPage int `mapstructure:"max_page" json:"max_page"`
+
 		Buckets struct {
 			GQL2            [2]int64 `mapstructure:"gql_v2" json:"gql_v2"`
 			GQL3            [2]int64 `mapstructure:"gql_v3" json:"gql_v3"`

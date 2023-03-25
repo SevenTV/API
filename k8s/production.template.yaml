@@ -50,7 +50,7 @@ spec:
           resources:
             limits:
               cpu: 1000m
-              memory: 1536Mi
+              memory: 1792Mi
             requests:
               cpu: 500m
               memory: 1024Mi
@@ -131,6 +131,8 @@ data:
         gql: 3000
         rest: 3100
 
+      disable_event_bridge: true
+
       cookie:
         domain: 7tv.io
         secure: true
@@ -152,6 +154,8 @@ data:
       bind: 0.0.0.0:9300
 
     limits:
+      max_page: 25
+
       buckets:
         gql_v3: [250, 2]
         gql_v2: [250, 3]

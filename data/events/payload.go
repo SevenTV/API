@@ -1,14 +1,19 @@
 package events
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"sort"
+	"strings"
 	"time"
 
+	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AnyPayload interface {
-	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ResumePayload |
+	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ReconnectPayload | ResumePayload |
 		SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload |
 		ErrorPayload | EndOfStreamPayload | BridgedCommandPayload[json.RawMessage]
 }
@@ -27,6 +32,10 @@ type AckPayload struct {
 
 type HeartbeatPayload struct {
 	Count uint64 `json:"count"`
+}
+
+type ReconnectPayload struct {
+	Reason string `json:"reason"`
 }
 
 type ResumePayload struct {
@@ -58,6 +67,41 @@ type DispatchPayload struct {
 	Conditions []EventCondition `json:"condition,omitempty"`
 	// This dispatch is a whisper to a specific session, usually as a response to a command
 	Whisper string `json:"whisper,omitempty"`
+}
+
+func CreateDispatchKey(t EventType, condition EventCondition, wildcard bool) string {
+	s := strings.Builder{}
+
+	s.WriteString(OpcodeDispatch.PublishKey())
+	s.WriteString(":type:")
+	s.WriteString(utils.Ternary(wildcard, t.ObjectName()+".*", string(t)))
+
+	if len(condition) > 0 {
+		s.WriteString(":")
+
+		sorted := make([]string, len(condition))
+		h := sha256.New()
+
+		i := 0
+
+		for k := range condition {
+			sorted[i] = k
+			i++
+		}
+
+		sort.Strings(sorted)
+
+		for _, k := range sorted {
+			v := condition[k]
+
+			h.Write(utils.S2B(k))
+			h.Write(utils.S2B(v))
+		}
+
+		s.WriteString(hex.EncodeToString(h.Sum(nil)))
+	}
+
+	return s.String()
 }
 
 type EventCondition map[string]string

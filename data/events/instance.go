@@ -4,44 +4,59 @@ import (
 	"context"
 	"encoding/json"
 	"hash/crc32"
-	"strings"
+	"time"
 
 	"github.com/seventv/api/data/model"
+	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.uber.org/zap"
 )
 
 type Instance interface {
-	Publish(ctx context.Context, msg Message[json.RawMessage]) error
-	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error
-	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) (Message[DispatchPayload], error)
+	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition)
+	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload]
+}
+
+type DataloaderPayload struct {
+	Key  string
+	Data string
 }
 
 type eventsInst struct {
 	ctx   context.Context
 	redis redis.Instance
+
+	dl *dataloader.DataLoader[DataloaderPayload, struct{}]
 }
 
 func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
-	return &eventsInst{
+	inst := &eventsInst{
 		ctx:   ctx,
 		redis: redis,
-	}
-}
+		dl: dataloader.New(dataloader.Config[DataloaderPayload, struct{}]{
+			Fetch: func(keys []DataloaderPayload) ([]struct{}, []error) {
+				p := redis.RawClient().Pipeline()
 
-func (inst *eventsInst) Publish(ctx context.Context, msg Message[json.RawMessage]) error {
-	j, err := json.Marshal(msg)
-	if err != nil {
-		return err
+				for _, k := range keys {
+					p.Publish(ctx, k.Key, k.Data)
+				}
+
+				if _, err := p.Exec(ctx); err != nil {
+					zap.S().Warnw("failed to publish events",
+						"error", err.Error(),
+					)
+				}
+
+				return make([]struct{}, len(keys)), nil
+			},
+			Wait:     time.Duration(25) * time.Millisecond,
+			MaxBatch: 32,
+		}),
 	}
 
-	k := inst.redis.ComposeKey("events", "op", strings.ToLower(msg.Op.String()))
-	if _, err = inst.redis.RawClient().Publish(ctx, k.String(), j).Result(); err != nil {
-		return err
-	}
-
-	return nil
+	return inst
 }
 
 // systemUser is a placeholder for the ChangeMap actor when no actor was provided
@@ -52,7 +67,7 @@ var systemUser = model.UserModel{
 	DisplayName: structures.SystemUser.DisplayName,
 }
 
-func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) error {
+func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -77,10 +92,35 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		Conditions: cond,
 	})
 
-	return inst.Publish(ctx, msg.ToRaw())
+	j, err := json.Marshal(msg)
+	if err != nil {
+		zap.S().Warnw("failed to marshal event",
+			"error", err.Error(),
+		)
+
+		return
+	}
+
+	payloads := []DataloaderPayload{}
+	s := utils.B2S(j)
+
+	for _, c := range cond {
+		for _, b := range []bool{false, true} {
+			payloads = append(payloads, DataloaderPayload{
+				Key:  CreateDispatchKey(t, c, b),
+				Data: s,
+			})
+		}
+	}
+
+	go func() {
+		for _, p := range payloads {
+			_, _ = inst.dl.Load(p)
+		}
+	}()
 }
 
-func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) (Message[DispatchPayload], error) {
+func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -107,10 +147,42 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		Whisper:    opt.Whisper,
 	})
 
-	return msg, inst.Publish(ctx, msg.ToRaw())
+	j, err := json.Marshal(msg)
+	if err != nil {
+		zap.S().Warnw("failed to marshal event",
+			"error", err.Error(),
+		)
+
+		return msg
+	}
+
+	payloads := []DataloaderPayload{}
+	s := utils.B2S(j)
+
+	for _, c := range cond {
+		for _, b := range []bool{false, true} {
+			payloads = append(payloads, DataloaderPayload{
+				Key:  CreateDispatchKey(t, c, b),
+				Data: s,
+			})
+		}
+	}
+
+	go func() {
+		if opt.Delay > 0 {
+			<-time.After(opt.Delay)
+		}
+
+		for _, p := range payloads {
+			_, _ = inst.dl.Load(p)
+		}
+	}()
+
+	return msg
 }
 
 type DispatchOptions struct {
+	Delay         time.Duration
 	Whisper       string
 	Effect        *SessionEffect
 	DisableDedupe bool

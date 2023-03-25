@@ -293,7 +293,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 				}, true)
 			}
 
-			_ = epl.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
+			epl.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
 				ID:      eb.Emote.ID,
 				Kind:    structures.ObjectKindEmote,
 				Actor:   epl.Ctx.Inst().Modelizer.User(emoteOwner).ToPartial(),

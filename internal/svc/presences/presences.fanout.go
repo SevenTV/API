@@ -81,7 +81,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw]) {
 		// Cosmetic
-		_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+		_ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
 			ID:         cos.ID,
 			Kind:       structures.ObjectKindCosmetic,
 			Contextual: true,
@@ -101,7 +101,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 		// Dispatch: Entitlement
 		dispatchFactory = append(dispatchFactory, func() (events.Message[events.DispatchPayload], error) {
-			msg, err := p.events.DispatchWithEffect(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
+			msg := p.events.DispatchWithEffect(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
 				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
@@ -235,7 +235,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 			// Dispatch the Emote Set data
 			es.Emotes = make([]structures.ActiveEmote, 0)
-			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
+			_ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
 				ID:         es.ID,
 				Kind:       structures.ObjectKindEmoteSet,
 				Contextual: true,
@@ -262,21 +262,25 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 				},
 			}, eventCond)
 
-			// Dispatch the Emote Set's Emotes
-			_ = p.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
-				ID:         es.ID,
-				Kind:       structures.ObjectKindEmoteSet,
-				Contextual: true,
-				Pushed:     emoteDispatches[:pos],
-			}, events.EventCondition{ // deliver the set's emotes through an ephemeral subscription
-				"object_id": es.ID.Hex(),
-				"token":     setDispatchToken,
-			})
-
 			// Dispatch the Emote Set entitlement
 			if entB, err := structures.ConvertEntitlement[structures.EntitlementDataBase](ent.ToRaw()); err == nil {
 				dispatchEntitlement(entB)
 			}
+
+			// Dispatch the Emote Set's Emotes
+			go func(es structures.EmoteSet) {
+				p.events.DispatchWithEffect(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+					ID:         es.ID,
+					Kind:       structures.ObjectKindEmoteSet,
+					Contextual: true,
+					Pushed:     emoteDispatches[:pos],
+				}, events.DispatchOptions{
+					Delay: time.Millisecond * 200,
+				}, events.EventCondition{ // deliver the set's emotes through an ephemeral subscription
+					"object_id": es.ID.Hex(),
+					"token":     setDispatchToken,
+				})
+			}(es)
 		}
 	}
 
@@ -301,7 +305,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 		if !found || lostEntitlementKinds.Has(ent.Kind) {
 			// Entitlement is no longer active, send delete event
-			_, _ = p.events.DispatchWithEffect(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
+			_ = p.events.DispatchWithEffect(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
 				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
