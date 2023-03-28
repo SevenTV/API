@@ -49,16 +49,44 @@ func Auth(gctx global.Context) Middleware {
 			clientIP = v
 		}
 
-		if clientIP != "" && user.State.ClientIP != clientIP || user.State.LastVisitDate.Before(time.Now().Add(-time.Hour*1)) {
+		ipDidChange := clientIP != "" && user.State.ClientIP != clientIP
+		lastVisitDidChange := user.State.LastVisitDate.Before(time.Now().Add(-time.Hour * 1))
+		usernameDidChange := false
+
+		// Check for username change
+		// Find primary user account
+
+		if len(user.Connections) > 0 {
+			conn := user.Connections[0]
+			connUsername, connDisplayName := conn.Username()
+
+			usernameDidChange = connUsername != user.Username
+			if usernameDidChange {
+				user.Username, user.DisplayName = connUsername, connDisplayName
+
+				user.SetDiscriminator("")
+				user.InferUsername()
+			}
+		}
+
+		if ipDidChange || lastVisitDidChange || usernameDidChange {
 			user.State.ClientIP = clientIP
+
+			m := bson.M{
+				"state.client_ip":     clientIP,
+				"state.last_visit_at": time.Now(),
+			}
+
+			if usernameDidChange {
+				m["username"] = user.Username
+				m["display_name"] = user.DisplayName
+				m["state.username_changed_at"] = time.Now()
+			}
 
 			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
 				"_id": user.ID,
 			}, bson.M{
-				"$set": bson.M{
-					"state.client_ip":     clientIP,
-					"state.last_visit_at": time.Now(),
-				},
+				"$set": m,
 			}); err != nil {
 				zap.S().Errorw("failed to update user client IP", "error", err)
 			}
