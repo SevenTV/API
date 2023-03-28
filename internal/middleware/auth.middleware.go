@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -61,7 +60,6 @@ func Auth(gctx global.Context) Middleware {
 			conn := user.Connections[0]
 			connUsername, connDisplayName := conn.Username()
 
-			fmt.Println(connUsername, user.Username, connUsername != user.Username)
 			usernameDidChange = connUsername != user.Username
 			if usernameDidChange {
 				user.Username, user.DisplayName = connUsername, connDisplayName
