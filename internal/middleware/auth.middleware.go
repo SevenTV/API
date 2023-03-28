@@ -80,6 +80,7 @@ func Auth(gctx global.Context) Middleware {
 			if usernameDidChange {
 				m["username"] = user.Username
 				m["display_name"] = user.DisplayName
+				m["state.username_changed_at"] = time.Now()
 			}
 
 			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
