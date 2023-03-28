@@ -50,6 +50,10 @@ const (
 	EventTypeCreateCosmetic EventType = "cosmetic.create"
 	EventTypeUpdateCosmetic EventType = "cosmetic.update"
 	EventTypeDeleteCosmetic EventType = "cosmetic.delete"
+
+	// Special
+
+	EventTypeWhisper EventType = "whisper.self"
 )
 
 func (et EventType) Split() []string {
