@@ -159,13 +159,22 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 	payloads := []DataloaderPayload{}
 	s := utils.B2S(j)
 
-	for _, c := range cond {
-		for _, b := range []bool{false, true} {
-			payloads = append(payloads, DataloaderPayload{
-				Key:  CreateDispatchKey(t, c, b),
-				Data: s,
-			})
+	if opt.Whisper == "" {
+		for _, c := range cond {
+			for _, b := range []bool{false, true} {
+				payloads = append(payloads, DataloaderPayload{
+					Key:  CreateDispatchKey(t, c, b),
+					Data: s,
+				})
+			}
 		}
+	} else {
+		payloads = append(payloads, DataloaderPayload{
+			Key: CreateDispatchKey(EventTypeWhisper, EventCondition{
+				"session_id": opt.Whisper,
+			}, false),
+			Data: s,
+		})
 	}
 
 	go func() {

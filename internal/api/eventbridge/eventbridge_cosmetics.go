@@ -125,8 +125,6 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 	kinds := utils.Set[structures.CosmeticKind]{}
 	kinds.Fill(body.Kinds...)
 
-	// TODO: create a utility to dispatch with a redis pipeline
-
 	// Dispatch user avatar
 	for _, user := range users {
 		if kinds.Has(structures.CosmeticKindAvatar) &&
