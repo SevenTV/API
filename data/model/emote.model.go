@@ -10,31 +10,33 @@ import (
 )
 
 type EmoteModel struct {
-	ID        primitive.ObjectID  `json:"id"`
-	Name      string              `json:"name"`
-	Flags     EmoteFlagsModel     `json:"flags"`
-	Tags      []string            `json:"tags"`
-	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
-	State     []EmoteVersionState `json:"state"`
-	Listed    bool                `json:"listed"`
-	Animated  bool                `json:"animated"`
-	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
-	OwnerID   primitive.ObjectID  `json:"-"`
-	Host      ImageHost           `json:"host"`
-	Versions  []EmoteVersionModel `json:"versions"`
+	ID          primitive.ObjectID  `json:"id"`
+	Name        string              `json:"name"`
+	Flags       EmoteFlagsModel     `json:"flags"`
+	Tags        []string            `json:"tags"`
+	Lifecycle   EmoteLifecycleModel `json:"lifecycle"`
+	State       []EmoteVersionState `json:"state"`
+	Listed      bool                `json:"listed"`
+	Animated    bool                `json:"animated"`
+	Owner       *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
+	OwnerID     primitive.ObjectID  `json:"-"`
+	Host        ImageHost           `json:"host"`
+	DankFileURL string              `json:"dank_file_url,omitempty" extensions:"x-omitempty"`
+	Versions    []EmoteVersionModel `json:"versions"`
 }
 
 type EmotePartialModel struct {
-	ID        primitive.ObjectID  `json:"id"`
-	Name      string              `json:"name"`
-	Flags     EmoteFlagsModel     `json:"flags"`
-	Tags      []string            `json:"tags,omitempty"`
-	Lifecycle EmoteLifecycleModel `json:"lifecycle"`
-	State     []EmoteVersionState `json:"state"`
-	Listed    bool                `json:"listed"`
-	Animated  bool                `json:"animated"`
-	Owner     *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
-	Host      ImageHost           `json:"host"`
+	ID          primitive.ObjectID  `json:"id"`
+	Name        string              `json:"name"`
+	Flags       EmoteFlagsModel     `json:"flags"`
+	Tags        []string            `json:"tags,omitempty"`
+	Lifecycle   EmoteLifecycleModel `json:"lifecycle"`
+	State       []EmoteVersionState `json:"state"`
+	Listed      bool                `json:"listed"`
+	Animated    bool                `json:"animated"`
+	Owner       *UserPartialModel   `json:"owner,omitempty" extensions:"x-omitempty"`
+	Host        ImageHost           `json:"host"`
+	DankFileURL string              `json:"dank_file_url,omitempty" extensions:"x-omitempty"`
 }
 
 type EmoteVersionModel struct {
@@ -91,6 +93,8 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 
 	states := make(utils.Set[EmoteVersionState], 0)
 
+	var version structures.EmoteVersion
+
 	versions := make([]EmoteVersionModel, len(v.Versions))
 
 	for i, ver := range v.Versions {
@@ -113,6 +117,7 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 			lifecycle = EmoteLifecycleModel(ver.State.Lifecycle)
 			animated = ver.Animated
 			images = vimages
+			version = ver
 
 			if listed = ver.State.Listed; listed {
 				states.Add(EmoteVersionStateListed)
@@ -150,6 +155,8 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 		versions[0].Host = nil
 	}
 
+	dankFileURL := version.DankFile
+
 	return EmoteModel{
 		ID:        v.ID,
 		Name:      v.Name,
@@ -165,22 +172,24 @@ func (x *modelizer) Emote(v structures.Emote) EmoteModel {
 			URL:   fmt.Sprintf("//%s/emote/%s", x.cdnURL, v.ID.Hex()),
 			Files: images,
 		},
-		Versions: versions,
+		DankFileURL: dankFileURL,
+		Versions:    versions,
 	}
 }
 
 func (em EmoteModel) ToPartial() EmotePartialModel {
 	return EmotePartialModel{
-		ID:        em.ID,
-		Name:      em.Name,
-		Flags:     em.Flags,
-		Tags:      em.Tags,
-		Lifecycle: em.Lifecycle,
-		State:     em.State,
-		Listed:    em.Listed,
-		Animated:  em.Animated,
-		Owner:     em.Owner,
-		Host:      em.Host,
+		ID:          em.ID,
+		Name:        em.Name,
+		Flags:       em.Flags,
+		Tags:        em.Tags,
+		Lifecycle:   em.Lifecycle,
+		State:       em.State,
+		Listed:      em.Listed,
+		Animated:    em.Animated,
+		Owner:       em.Owner,
+		Host:        em.Host,
+		DankFileURL: em.DankFileURL,
 	}
 }
 
