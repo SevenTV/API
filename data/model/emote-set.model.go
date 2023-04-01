@@ -126,6 +126,10 @@ func (x *modelizer) ActiveEmote(v structures.ActiveEmote) ActiveEmoteModel {
 			v.Flags = v.Flags.Set(structures.ActiveEmoteFlagZeroWidth)
 		}
 
+		if v.Name == "" {
+			v.Name = v.Emote.Name
+		}
+
 		e := x.Emote(*v.Emote).ToPartial()
 		data = &e
 	}
