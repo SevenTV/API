@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/seventv/common/errors"
@@ -10,6 +11,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
@@ -73,7 +75,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 				},
 			},
 		}},
-	})
+	}, options.Aggregate().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
 	if err != nil {
 		return qr.setError(err)
 	}

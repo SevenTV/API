@@ -3,12 +3,14 @@ package query
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structures.User] {
@@ -69,7 +71,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 				},
 			},
 		}},
-	})
+	}, options.Aggregate().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
 	if err != nil {
 		return r.setError(errors.ErrInternalServerError().SetDetail(err.Error()))
 	}
