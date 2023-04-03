@@ -12,8 +12,7 @@ import (
 
 func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, structures.Emote]{
-		Wait:     time.Millisecond * 25,
-		MaxBatch: 500,
+		Wait: time.Millisecond * 25,
 		Fetch: func(keys []primitive.ObjectID) ([]structures.Emote, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
@@ -61,8 +60,7 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 
 func batchEmoteLoader(ctx context.Context, x inst, key string) BatchEmoteLoaderByID {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, []structures.Emote]{
-		Wait:     time.Millisecond * 25,
-		MaxBatch: 500,
+		Wait: time.Millisecond * 25,
 		Fetch: func(keys []primitive.ObjectID) ([][]structures.Emote, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()

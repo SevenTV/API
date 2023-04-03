@@ -16,8 +16,7 @@ import (
 
 func userLoader[T comparable](ctx context.Context, x inst, keyName string) *dataloader.DataLoader[T, structures.User] {
 	return dataloader.New(dataloader.Config[T, structures.User]{
-		Wait:     time.Millisecond * 25,
-		MaxBatch: 500,
+		Wait: time.Millisecond * 25,
 		Fetch: func(keys []T) ([]structures.User, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
@@ -72,8 +71,7 @@ func userLoader[T comparable](ctx context.Context, x inst, keyName string) *data
 
 func userByConnectionLoader(ctx context.Context, x inst, platform structures.UserConnectionPlatform, key string) *dataloader.DataLoader[string, structures.User] {
 	return dataloader.New(dataloader.Config[string, structures.User]{
-		Wait:     time.Millisecond * 75,
-		MaxBatch: 500,
+		Wait: time.Millisecond * 75,
 		Fetch: func(keys []string) ([]structures.User, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
@@ -137,8 +135,7 @@ func userByConnectionLoader(ctx context.Context, x inst, platform structures.Use
 
 func entitlementsLoader(ctx context.Context, x inst) *dataloader.DataLoader[primitive.ObjectID, query.EntitlementQueryResult] {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, query.EntitlementQueryResult]{
-		Wait:     time.Millisecond * 100,
-		MaxBatch: 500,
+		Wait: time.Millisecond * 100,
 		Fetch: func(keys []primitive.ObjectID) ([]query.EntitlementQueryResult, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
