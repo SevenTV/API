@@ -52,8 +52,8 @@ spec:
               cpu: 1000m
               memory: 1792Mi
             requests:
-              cpu: 500m
-              memory: 1024Mi
+              cpu: 750m
+              memory: 1792Mi
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
@@ -131,7 +131,7 @@ data:
         gql: 3000
         rest: 3100
 
-      disable_event_bridge: false
+      disable_event_bridge: true
       disable_cosmetics: false
 
       cookie:
