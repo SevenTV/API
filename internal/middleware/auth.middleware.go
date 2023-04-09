@@ -55,6 +55,9 @@ func Auth(gctx global.Context) Middleware {
 
 		// Check for username change
 		// Find primary user account
+		var (
+			oldUsername string
+		)
 
 		if len(user.Connections) > 0 {
 			conn := user.Connections[0]
@@ -62,6 +65,7 @@ func Auth(gctx global.Context) Middleware {
 
 			usernameDidChange = connUsername != user.Username
 			if usernameDidChange {
+				oldUsername = user.Username
 				user.Username, user.DisplayName = connUsername, connDisplayName
 
 				user.SetDiscriminator("")
@@ -84,7 +88,8 @@ func Auth(gctx global.Context) Middleware {
 			}
 
 			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
-				"_id": user.ID,
+				"_id":      user.ID,
+				"username": oldUsername,
 			}, bson.M{
 				"$set": m,
 			}); err != nil {
