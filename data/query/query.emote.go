@@ -15,7 +15,7 @@ import (
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
 	qr := QueryResult[structures.Emote]{}
 
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, filter, options.Find().SetNoCursorTimeout(true))
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, filter, options.Find().SetNoCursorTimeout(true).SetBatchSize(10))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
 

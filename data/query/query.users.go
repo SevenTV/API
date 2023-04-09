@@ -17,7 +17,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	items := []structures.User{}
 	r := &QueryResult[structures.User]{}
 
-	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, filter, options.Find().SetNoCursorTimeout(true))
+	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, filter, options.Find().SetNoCursorTimeout(true).SetBatchSize(10))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate users", "error", err)
 
