@@ -17,7 +17,7 @@ import (
 func userLoader[T comparable](ctx context.Context, x inst, keyName string) *dataloader.DataLoader[T, structures.User] {
 	return dataloader.New(dataloader.Config[T, structures.User]{
 		Wait:     time.Millisecond * 25,
-		MaxBatch: 500,
+		MaxBatch: 250,
 		Fetch: func(keys []T) ([]structures.User, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()

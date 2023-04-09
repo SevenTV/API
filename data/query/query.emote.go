@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"time"
 
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -32,7 +31,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 			Key:   "$match",
 			Value: filter,
 		}},
-	}, options.MergeAggregateOptions().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
+	}, options.MergeAggregateOptions().SetBatchSize(15))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
 

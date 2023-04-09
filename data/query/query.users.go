@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -40,7 +39,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 				}},
 			},
 		}},
-	}, options.Aggregate().SetBatchSize(5).SetMaxAwaitTime(time.Second*30))
+	}, options.Aggregate().SetBatchSize(5))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate users", "error", err)
 

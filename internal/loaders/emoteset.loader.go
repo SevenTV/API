@@ -14,7 +14,8 @@ import (
 
 func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, structures.EmoteSet]{
-		Wait: time.Millisecond * 25,
+		Wait:     time.Millisecond * 100,
+		MaxBatch: 20,
 		Fetch: func(keys []primitive.ObjectID) ([]structures.EmoteSet, []error) {
 			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 			defer cancel()
