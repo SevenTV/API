@@ -15,23 +15,7 @@ import (
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
 	qr := QueryResult[structures.Emote]{}
 
-	bans, err := q.Bans(ctx, BanQueryOptions{
-		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
-	})
-	if err != nil {
-		return qr.setError(err)
-	}
-
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, mongo.Pipeline{
-		{{
-			Key:   "$match",
-			Value: bson.M{"owner_id": bson.M{"$not": bson.M{"$in": bans.NoOwnership.KeySlice()}}},
-		}},
-		{{
-			Key:   "$match",
-			Value: filter,
-		}},
-	}, options.MergeAggregateOptions().SetBatchSize(15))
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, filter, options.Find().SetBatchSize(5))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
 

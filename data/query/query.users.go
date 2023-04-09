@@ -17,29 +17,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	items := []structures.User{}
 	r := &QueryResult[structures.User]{}
 
-	bans, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
-		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectMemoryHole}},
-	})
-	if err != nil {
-		return r.setError(err)
-	}
-
-	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
-		{{
-			Key:   "$match",
-			Value: filter,
-		}},
-		{{
-			Key: "$set",
-			Value: bson.M{ // Remove memory holed editors
-				"editors": bson.M{"$filter": bson.M{
-					"input": "$editors",
-					"as":    "e",
-					"cond":  bson.M{"$not": bson.M{"$in": bson.A{"$$e.id", bans.MemoryHole.KeySlice()}}},
-				}},
-			},
-		}},
-	}, options.Aggregate().SetBatchSize(5))
+	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, filter, options.Find().SetBatchSize(25))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate users", "error", err)
 
