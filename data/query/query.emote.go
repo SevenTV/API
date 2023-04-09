@@ -8,13 +8,14 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
 func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structures.Emote] {
 	qr := QueryResult[structures.Emote]{}
 
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, filter)
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(ctx, filter, options.Find().SetNoCursorTimeout(true))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate emotes", "error", err)
 

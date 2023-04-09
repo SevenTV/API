@@ -9,6 +9,7 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +17,7 @@ func (q *Query) Users(ctx context.Context, filter bson.M) *QueryResult[structure
 	items := []structures.User{}
 	r := &QueryResult[structures.User]{}
 
-	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, filter)
+	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Find(ctx, filter, options.Find().SetNoCursorTimeout(true))
 	if err != nil {
 		zap.S().Errorw("failed to create query to aggregate users", "error", err)
 
