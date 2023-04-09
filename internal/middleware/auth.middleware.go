@@ -59,8 +59,7 @@ func Auth(gctx global.Context) Middleware {
 			oldUsername string
 		)
 
-		if len(user.Connections) > 0 {
-			conn := user.Connections[0]
+		if conn, i, _ := user.Connections.Twitch(); i != -1 {
 			connUsername, connDisplayName := conn.Username()
 
 			usernameDidChange = connUsername != user.Username
