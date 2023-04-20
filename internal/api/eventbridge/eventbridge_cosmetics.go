@@ -205,9 +205,11 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 	params.WriteString("|")
 
 	kinds := make([]string, 0, len(body.Kinds))
+
 	for _, k := range body.Kinds {
 		kinds = append(kinds, string(k))
 	}
+
 	params.WriteString(strings.Join(kinds, ","))
 
 	switch v := ctx.Value(SESSION_ID_KEY).(type) {
@@ -216,7 +218,7 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 		params.WriteString(v)
 	}
 
-	userStateLoader.Load(params.String())
+	_, _ = userStateLoader.Load(params.String())
 
 	return nil
 }
