@@ -30,7 +30,6 @@ func createUserStateLoader(gctx global.Context) {
 		Fetch: func(keys []string) ([]structures.User, []error) {
 			var (
 				errs []error
-				v    []structures.User
 			)
 
 			identifierMap := map[string]utils.Set[string]{
@@ -40,58 +39,33 @@ func createUserStateLoader(gctx global.Context) {
 				identifier_username:         {},
 			}
 
-			sessions := make(utils.Set[string])
-
 			for _, key := range keys {
 				// Identify the target
-				keysp := strings.SplitN(key, "|", 4)
-				if len(keysp) != 4 {
+				keysp := strings.SplitN(key, "|", 2)
+				if len(keysp) != 2 {
 					continue
 				}
 
-				identifiers := utils.Set[string]{}
-				kinds := utils.Set[structures.CosmeticKind]{}
-
 				platform := keysp[0]
 
-				identifierArg := keysp[1]
-				for _, i := range strings.Split(identifierArg, ",") {
-					identifiers.Add(i)
-				}
+				idsp := strings.SplitN(keysp[1], ":", 2)
+				idType := idsp[0]
+				identifier := idsp[1]
 
-				kindArg := keysp[2]
-				for _, ki := range strings.Split(kindArg, ",") {
-					kinds.Add(structures.CosmeticKind(ki))
-				}
-
-				sessionID := keysp[3]
-				sessions.Add(sessionID)
-
-				for id := range identifiers {
-					// Identify the target
-					idsp := strings.SplitN(id, ":", 2)
-					if len(idsp) != 2 {
-						zap.S().Errorw("invalid identifier", "identifier", id, "session_id", sessionID)
+				// Platform specified: find by connection
+				if platform != "" {
+					switch idType {
+					case "id":
+						identifierMap["foreign_id"].Add(platform + ":" + identifier)
+					case "username":
+						identifierMap["foreign_username"].Add(platform + ":" + identifier)
 					}
-
-					idType := idsp[0]
-					identifier := idsp[1]
-
-					// Platform specified: find by connection
-					if platform != "" {
-						switch idType {
-						case "id":
-							identifierMap["foreign_id"].Add(platform + ":" + identifier)
-						case "username":
-							identifierMap["foreign_username"].Add(platform + ":" + identifier)
-						}
-					} else { // no platform means app user
-						switch idType {
-						case "id":
-							identifierMap["id"].Add(identifier)
-						case "username":
-							identifierMap["username"].Add(identifier)
-						}
+				} else { // no platform means app user
+					switch idType {
+					case "id":
+						identifierMap["id"].Add(identifier)
+					case "username":
+						identifierMap["username"].Add(identifier)
 					}
 				}
 			}
@@ -171,26 +145,7 @@ func createUserStateLoader(gctx global.Context) {
 
 			wg.Wait()
 
-			// Dispatch user avatar
-			for _, user := range users {
-				if (user.Avatar != nil || user.AvatarID != "") &&
-					user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
-					av := utils.ToJSON(gctx.Inst().Modelizer.Avatar(user))
-
-					for _, sid := range sessions.Values() {
-						_ = gctx.Inst().Events.DispatchWithEffect(gctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-							ID:         user.ID,
-							Kind:       structures.ObjectKindCosmetic,
-							Contextual: true,
-							Object:     av,
-						}, events.DispatchOptions{
-							Whisper: sid,
-						})
-					}
-				}
-			}
-
-			return v, errs
+			return users, errs
 		},
 		Wait:     500 * time.Millisecond,
 		MaxBatch: 100,
@@ -198,27 +153,46 @@ func createUserStateLoader(gctx global.Context) {
 }
 
 func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) error {
-	params := strings.Builder{}
-	params.WriteString(string(body.Platform))
-	params.WriteString("|")
-	params.WriteString(strings.Join(body.Identifiers, ","))
-	params.WriteString("|")
+	keys := make([]string, len(body.Identifiers))
 
-	kinds := make([]string, 0, len(body.Kinds))
-
-	for _, k := range body.Kinds {
-		kinds = append(kinds, string(k))
-	}
-
-	params.WriteString(strings.Join(kinds, ","))
-
-	switch v := ctx.Value(SESSION_ID_KEY).(type) {
-	case string:
+	for i, id := range body.Identifiers {
+		params := strings.Builder{}
+		params.WriteString(string(body.Platform))
 		params.WriteString("|")
-		params.WriteString(v)
+		params.WriteString(id)
+
+		keys[i] = params.String()
 	}
 
-	_, _ = userStateLoader.Load(params.String())
+	users, _ := userStateLoader.LoadAll(keys)
+
+	var sid string
+	switch t := ctx.Value(SESSION_ID_KEY).(type) {
+	case string:
+		sid = t
+	}
+
+	if sid == "" {
+		zap.S().Errorw("failed to get session id from context")
+		return nil
+	}
+
+	// Dispatch user avatar
+	for _, user := range users {
+		if (user.Avatar != nil || user.AvatarID != "") &&
+			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
+			av := utils.ToJSON(gctx.Inst().Modelizer.Avatar(user))
+
+			_ = gctx.Inst().Events.DispatchWithEffect(gctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+				ID:         user.ID,
+				Kind:       structures.ObjectKindCosmetic,
+				Contextual: true,
+				Object:     av,
+			}, events.DispatchOptions{
+				Whisper: sid,
+			})
+		}
+	}
 
 	return nil
 }
