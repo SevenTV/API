@@ -16,7 +16,7 @@ const SESSION_ID_KEY = utils.Key("session_id")
 func handle(gctx global.Context, name string, body []byte) error {
 	var err error
 
-	req := getCommandBody[events.UserStateCommandBody](body)
+	req := getCommandBody[json.RawMessage](body)
 
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
@@ -25,7 +25,9 @@ func handle(gctx global.Context, name string, body []byte) error {
 
 	switch name {
 	case "userstate", "cosmetics":
-		err = handleUserState(gctx, ctx, req.Body)
+		data := getCommandBody[events.UserStateCommandBody](body).Body
+
+		err = handleUserState(gctx, ctx, data)
 	}
 
 	return err
@@ -41,6 +43,8 @@ func New(gctx global.Context) <-chan interface{} {
 		var (
 			s string
 		)
+
+		createUserStateLoader(gctx)
 
 		for {
 			select {
