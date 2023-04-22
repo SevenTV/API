@@ -12,7 +12,6 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
@@ -92,39 +91,39 @@ func createUserStateLoader(gctx global.Context) {
 
 					switch idType {
 					case identifier_foreign_id, identifier_foreign_username:
-						l := utils.Ternary(idType == identifier_foreign_id, gctx.Inst().Loaders.UserByConnectionID, gctx.Inst().Loaders.UserByConnectionUsername)
+						// l := utils.Ternary(idType == identifier_foreign_id, gctx.Inst().Loaders.UserByConnectionID, gctx.Inst().Loaders.UserByConnectionUsername)
 
-						m := make(map[structures.UserConnectionPlatform][]string)
+						// m := make(map[structures.UserConnectionPlatform][]string)
 
-						for _, id := range identifiers.Values() {
-							idsp := strings.SplitN(id, ":", 2)
-							if len(idsp) != 2 {
-								continue
-							}
+						// for _, id := range identifiers.Values() {
+						// idsp := strings.SplitN(id, ":", 2)
+						// if len(idsp) != 2 {
+						// continue
+						// }
 
-							platform := structures.UserConnectionPlatform((idsp[0]))
-							id := idsp[1]
+						// platform := structures.UserConnectionPlatform((idsp[0]))
+						// id := idsp[1]
 
-							m[platform] = append(m[platform], id)
-						}
+						// m[platform] = append(m[platform], id)
+						// }
 
-						for p, ids := range m {
-							v, errs = l(p).LoadAll(ids)
-						}
+						// for p, ids := range m {
+						// v, errs = l(p).LoadAll(ids)
+						// }
 					case identifier_id:
-						iden := identifiers.Values()
-						idList := utils.Map(iden, func(x string) primitive.ObjectID {
-							oid, err := primitive.ObjectIDFromHex(x)
-							if err != nil {
-								return primitive.NilObjectID
-							}
+						// iden := identifiers.Values()
+						// idList := utils.Map(iden, func(x string) primitive.ObjectID {
+						// 	oid, err := primitive.ObjectIDFromHex(x)
+						// 	if err != nil {
+						// 		return primitive.NilObjectID
+						// 	}
 
-							return oid
-						})
+						// 	return oid
+						// })
 
-						v, errs = gctx.Inst().Loaders.UserByID().LoadAll(idList)
+						// v, errs = gctx.Inst().Loaders.UserByID().LoadAll(idList)
 					case identifier_username:
-						v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
+						//v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
 					}
 
 					mx.Lock()
@@ -166,7 +165,7 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 		keys[i] = params.String()
 	}
 
-	_, _ = userStateLoader.LoadAll(keys)
+	users, _ := userStateLoader.LoadAll(keys)
 
 	var sid string
 	switch t := ctx.Value(SESSION_ID_KEY).(type) {
@@ -177,6 +176,23 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 	if sid == "" {
 		zap.S().Errorw("failed to get session id from context")
 		return nil
+	}
+
+	// Dispatch user avatar
+	for _, user := range users {
+		if (user.Avatar != nil || user.AvatarID != "") &&
+			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
+			av := utils.ToJSON(gctx.Inst().Modelizer.Avatar(user))
+
+			_ = gctx.Inst().Events.DispatchWithEffect(gctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+				ID:         user.ID,
+				Kind:       structures.ObjectKindCosmetic,
+				Contextual: true,
+				Object:     av,
+			}, events.DispatchOptions{
+				Whisper: sid,
+			})
+		}
 	}
 
 	return nil
