@@ -37,7 +37,7 @@ func handle(gctx global.Context, name string, body []byte) error {
 func New(gctx global.Context) <-chan interface{} {
 	// EventAPI Bridge
 	go func() {
-		ch := make(chan string, 128)
+		ch := make(chan string, 1024)
 		go gctx.Inst().Redis.Subscribe(gctx, ch, gctx.Inst().Redis.ComposeKey("eventapi", "bridge"))
 
 		var (
