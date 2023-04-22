@@ -145,10 +145,12 @@ func createUserStateLoader(gctx global.Context) {
 
 			wg.Wait()
 
+			zap.S().Infow("loaded users for bridged cosmetics request command", "count", len(users), "keys", strings.Join(keys, ", "))
+
 			return users, errs
 		},
-		Wait:     500 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     1500 * time.Millisecond,
+		MaxBatch: 1000,
 	})
 }
 
