@@ -166,7 +166,7 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 		keys[i] = params.String()
 	}
 
-	users, _ := userStateLoader.LoadAll(keys)
+	_, _ = userStateLoader.LoadAll(keys)
 
 	var sid string
 	switch t := ctx.Value(SESSION_ID_KEY).(type) {
@@ -177,23 +177,6 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 	if sid == "" {
 		zap.S().Errorw("failed to get session id from context")
 		return nil
-	}
-
-	// Dispatch user avatar
-	for _, user := range users {
-		if (user.Avatar != nil || user.AvatarID != "") &&
-			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
-			av := utils.ToJSON(gctx.Inst().Modelizer.Avatar(user))
-
-			_ = gctx.Inst().Events.DispatchWithEffect(gctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-				ID:         user.ID,
-				Kind:       structures.ObjectKindCosmetic,
-				Contextual: true,
-				Object:     av,
-			}, events.DispatchOptions{
-				Whisper: sid,
-			})
-		}
 	}
 
 	return nil
