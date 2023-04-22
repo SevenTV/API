@@ -7,11 +7,16 @@ import (
 	"time"
 
 	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	mongodb "go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 )
 
@@ -29,6 +34,7 @@ func createUserStateLoader(gctx global.Context) {
 		Fetch: func(keys []string) ([]structures.User, []error) {
 			var (
 				errs []error
+				v    []structures.User
 			)
 
 			identifierMap := map[string]utils.Set[string]{
@@ -72,8 +78,6 @@ func createUserStateLoader(gctx global.Context) {
 			wg := sync.WaitGroup{}
 			mx := sync.Mutex{}
 
-			users := []structures.User{}
-
 			for idType, identifiers := range identifierMap {
 				if len(identifiers) == 0 {
 					continue
@@ -82,52 +86,125 @@ func createUserStateLoader(gctx global.Context) {
 				wg.Add(1)
 
 				go func(idType string, identifiers utils.Set[string]) {
-					var (
-						errs []error
-						v    []structures.User
-					)
-
 					defer wg.Done()
+
+					var (
+						cur   *mongodb.Cursor
+						err   error
+						users = []structures.User{}
+					)
 
 					switch idType {
 					case identifier_foreign_id, identifier_foreign_username:
-						// l := utils.Ternary(idType == identifier_foreign_id, gctx.Inst().Loaders.UserByConnectionID, gctx.Inst().Loaders.UserByConnectionUsername)
+						m := make(map[structures.UserConnectionPlatform][]string)
 
-						// m := make(map[structures.UserConnectionPlatform][]string)
+						for _, id := range identifiers.Values() {
+							idsp := strings.SplitN(id, ":", 2)
+							if len(idsp) != 2 {
+								continue
+							}
 
-						// for _, id := range identifiers.Values() {
-						// idsp := strings.SplitN(id, ":", 2)
-						// if len(idsp) != 2 {
-						// continue
-						// }
+							platform := structures.UserConnectionPlatform((idsp[0]))
+							id := idsp[1]
 
-						// platform := structures.UserConnectionPlatform((idsp[0]))
-						// id := idsp[1]
+							m[platform] = append(m[platform], id)
+						}
 
-						// m[platform] = append(m[platform], id)
-						// }
-
-						// for p, ids := range m {
-						// v, errs = l(p).LoadAll(ids)
-						// }
+						for p, ids := range m {
+							cur, err = gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(gctx, bson.M{
+								"connections.platform": p,
+								utils.Ternary(idType == identifier_foreign_id, "connections.id", "connections.data.login"): bson.M{
+									"$in": ids,
+								},
+							})
+						}
 					case identifier_id:
-						// iden := identifiers.Values()
-						// idList := utils.Map(iden, func(x string) primitive.ObjectID {
-						// 	oid, err := primitive.ObjectIDFromHex(x)
-						// 	if err != nil {
-						// 		return primitive.NilObjectID
-						// 	}
+						//iden := identifiers.Values()
+						//idList := utils.Map(iden, func(x string) primitive.ObjectID {
+						//	oid, err := primitive.ObjectIDFromHex(x)
+						//	if err != nil {
+						//		return primitive.NilObjectID
+						//	}
 
-						// 	return oid
-						// })
+						//	return oid
+						//})
 
 						// v, errs = gctx.Inst().Loaders.UserByID().LoadAll(idList)
 					case identifier_username:
-						//v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
+						// v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
+					}
+
+					if cur == nil || err != nil {
+						zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
+						return
+					}
+
+					if err = cur.All(gctx, &users); err != nil {
+						zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
+
+						return
+					}
+
+					userMap := map[primitive.ObjectID]struct {
+						i int
+						u structures.User
+					}{}
+					userIDs := make([]primitive.ObjectID, len(users))
+
+					for i, user := range users {
+						userIDs[i] = user.ID
+
+						userMap[user.ID] = struct {
+							i int
+							u structures.User
+						}{
+							i: i,
+							u: user,
+						}
+					}
+
+					entQuery := gctx.Inst().Query.Entitlements(gctx, bson.M{
+						"user_id": bson.M{
+							"$in": userIDs,
+						},
+					}, query.QueryEntitlementsOptions{
+						SelectedOnly: true,
+					})
+
+					ents, err := entQuery.Items()
+					if err != nil {
+						zap.S().Errorw("failed to load entitlements for bridged cosmetics request command", "error", err)
+					}
+
+					roleMap := make(map[primitive.ObjectID]structures.Role)
+					roles, err := gctx.Inst().Query.Roles(gctx, bson.M{})
+					if err != nil {
+						zap.S().Errorw("failed to load roles for bridged cosmetics request command", "error", err)
+					}
+
+					for _, role := range roles {
+						roleMap[role.ID] = role
+					}
+
+					for _, ent := range ents {
+						user := userMap[ent.UserID]
+
+						for _, role := range ent.Roles {
+							rol, ok := roleMap[role.Data.RefID]
+							if !ok {
+								continue
+							}
+
+							user.u.Roles = append(user.u.Roles, rol)
+						}
+
+						users[user.i] = user.u
 					}
 
 					mx.Lock()
-					users = append(users, v...)
+
+					v = append(v, users...)
+
 					mx.Unlock()
 
 					for _, err := range errs {
@@ -144,11 +221,9 @@ func createUserStateLoader(gctx global.Context) {
 
 			wg.Wait()
 
-			zap.S().Infow("loaded users for bridged cosmetics request command", "count", len(users), "keys", strings.Join(keys, ", "))
-
-			return users, errs
+			return v, errs
 		},
-		Wait:     1500 * time.Millisecond,
+		Wait:     500 * time.Millisecond,
 		MaxBatch: 1000,
 	})
 }
