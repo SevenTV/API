@@ -263,15 +263,14 @@ func main() {
 		}()
 	}
 
-	go func() {
+	if gctx.Config().EventBridge.Enabled {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
 			<-eventbridge.New(gctx)
 		}()
-		defer wg.Done()
-	}()
+	}
 
 	done := make(chan struct{})
 

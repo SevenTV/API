@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/seventv/api/data/events"
@@ -23,7 +22,6 @@ func handle(gctx global.Context, body []byte) error {
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
 
-	fmt.Println("sid", req.SessionID, "cmd", req.Command)
 	defer cancel()
 
 	switch req.Command {
@@ -38,16 +36,12 @@ func handle(gctx global.Context, body []byte) error {
 
 // The EventAPI Bridge allows passing commands from the eventapi via the websocket
 func New(gctx global.Context) <-chan struct{} {
-	if !gctx.Config().EventBridge.Enabled {
-		return nil
-	}
+	done := make(chan struct{})
 
 	createUserStateLoader(gctx)
 
-	done := make(chan struct{})
-
 	go func() {
-		http.ListenAndServe(gctx.Config().EventBridge.Bind, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := http.ListenAndServe(gctx.Config().EventBridge.Bind, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var err error
 
 			// read body into byte slice
@@ -64,12 +58,16 @@ func New(gctx global.Context) <-chan struct{} {
 				return
 			}
 
-			fmt.Println(buf)
-
 			if err := handle(gctx, buf.Bytes()); err != nil {
 				zap.S().Errorw("eventapi bridge command failed", "error", err)
 			}
 		}))
+
+		if err != nil {
+			zap.S().Errorw("eventapi bridge failed", "error", err)
+
+			close(done)
+		}
 	}()
 
 	go func() {
