@@ -293,7 +293,7 @@ func main() {
 		close(done)
 	}()
 
-	wg.Add(3)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
