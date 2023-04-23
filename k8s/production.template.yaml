@@ -39,6 +39,9 @@ spec:
             - name: pprof
               containerPort: 9300
               protocol: TCP
+            - name: eventbridge
+              containerPort: 9700
+              protocol: TCP
           envFrom:
             - secretRef:
                 name: api-secret
@@ -109,6 +112,10 @@ spec:
       protocol: TCP
       port: 9300
       targetPort: pprof
+    - name: eventbridge
+      protocol: TCP
+      port: 9700
+      targetPort: pprof
   selector:
     app: api
 ---
@@ -153,6 +160,10 @@ data:
     pprof:
       enabled: false
       bind: 0.0.0.0:9300
+
+    event_bridge:
+      enabled: true
+      bind: 0.0.0.0:9700
 
     limits:
       max_page: 25

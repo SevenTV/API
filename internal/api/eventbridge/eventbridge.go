@@ -1,9 +1,11 @@
 package eventbridge
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"strings"
+	"fmt"
+	"net/http"
 
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/internal/global"
@@ -13,7 +15,7 @@ import (
 
 const SESSION_ID_KEY = utils.Key("session_id")
 
-func handle(gctx global.Context, name string, body []byte) error {
+func handle(gctx global.Context, body []byte) error {
 	var err error
 
 	req := getCommandBody[json.RawMessage](body)
@@ -21,9 +23,10 @@ func handle(gctx global.Context, name string, body []byte) error {
 	ctx, cancel := context.WithCancel(gctx)
 	ctx = context.WithValue(ctx, SESSION_ID_KEY, req.SessionID)
 
+	fmt.Println("sid", req.SessionID, "cmd", req.Command)
 	defer cancel()
 
-	switch name {
+	switch req.Command {
 	case "userstate", "cosmetics":
 		data := getCommandBody[events.UserStateCommandBody](body).Body
 
@@ -34,59 +37,47 @@ func handle(gctx global.Context, name string, body []byte) error {
 }
 
 // The EventAPI Bridge allows passing commands from the eventapi via the websocket
-func New(gctx global.Context) <-chan interface{} {
-	// EventAPI Bridge
+func New(gctx global.Context) <-chan struct{} {
+	if !gctx.Config().EventBridge.Enabled {
+		return nil
+	}
+
+	createUserStateLoader(gctx)
+
+	done := make(chan struct{})
+
 	go func() {
-		ch := make(chan string, 1024)
-		go gctx.Inst().Redis.Subscribe(gctx, ch, gctx.Inst().Redis.ComposeKey("eventapi", "bridge"))
+		http.ListenAndServe(gctx.Config().EventBridge.Bind, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
 
-		var (
-			s string
-		)
-
-		createUserStateLoader(gctx)
-
-		for {
-			select {
-			case <-gctx.Done():
-				return
-			case s = <-ch:
-				if gctx.Config().Http.DisableEventBridge {
-					continue
-				}
-
-				go func(msg string) {
-					sp := strings.SplitN(msg, ":", 2)
-					if len(sp) != 2 {
-						zap.S().Errorw("invalid eventapi bridge message",
-							"reason", "bad length",
-							"msg", msg,
-						)
-
-						return
-					}
-
-					cmd := sp[0]
-					bodyStr := sp[1]
-
-					var body json.RawMessage
-					if err := json.Unmarshal(utils.S2B(bodyStr), &body); err != nil {
-						zap.S().Errorw("invalid eventapi bridge message", "msg", msg, "err", err)
-
-						return
-					}
-
-					if err := handle(gctx, cmd, body); err != nil {
-						zap.S().Errorw("eventapi bridge command failed", "cmd", cmd, "err", err)
-					}
-				}(s)
-			default:
-				continue
+			// read body into byte slice
+			if r.Body == nil {
+				zap.S().Errorw("invalid eventapi bridge message", "err", "empty body")
 			}
-		}
+
+			defer r.Body.Close()
+
+			var buf bytes.Buffer
+			if _, err = buf.ReadFrom(r.Body); err != nil {
+				zap.S().Errorw("invalid eventapi bridge message", "err", err)
+
+				return
+			}
+
+			fmt.Println(buf)
+
+			if err := handle(gctx, buf.Bytes()); err != nil {
+				zap.S().Errorw("eventapi bridge command failed", "error", err)
+			}
+		}))
 	}()
 
-	return nil
+	go func() {
+		<-gctx.Done()
+		close(done)
+	}()
+
+	return done
 }
 
 func getCommandBody[T events.BridgedCommandBody](body []byte) events.BridgedCommandPayload[T] {

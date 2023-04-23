@@ -162,6 +162,11 @@ type Config struct {
 		Labels  Labels `mapstructure:"labels" json:"labels"`
 	} `mapstructure:"monitoring" json:"monitoring"`
 
+	EventBridge struct {
+		Enabled bool   `mapstructure:"enabled" json:"enabled"`
+		Bind    string `mapstructure:"bind" json:"bind"`
+	} `mapstructure:"event_bridge" json:"event_bridge"`
+
 	Chatterino struct {
 		Version string `mapstructure:"version" json:"version"`
 		Stable  struct {
@@ -204,8 +209,9 @@ type Config struct {
 		Addr          string `mapstructure:"addr" json:"addr"`
 		VersionSuffix string `mapstructure:"version_suffix" json:"version_suffix"`
 		Ports         struct {
-			GQL  int `mapstructure:"gql" json:"gql"`
-			REST int `mapstructure:"rest" json:"rest"`
+			GQL    int `mapstructure:"gql" json:"gql"`
+			REST   int `mapstructure:"rest" json:"rest"`
+			Bridge int `mapstructure:"bridge" json:"bridge"`
 		} `mapstructure:"ports" json:"ports"`
 
 		DisablePresences   bool `mapstructure:"disable_presences" json:"disable_presences"`
