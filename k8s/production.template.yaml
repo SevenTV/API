@@ -115,7 +115,7 @@ spec:
     - name: eventbridge
       protocol: TCP
       port: 9700
-      targetPort: pprof
+      targetPort: eventbridge
   selector:
     app: api
 ---
