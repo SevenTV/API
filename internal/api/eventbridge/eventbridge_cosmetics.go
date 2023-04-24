@@ -127,7 +127,7 @@ func createUserStateLoader(gctx global.Context) {
 								"connections.id":                     1,
 								"connections.data.login":             1,
 								"connections.data.profile_image_url": 1,
-							}), options.Find().SetBatchSize(10))
+							}), options.Find().SetBatchSize(5))
 						}
 					case identifier_id:
 						//iden := identifiers.Values()
@@ -234,8 +234,8 @@ func createUserStateLoader(gctx global.Context) {
 
 			return v, errs
 		},
-		Wait:     3000 * time.Millisecond,
-		MaxBatch: 100,
+		Wait:     100 * time.Millisecond,
+		MaxBatch: 30,
 	})
 }
 
