@@ -7,17 +7,11 @@ import (
 	"time"
 
 	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	mongodb "go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -89,14 +83,12 @@ func createUserStateLoader(gctx global.Context) {
 				go func(idType string, identifiers utils.Set[string]) {
 					defer wg.Done()
 
-					var (
-						cur   *mongodb.Cursor
-						err   error
-						users = []structures.User{}
-					)
+					var users = []structures.User{}
 
 					switch idType {
 					case identifier_foreign_id, identifier_foreign_username:
+						l := utils.Ternary(idType == identifier_foreign_id, gctx.Inst().Loaders.UserByConnectionID, gctx.Inst().Loaders.UserByConnectionUsername)
+
 						m := make(map[structures.UserConnectionPlatform][]string)
 
 						for _, id := range identifiers.Values() {
@@ -112,22 +104,7 @@ func createUserStateLoader(gctx global.Context) {
 						}
 
 						for p, ids := range m {
-							cur, err = gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).Find(gctx, bson.M{
-								utils.Ternary(idType == identifier_foreign_id, "connections.id", "connections.data.login"): bson.M{
-									"$in": ids,
-								},
-								"connections.platform": p,
-							}, options.Find().SetProjection(bson.M{
-								"_id":                                1,
-								"avatar":                             1,
-								"avatar_id":                          1,
-								"username":                           1,
-								"display_name":                       1,
-								"connections.platform":               1,
-								"connections.id":                     1,
-								"connections.data.login":             1,
-								"connections.data.profile_image_url": 1,
-							}), options.Find().SetBatchSize(5))
+							users, errs = l(p).LoadAll(ids)
 						}
 					case identifier_id:
 						//iden := identifiers.Values()
@@ -143,73 +120,6 @@ func createUserStateLoader(gctx global.Context) {
 						// v, errs = gctx.Inst().Loaders.UserByID().LoadAll(idList)
 					case identifier_username:
 						// v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
-					}
-
-					if cur == nil || err != nil {
-						zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
-						return
-					}
-
-					if err = cur.All(gctx, &users); err != nil {
-						zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
-
-						return
-					}
-
-					userMap := map[primitive.ObjectID]struct {
-						i int
-						u structures.User
-					}{}
-					userIDs := make([]primitive.ObjectID, len(users))
-
-					for i, user := range users {
-						userIDs[i] = user.ID
-
-						userMap[user.ID] = struct {
-							i int
-							u structures.User
-						}{
-							i: i,
-							u: user,
-						}
-					}
-
-					entQuery := gctx.Inst().Query.Entitlements(gctx, bson.M{
-						"user_id": bson.M{
-							"$in": userIDs,
-						},
-					}, query.QueryEntitlementsOptions{
-						SelectedOnly: true,
-					})
-
-					ents, err := entQuery.Items()
-					if err != nil {
-						zap.S().Errorw("failed to load entitlements for bridged cosmetics request command", "error", err)
-					}
-
-					roleMap := make(map[primitive.ObjectID]structures.Role)
-					roles, err := gctx.Inst().Query.Roles(gctx, bson.M{})
-					if err != nil {
-						zap.S().Errorw("failed to load roles for bridged cosmetics request command", "error", err)
-					}
-
-					for _, role := range roles {
-						roleMap[role.ID] = role
-					}
-
-					for _, ent := range ents {
-						user := userMap[ent.UserID]
-
-						for _, role := range ent.Roles {
-							rol, ok := roleMap[role.Data.RefID]
-							if !ok {
-								continue
-							}
-
-							user.u.Roles = append(user.u.Roles, rol)
-						}
-
-						users[user.i] = user.u
 					}
 
 					mx.Lock()
