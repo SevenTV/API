@@ -2,6 +2,7 @@ package eventbridge
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"sync"
 	"time"
@@ -144,12 +145,12 @@ func createUserStateLoader(gctx global.Context) {
 
 			return v, errs
 		},
-		Wait:     100 * time.Millisecond,
-		MaxBatch: 30,
+		Wait:     1000 * time.Millisecond,
+		MaxBatch: 300,
 	})
 }
 
-func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) error {
+func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) ([]events.Message[json.RawMessage], error) {
 	keys := make([]string, len(body.Identifiers))
 
 	for i, id := range body.Identifiers {
@@ -171,8 +172,10 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 
 	if sid == "" {
 		zap.S().Errorw("failed to get session id from context")
-		return nil
+		return nil, nil
 	}
+
+	result := []events.Message[json.RawMessage]{}
 
 	// Dispatch user avatar
 	for _, user := range users {
@@ -180,16 +183,18 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 			user.HasPermission(structures.RolePermissionFeatureProfilePictureAnimation) {
 			av := utils.ToJSON(gctx.Inst().Modelizer.Avatar(user))
 
-			_ = gctx.Inst().Events.DispatchWithEffect(gctx, events.EventTypeCreateCosmetic, events.ChangeMap{
-				ID:         user.ID,
-				Kind:       structures.ObjectKindCosmetic,
-				Contextual: true,
-				Object:     av,
-			}, events.DispatchOptions{
+			result = append(result, events.NewMessage(events.OpcodeDispatch, events.DispatchPayload{
+				Type: events.EventTypeCreateCosmetic,
+				Body: events.ChangeMap{
+					ID:         user.ID,
+					Kind:       structures.ObjectKindCosmetic,
+					Contextual: true,
+					Object:     av,
+				},
 				Whisper: sid,
-			})
+			}).ToRaw())
 		}
 	}
 
-	return nil
+	return result, nil
 }

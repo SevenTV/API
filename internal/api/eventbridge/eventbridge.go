@@ -14,7 +14,7 @@ import (
 
 const SESSION_ID_KEY = utils.Key("session_id")
 
-func handle(gctx global.Context, body []byte) error {
+func handle(gctx global.Context, body []byte) ([]events.Message[json.RawMessage], error) {
 	var err error
 
 	req := getCommandBody[json.RawMessage](body)
@@ -24,14 +24,16 @@ func handle(gctx global.Context, body []byte) error {
 
 	defer cancel()
 
+	var result []events.Message[json.RawMessage]
+
 	switch req.Command {
 	case "userstate", "cosmetics":
 		data := getCommandBody[events.UserStateCommandBody](body).Body
 
-		err = handleUserState(gctx, ctx, data)
+		result, err = handleUserState(gctx, ctx, data)
 	}
 
-	return err
+	return result, err
 }
 
 // The EventAPI Bridge allows passing commands from the eventapi via the websocket
@@ -58,9 +60,18 @@ func New(gctx global.Context) <-chan struct{} {
 				return
 			}
 
-			if err := handle(gctx, buf.Bytes()); err != nil {
+			result, err := handle(gctx, buf.Bytes())
+			if err != nil {
 				zap.S().Errorw("eventapi bridge command failed", "error", err)
 			}
+
+			if len(result) > 0 {
+				if err := json.NewEncoder(w).Encode(result); err != nil {
+					zap.S().Errorw("eventapi bridge command failed", "error", err)
+				}
+			}
+
+			w.WriteHeader(200)
 		}))
 
 		if err != nil {
