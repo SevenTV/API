@@ -145,8 +145,8 @@ func createUserStateLoader(gctx global.Context) {
 
 			return v, errs
 		},
-		Wait:     1000 * time.Millisecond,
-		MaxBatch: 300,
+		Wait:     250 * time.Millisecond,
+		MaxBatch: 100,
 	})
 }
 
