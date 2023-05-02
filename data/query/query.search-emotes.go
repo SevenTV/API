@@ -182,7 +182,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 				wg.Done()
 			}()
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
 			value, err := q.mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, match)
