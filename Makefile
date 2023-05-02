@@ -36,11 +36,8 @@ dev_deps:
 	yarn
 
 generate: 
-	echo ${DOCROOT}
-
 	swag init --dir internal/api/rest/v3,data -g v3.go -o internal/api/rest/v3/docs & swag init --dir internal/api/rest/v2 -g v2.go -o internal/api/rest/v2/docs
 	gqlgen --config ./gqlgen.v3.yml & gqlgen --config ./gqlgen.v2.yml
-	make format
 
 portal:
 	yarn --cwd ./portal 

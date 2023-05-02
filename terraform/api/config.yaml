@@ -1,0 +1,125 @@
+level: info
+
+website_url: ${website_url}
+website_old_url: old.${website_url}
+cdn_url: cdn.${website_url}
+
+http:
+  addr: 0.0.0.0
+  ports:
+    gql: 3000
+    rest: 3100
+
+  disable_event_bridge: true
+  disable_cosmetics: false
+
+  proxied_endpoint_bypass_token: ${proxy_endpoint_bypass_token}
+  proxied_endpoint_url: ${proxy_endpoint_url}
+
+  cookie:
+    domain: ${cookie_domain}
+    secure: true
+    whitelist:
+      - https://${website_url}
+      - https://twitch.tv
+      - https://www.twitch.tv
+
+health:
+  enabled: true
+  bind: 0.0.0.0:9200
+
+monitoring:
+  enabled: true
+  bind: 0.0.0.0:9100
+
+pprof:
+  enabled: false
+  bind: 0.0.0.0:9300
+
+limits:
+  max_page: 25
+
+  buckets:
+    gql_v3: [250, 2]
+    gql_v2: [250, 3]
+    image_processing: [4, 60]
+  emotes:
+    max_processing_time_seconds: 120
+    max_width: 1000
+    max_height: 1000
+    max_frame_count: 1000
+    max_tags: 6
+    reserved_tags:
+      - halloween2022
+  quota:
+    default_limit: 1000
+    max_bad_queries: 5
+    max_active_mod_requests: 10
+
+platforms:
+  twitch:
+    enabled: true
+    client_id: ${twitch_client_id}
+    client_secret: ${twitch_client_secret}
+    redirect_uri: ${twitch_redirect_uri}
+
+  discord:
+    enabled: true
+    api: ${discord_api}
+    client_id: ${discord_client_id}
+    client_secret: ${discord_client_secret}
+
+misc:
+  beta_paint_entitlement_id: 63bdff9723e3c08ccb76494c
+
+chatterino:
+  version: 7.4.2
+  stable:
+    win:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Installer.exe
+      portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Portable.zip
+      update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Installer.exe
+    linux:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7-x86_64.AppImage
+    macos:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
+      update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
+  beta:
+    win:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Installer.exe
+      portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Portable.zip
+      update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.Installer.exe
+    linux:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7-x86_64.AppImage
+    macos:
+      download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
+      update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
+
+mongo:
+  db: ${mongo_db}
+  uri: ${mongo_uri}
+
+s3:
+  access_token: ${s3_access_token}
+  secret_key: ${s3_secret_key}
+  region: ${s3_region}
+  endpoint: ${s3_endpoint}
+  internal_bucket: ${s3_internal_bucket}
+  external_bucket: ${s3_external_bucket}
+
+message_queue:
+  mode: "RMQ"
+  image_processor_jobs_queue_name: "seventv_jobs"
+  image_processor_results_queue_name: "seventv_results"
+  image_processor_user_pictures_results_queue_name: "seventv_user_pictures_results"
+  rmq:
+    uri: ${rmq_uri}
+    max_reconnect_attempts: 25
+
+redis:
+  addresses:
+    - ${redis_address}
+  sentinel: true
+  master_name: "mymaster"
+  database: 0
+  password: ${redis_password}
