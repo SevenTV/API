@@ -35,6 +35,9 @@ func presenceLoader[T structures.UserPresenceData](ctx context.Context, x inst, 
 			}
 
 			cur, err := x.mongo.Collection(mongo.CollectionNameUserPresences).Find(ctx, f)
+			if err != nil {
+				return items, errs
+			}
 
 			presences := make([]structures.UserPresence[T], 0)
 
