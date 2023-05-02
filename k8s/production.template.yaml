@@ -39,6 +39,9 @@ spec:
             - name: pprof
               containerPort: 9300
               protocol: TCP
+            - name: eventbridge
+              containerPort: 9700
+              protocol: TCP
           envFrom:
             - secretRef:
                 name: api-secret
@@ -109,6 +112,10 @@ spec:
       protocol: TCP
       port: 9300
       targetPort: pprof
+    - name: eventbridge
+      protocol: TCP
+      port: 9700
+      targetPort: eventbridge
   selector:
     app: api
 ---
@@ -131,7 +138,7 @@ data:
         gql: 3000
         rest: 3100
 
-      disable_event_bridge: true
+      disable_event_bridge: false
       disable_cosmetics: false
 
       cookie:
@@ -154,12 +161,16 @@ data:
       enabled: false
       bind: 0.0.0.0:9300
 
+    event_bridge:
+      enabled: true
+      bind: 0.0.0.0:9700
+
     limits:
       max_page: 25
 
       buckets:
-        gql_v3: [250, 2]
-        gql_v2: [250, 3]
+        gql_v3: [50, 2]
+        gql_v2: [5, 3]
         image_processing: [4, 60]
       emotes:
         max_processing_time_seconds: 120
@@ -213,6 +224,7 @@ data:
         macos:
           download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
           update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.2/Chatterino7.dmg
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

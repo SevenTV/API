@@ -263,6 +263,15 @@ func main() {
 		}()
 	}
 
+	if gctx.Config().EventBridge.Enabled {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			<-eventbridge.New(gctx)
+		}()
+	}
+
 	done := make(chan struct{})
 
 	go func() {
@@ -284,7 +293,7 @@ func main() {
 		close(done)
 	}()
 
-	wg.Add(3)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -301,16 +310,6 @@ func main() {
 
 		if err := gql.New(gctx); err != nil {
 			zap.S().Fatalw("gql failed",
-				"error", err,
-			)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		if err := eventbridge.New(gctx); err != nil {
-			zap.S().Fatalw("eventbridge failed",
 				"error", err,
 			)
 		}
