@@ -198,7 +198,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 			totalCount = int(value)
 
 			// Return total count & cache
-			dur := utils.Ternary(query == "", time.Hour*4, time.Hour*2)
+			dur := utils.Ternary(query == "", time.Hour*24, time.Hour*12)
 
 			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
 				zap.S().Errorw("redis, failed to save total list count of emotes() gql query",
