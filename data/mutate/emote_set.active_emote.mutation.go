@@ -49,10 +49,16 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 		// Find emote set owner
 		if set.Owner == nil {
 			set.Owner = &structures.User{}
+
 			cur, err := m.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, append(mongo.Pipeline{
 				{{Key: "$match", Value: bson.M{"_id": set.OwnerID}}},
 			}, aggregations.UserRelationEditors...))
+			if err != nil {
+				return err
+			}
+
 			cur.Next(ctx)
+
 			if err = multierror.Append(err, cur.Decode(set.Owner), cur.Close(ctx)).ErrorOrNil(); err != nil {
 				if err == mongo.ErrNoDocuments {
 					return errors.ErrUnknownUser().SetDetail("emote set owner")
