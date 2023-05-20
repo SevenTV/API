@@ -40,17 +40,17 @@ type CosmeticPaintModel struct {
 	Shadows []CosmeticPaintShadow `json:"shadows"`
 	Flairs  []CosmeticPaintFlair  `json:"flairs"`
 	Text    *CosmeticPaintText    `json:"text"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	Function CosmeticPaintFunction `json:"function" enums:"LINEAR_GRADIENT,RADIAL_GRADIENT,URL"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	Repeat bool `json:"repeat"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	Angle int32 `json:"angle"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	Shape string `json:"shape"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	ImageURL string `json:"image_url"`
-	// deprecated: use `gradients`
+	// use `gradients`
 	Stops []CosmeticPaintGradientStop `json:"stops"`
 }
 
