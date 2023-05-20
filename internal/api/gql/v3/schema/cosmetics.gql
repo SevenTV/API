@@ -42,18 +42,36 @@ type CosmeticPaint implements Cosmetic {
   name: String!
 
   function: CosmeticPaintFunction!
+    @deprecated(reason: "use the 'gradients' property")
   color: Int
-  angle: Int!
-  shape: String
-  image_url: String
-  repeat: Boolean!
+  canvas_size: [Float!]
+  canvas_repeat: String!
+  gradients: [CosmeticPaintGradient!]!
+  shadows: [CosmeticPaintShadow!]
+  flairs: [CosmeticPaintFlair!]
+  text: CosmeticPaintText
+  angle: Int! @deprecated(reason: "use the 'gradients' property")
+  shape: String @deprecated(reason: "use the 'gradients' property")
+  image_url: String @deprecated(reason: "use the 'gradients' property")
+  repeat: Boolean! @deprecated(reason: "use the 'gradients' property")
   stops: [CosmeticPaintStop!]!
-  shadows: [CosmeticPaintShadow!]!
+    @deprecated(reason: "use the 'gradients' property")
+}
+
+type CosmeticPaintGradient {
+  function: CosmeticPaintFunction!
+  stops: [CosmeticPaintStop!]!
+  angle: Int!
+  repeat: Boolean!
+  image_url: String
+  shape: String
+  at: [Float!]
 }
 
 type CosmeticPaintStop {
   at: Float!
   color: Int!
+  center_at: [Float!]
 }
 
 type CosmeticPaintShadow {
@@ -61,6 +79,34 @@ type CosmeticPaintShadow {
   y_offset: Float!
   radius: Float!
   color: Int!
+}
+
+type CosmeticPaintText {
+  weight: Int
+  shadows: [CosmeticPaintShadow!]
+  transform: String
+  stroke: CosmeticPaintStroke
+  variant: String
+}
+
+type CosmeticPaintStroke {
+  color: Int!
+  width: Float!
+}
+
+type CosmeticPaintFlair {
+  kind: CosmeticPaintFlairKind!
+  x_offset: Float!
+  y_offset: Float!
+  width: Float!
+  height: Float!
+  data: String!
+}
+
+enum CosmeticPaintFlairKind {
+  IMAGE
+  VECTOR
+  TEXT
 }
 
 enum CosmeticKind {

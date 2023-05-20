@@ -69,7 +69,7 @@ func (r *ResolverOps) UpdatePaint(ctx context.Context, obj *model.CosmeticOps, d
 		Priority: 0,
 		Name:     def.Name,
 		Data: structures.CosmeticDataPaint{
-			Function:    structures.CosmeticPaintFunction(def.Function),
+			Function:    structures.CosmeticPaintGradientFunction(def.Function),
 			Color:       utils.PointerOf(utils.Color(mainColor)),
 			Stops:       stops,
 			Repeat:      def.Repeat,

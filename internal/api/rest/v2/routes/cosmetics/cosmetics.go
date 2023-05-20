@@ -388,7 +388,7 @@ func (r *Route) generateCosmeticsData(ctx *rest.Ctx, idType string) (*model.Cosm
 
 			f := strings.Replace(string(paint.Data.Function), "_", "-", 1)
 			f = strings.ToLower(f)
-			paint.Data.Function = structures.CosmeticPaintFunction(f)
+			paint.Data.Function = structures.CosmeticPaintGradientFunction(f)
 
 			b := createPaintResponse(paint.ToRaw(), cos.Users, idType)
 			result.Paints = append(result.Paints, &b)

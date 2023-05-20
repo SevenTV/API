@@ -391,7 +391,234 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CosmeticPaintDropShadow": {
+        "model.CosmeticPaintCanvasRepeat": {
+            "type": "string",
+            "enum": [
+                "no-repeat",
+                "repeat-x",
+                "repeat-y",
+                "revert",
+                "round",
+                "space"
+            ],
+            "x-enum-varnames": [
+                "CosmeticPaintCanvasRepeatNone",
+                "CosmeticPaintCanvasRepeatX",
+                "CosmeticPaintCanvasRepeatY",
+                "CosmeticPaintCanvasRepeatRevert",
+                "CosmeticPaintCanvasRepeatRound",
+                "CosmeticPaintCanvasRepeatSpace"
+            ]
+        },
+        "model.CosmeticPaintFlair": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Base64-encoded image or vector data",
+                    "type": "string"
+                },
+                "height": {
+                    "description": "The height of the flair",
+                    "type": "number"
+                },
+                "kind": {
+                    "description": "The kind of sprite",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintFlairKind"
+                        }
+                    ]
+                },
+                "width": {
+                    "description": "The width of the flair",
+                    "type": "number"
+                },
+                "x_offset": {
+                    "description": "The X offset of the flair (%)",
+                    "type": "number"
+                },
+                "y_offset": {
+                    "description": "The Y offset of the flair (%)",
+                    "type": "number"
+                }
+            }
+        },
+        "model.CosmeticPaintFlairKind": {
+            "type": "string",
+            "enum": [
+                "IMAGE",
+                "VECTOR",
+                "TEXT"
+            ],
+            "x-enum-varnames": [
+                "CosmeticPaintSpriteKindImage",
+                "CosmeticPaintSpriteKindVector",
+                "CosmeticPaintSpriteKindText"
+            ]
+        },
+        "model.CosmeticPaintFunction": {
+            "type": "string",
+            "enum": [
+                "LINEAR_GRADIENT",
+                "RADIAL_GRADIENT",
+                "URL"
+            ],
+            "x-enum-varnames": [
+                "CosmeticPaintFunctionLinearGradient",
+                "CosmeticPaintFunctionRadialGradient",
+                "CosmeticPaintFunctionImageURL"
+            ]
+        },
+        "model.CosmeticPaintGradient": {
+            "type": "object",
+            "properties": {
+                "angle": {
+                    "description": "The degree angle of the gradient (does not apply if function is URL)",
+                    "type": "integer"
+                },
+                "at": {
+                    "description": "Gradient position (X/Y % values)",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "function": {
+                    "description": "The function used to generate the paint (i.e gradients or an image)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintFunction"
+                        }
+                    ]
+                },
+                "image_url": {
+                    "description": "For a URL-based paint, the URL to an image",
+                    "type": "string"
+                },
+                "repeat": {
+                    "description": "Whether or not the gradient repeats outside its original area",
+                    "type": "boolean"
+                },
+                "shape": {
+                    "description": "For a radial gradient, the shape of the gradient",
+                    "type": "string"
+                },
+                "stops": {
+                    "description": "Gradient stops, a list of positions and colors",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintGradientStop"
+                    }
+                }
+            }
+        },
+        "model.CosmeticPaintGradientStop": {
+            "type": "object",
+            "properties": {
+                "at": {
+                    "type": "number"
+                },
+                "center_at": {
+                    "description": "the center position for the gradient. X/Y % values (for radial gradients only)",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "color": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.CosmeticPaintModel": {
+            "type": "object",
+            "properties": {
+                "angle": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "type": "integer"
+                },
+                "canvas_repeat": {
+                    "description": "The repeat mode of the canvas",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintCanvasRepeat"
+                        }
+                    ]
+                },
+                "canvas_size": {
+                    "description": "The canvas size for the paint",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "color": {
+                    "type": "integer"
+                },
+                "flairs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintFlair"
+                    }
+                },
+                "function": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "enum": [
+                        "LINEAR_GRADIENT",
+                        "RADIAL_GRADIENT",
+                        "URL"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintFunction"
+                        }
+                    ]
+                },
+                "gradients": {
+                    "description": "A list of gradients. There may be any amount, which can be stacked onto each other",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintGradient"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "repeat": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "type": "boolean"
+                },
+                "shadows": {
+                    "description": "A list of shadows. There may be any amount, which can be stacked onto each other",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintShadow"
+                    }
+                },
+                "shape": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "type": "string"
+                },
+                "stops": {
+                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintGradientStop"
+                    }
+                },
+                "text": {
+                    "$ref": "#/definitions/model.CosmeticPaintText"
+                }
+            }
+        },
+        "model.CosmeticPaintShadow": {
             "type": "object",
             "properties": {
                 "color": {
@@ -408,79 +635,65 @@ const docTemplate = `{
                 }
             }
         },
-        "model.CosmeticPaintFunction": {
-            "type": "string",
-            "enum": [
-                "LINEAR_GRADIENT",
-                "RADIAL_GRADIENT",
-                "URL"
-            ],
-            "x-enum-varnames": [
-                "CosmeticPaintFunctionLinearGradient",
-                "CosmeticPaintFunctionRadialGradient",
-                "CosmeticPaintFunctionImageURL"
-            ]
-        },
-        "model.CosmeticPaintGradientStop": {
+        "model.CosmeticPaintStroke": {
             "type": "object",
             "properties": {
-                "at": {
-                    "type": "number"
-                },
                 "color": {
+                    "description": "Stroke color",
                     "type": "integer"
+                },
+                "width": {
+                    "description": "Stroke width",
+                    "type": "number"
                 }
             }
         },
-        "model.CosmeticPaintModel": {
+        "model.CosmeticPaintText": {
             "type": "object",
             "properties": {
-                "angle": {
-                    "type": "integer"
+                "shadows": {
+                    "description": "Shadows applied to the text",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.CosmeticPaintShadow"
+                    }
                 },
-                "color": {
-                    "type": "integer"
-                },
-                "function": {
-                    "enum": [
-                        "LINEAR_GRADIENT",
-                        "RADIAL_GRADIENT",
-                        "URL"
-                    ],
+                "stroke": {
+                    "description": "Text stroke",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/model.CosmeticPaintFunction"
+                            "$ref": "#/definitions/model.CosmeticPaintStroke"
                         }
                     ]
                 },
-                "id": {
+                "transform": {
+                    "description": "Text tranformation",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintTextTransform"
+                        }
+                    ]
+                },
+                "variant": {
+                    "description": "(css) font variant property. non-standard",
                     "type": "string"
                 },
-                "image_url": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "repeat": {
-                    "type": "boolean"
-                },
-                "shadows": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.CosmeticPaintDropShadow"
-                    }
-                },
-                "shape": {
-                    "type": "string"
-                },
-                "stops": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.CosmeticPaintGradientStop"
-                    }
+                "weight": {
+                    "description": "Weight multiplier for the text. Defaults to 9x is not specified",
+                    "type": "integer"
                 }
             }
+        },
+        "model.CosmeticPaintTextTransform": {
+            "type": "string",
+            "enum": [
+                "uppercase",
+                "lowercase"
+            ],
+            "x-enum-varnames": [
+                "CosmeticPaintTextTransformUppercase",
+                "CosmeticPaintTextTransformLowercase"
+            ]
         },
         "model.EmoteFlagsModel": {
             "type": "integer",

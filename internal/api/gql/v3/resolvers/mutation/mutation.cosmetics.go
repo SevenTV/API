@@ -58,7 +58,7 @@ func (r *Resolver) CreateCosmeticPaint(ctx context.Context, def model.CosmeticPa
 		Priority: 0,
 		Name:     def.Name,
 		Data: structures.CosmeticDataPaint{
-			Function:    structures.CosmeticPaintFunction(def.Function),
+			Function:    structures.CosmeticPaintGradientFunction(def.Function),
 			Color:       utils.PointerOf(utils.Color(mainColor)),
 			Stops:       stops,
 			Repeat:      def.Repeat,
