@@ -13,11 +13,9 @@ func CosmeticPaint(xm model.CosmeticPaintModel) *gql_model.CosmeticPaint {
 	}
 
 	return &gql_model.CosmeticPaint{
-		ID:           xm.ID,
-		Name:         xm.Name,
-		Color:        color,
-		CanvasSize:   xm.CanvasSize[:],
-		CanvasRepeat: string(xm.CanvasRepeat),
+		ID:    xm.ID,
+		Name:  xm.Name,
+		Color: color,
 		Shadows: utils.Map(xm.Shadows, func(x model.CosmeticPaintShadow) *gql_model.CosmeticPaintShadow {
 			return &gql_model.CosmeticPaintShadow{
 				XOffset: x.OffsetX,
@@ -28,7 +26,9 @@ func CosmeticPaint(xm model.CosmeticPaintModel) *gql_model.CosmeticPaint {
 		}),
 		Gradients: utils.Map(xm.Gradients, func(x model.CosmeticPaintGradient) *gql_model.CosmeticPaintGradient {
 			return &gql_model.CosmeticPaintGradient{
-				Function: gql_model.CosmeticPaintFunction(x.Function),
+				Function:     gql_model.CosmeticPaintFunction(x.Function),
+				CanvasRepeat: string(x.CanvasRepeat),
+				Size:         x.Size[:],
 				Stops: utils.Map(x.Stops, func(x model.CosmeticPaintGradientStop) *gql_model.CosmeticPaintStop {
 					return &gql_model.CosmeticPaintStop{
 						At:       x.At,

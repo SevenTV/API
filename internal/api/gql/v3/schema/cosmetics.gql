@@ -44,8 +44,6 @@ type CosmeticPaint implements Cosmetic {
   function: CosmeticPaintFunction!
     @deprecated(reason: "use the 'gradients' property")
   color: Int
-  canvas_size: [Float!]
-  canvas_repeat: String!
   gradients: [CosmeticPaintGradient!]!
   shadows: [CosmeticPaintShadow!]
   flairs: [CosmeticPaintFlair!]
@@ -60,12 +58,14 @@ type CosmeticPaint implements Cosmetic {
 
 type CosmeticPaintGradient {
   function: CosmeticPaintFunction!
+  canvas_repeat: String!
+  size: [Float!]
+  at: [Float!]
   stops: [CosmeticPaintStop!]!
   angle: Int!
   repeat: Boolean!
   image_url: String
   shape: String
-  at: [Float!]
 }
 
 type CosmeticPaintStop {

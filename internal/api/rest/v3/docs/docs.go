@@ -483,6 +483,21 @@ const docTemplate = `{
                         "type": "number"
                     }
                 },
+                "canvas_repeat": {
+                    "description": "The repeat mode of the canvas",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CosmeticPaintCanvasRepeat"
+                        }
+                    ]
+                },
+                "canvas_size": {
+                    "description": "The canvas size for the paint",
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
                 "function": {
                     "description": "The function used to generate the paint (i.e gradients or an image)",
                     "allOf": [
@@ -504,7 +519,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "stops": {
-                    "description": "Gradient stops, a list of positions and colors",
+                    "description": "A list of gradients. There may be any amount, which can be stacked onto each other\nGradient stops, a list of positions and colors",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.CosmeticPaintGradientStop"
@@ -534,23 +549,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "angle": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "type": "integer"
-                },
-                "canvas_repeat": {
-                    "description": "The repeat mode of the canvas",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.CosmeticPaintCanvasRepeat"
-                        }
-                    ]
-                },
-                "canvas_size": {
-                    "description": "The canvas size for the paint",
-                    "type": "array",
-                    "items": {
-                        "type": "number"
-                    }
                 },
                 "color": {
                     "type": "integer"
@@ -562,7 +562,7 @@ const docTemplate = `{
                     }
                 },
                 "function": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "enum": [
                         "LINEAR_GRADIENT",
                         "RADIAL_GRADIENT",
@@ -575,7 +575,6 @@ const docTemplate = `{
                     ]
                 },
                 "gradients": {
-                    "description": "A list of gradients. There may be any amount, which can be stacked onto each other",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.CosmeticPaintGradient"
@@ -585,14 +584,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "image_url": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
                 "repeat": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "type": "boolean"
                 },
                 "shadows": {
@@ -603,11 +602,11 @@ const docTemplate = `{
                     }
                 },
                 "shape": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "type": "string"
                 },
                 "stops": {
-                    "description": "deprecated: use ` + "`" + `gradients` + "`" + `",
+                    "description": "use ` + "`" + `gradients` + "`" + `",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.CosmeticPaintGradientStop"

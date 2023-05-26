@@ -27,14 +27,9 @@ const (
 )
 
 type CosmeticPaintModel struct {
-	ID    primitive.ObjectID `json:"id"`
-	Name  string             `json:"name"`
-	Color *int32             `json:"color"`
-	// The canvas size for the paint
-	CanvasSize [2]float64 `json:"canvas_size" bson:"canvas_size"`
-	// The repeat mode of the canvas
-	CanvasRepeat CosmeticPaintCanvasRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
-	// A list of gradients. There may be any amount, which can be stacked onto each other
+	ID        primitive.ObjectID      `json:"id"`
+	Name      string                  `json:"name"`
+	Color     *int32                  `json:"color"`
 	Gradients []CosmeticPaintGradient `json:"gradients"`
 	// A list of shadows. There may be any amount, which can be stacked onto each other
 	Shadows []CosmeticPaintShadow `json:"shadows"`
@@ -57,6 +52,13 @@ type CosmeticPaintModel struct {
 type CosmeticPaintGradient struct {
 	// The function used to generate the paint (i.e gradients or an image)
 	Function CosmeticPaintFunction `json:"function" bson:"function"`
+	// The repeat mode of the canvas
+	CanvasRepeat CosmeticPaintCanvasRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
+	// The canvas size for the paint
+	Size [2]float64 `json:"canvas_size" bson:"canvas_size"`
+	// Gradient position (X/Y % values)
+	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
+	// A list of gradients. There may be any amount, which can be stacked onto each other
 	// Gradient stops, a list of positions and colors
 	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
 	// For a URL-based paint, the URL to an image
@@ -67,9 +69,6 @@ type CosmeticPaintGradient struct {
 	Angle int32 `json:"angle,omitempty" bson:"angle,omitempty"`
 	// Whether or not the gradient repeats outside its original area
 	Repeat bool `json:"repeat" bson:"repeat"`
-
-	// Gradient position (X/Y % values)
-	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
 }
 
 type CosmeticPaintFunction string
@@ -204,15 +203,15 @@ func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) C
 	}
 
 	return CosmeticPaintModel{
-		ID:           v.ID,
-		Name:         v.Name,
-		Function:     CosmeticPaintFunction(v.Data.Function),
-		Color:        color,
-		CanvasSize:   v.Data.CanvasSize,
-		CanvasRepeat: CosmeticPaintCanvasRepeat(v.Data.CanvasRepeat),
+		ID:       v.ID,
+		Name:     v.Name,
+		Function: CosmeticPaintFunction(v.Data.Function),
+		Color:    color,
 		Gradients: utils.Map(v.Data.Gradients, func(x structures.CosmeticPaintGradient) CosmeticPaintGradient {
 			return CosmeticPaintGradient{
-				Function: CosmeticPaintFunction(x.Function),
+				Function:     CosmeticPaintFunction(x.Function),
+				CanvasRepeat: CosmeticPaintCanvasRepeat(x.CanvasRepeat),
+				Size:         x.Size,
 				Stops: utils.Map(x.Stops, func(x structures.CosmeticPaintGradientStop) CosmeticPaintGradientStop {
 					return CosmeticPaintGradientStop{
 						At:       x.At,
