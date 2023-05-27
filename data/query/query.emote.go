@@ -75,7 +75,7 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 				},
 			},
 		}},
-	}, options.Aggregate().SetBatchSize(25).SetMaxAwaitTime(time.Second*30))
+	}, options.Aggregate().SetBatchSize(10).SetMaxAwaitTime(time.Minute))
 	if err != nil {
 		return qr.setError(err)
 	}

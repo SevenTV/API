@@ -12,6 +12,7 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -54,7 +55,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 					},
 				}},
 		}}},
-	))
+	), options.Aggregate().SetBatchSize(10))
 	if err != nil {
 		zap.S().Errorw("mongo, failed to query emote sets", "error", err)
 
