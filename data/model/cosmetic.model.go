@@ -27,16 +27,48 @@ const (
 )
 
 type CosmeticPaintModel struct {
-	ID       primitive.ObjectID          `json:"id"`
-	Name     string                      `json:"name"`
-	Function CosmeticPaintFunction       `json:"function" enums:"LINEAR_GRADIENT,RADIAL_GRADIENT,URL"`
-	Color    *int32                      `json:"color"`
-	Repeat   bool                        `json:"repeat"`
-	Angle    int32                       `json:"angle"`
-	Shape    string                      `json:"shape"`
-	ImageURL string                      `json:"image_url"`
-	Stops    []CosmeticPaintGradientStop `json:"stops"`
-	Shadows  []CosmeticPaintDropShadow   `json:"shadows"`
+	ID        primitive.ObjectID      `json:"id"`
+	Name      string                  `json:"name"`
+	Color     *int32                  `json:"color"`
+	Gradients []CosmeticPaintGradient `json:"gradients"`
+	// A list of shadows. There may be any amount, which can be stacked onto each other
+	Shadows []CosmeticPaintShadow `json:"shadows"`
+	Flairs  []CosmeticPaintFlair  `json:"flairs"`
+	Text    *CosmeticPaintText    `json:"text"`
+	// use `gradients`
+	Function CosmeticPaintFunction `json:"function" enums:"LINEAR_GRADIENT,RADIAL_GRADIENT,URL"`
+	// use `gradients`
+	Repeat bool `json:"repeat"`
+	// use `gradients`
+	Angle int32 `json:"angle"`
+	// use `gradients`
+	Shape string `json:"shape"`
+	// use `gradients`
+	ImageURL string `json:"image_url"`
+	// use `gradients`
+	Stops []CosmeticPaintGradientStop `json:"stops"`
+}
+
+type CosmeticPaintGradient struct {
+	// The function used to generate the paint (i.e gradients or an image)
+	Function CosmeticPaintFunction `json:"function" bson:"function"`
+	// The repeat mode of the canvas
+	CanvasRepeat CosmeticPaintCanvasRepeat `json:"canvas_repeat" bson:"canvas_repeat"`
+	// The canvas size for the paint
+	Size [2]float64 `json:"canvas_size" bson:"canvas_size"`
+	// Gradient position (X/Y % values)
+	At [2]float64 `json:"at,omitempty" bson:"at,omitempty"`
+	// A list of gradients. There may be any amount, which can be stacked onto each other
+	// Gradient stops, a list of positions and colors
+	Stops []CosmeticPaintGradientStop `json:"stops" bson:"stops"`
+	// For a URL-based paint, the URL to an image
+	ImageURL string `json:"image_url,omitempty" bson:"image_url,omitempty"`
+	// For a radial gradient, the shape of the gradient
+	Shape string `json:"shape,omitempty" bson:"shape,omitempty"`
+	// The degree angle of the gradient (does not apply if function is URL)
+	Angle int32 `json:"angle,omitempty" bson:"angle,omitempty"`
+	// Whether or not the gradient repeats outside its original area
+	Repeat bool `json:"repeat" bson:"repeat"`
 }
 
 type CosmeticPaintFunction string
@@ -50,14 +82,77 @@ const (
 type CosmeticPaintGradientStop struct {
 	At    float64 `json:"at"`
 	Color int32   `json:"color"`
+	// the center position for the gradient. X/Y % values (for radial gradients only)
+	CenterAt [2]float64 `json:"center_at,omitempty" bson:"center_at,omitempty"`
 }
 
-type CosmeticPaintDropShadow struct {
+type CosmeticPaintCanvasRepeat string
+
+const (
+	CosmeticPaintCanvasRepeatNone   CosmeticPaintCanvasRepeat = "no-repeat"
+	CosmeticPaintCanvasRepeatX      CosmeticPaintCanvasRepeat = "repeat-x"
+	CosmeticPaintCanvasRepeatY      CosmeticPaintCanvasRepeat = "repeat-y"
+	CosmeticPaintCanvasRepeatRevert CosmeticPaintCanvasRepeat = "revert"
+	CosmeticPaintCanvasRepeatRound  CosmeticPaintCanvasRepeat = "round"
+	CosmeticPaintCanvasRepeatSpace  CosmeticPaintCanvasRepeat = "space"
+)
+
+type CosmeticPaintShadow struct {
 	OffsetX float64 `json:"x_offset"`
 	OffsetY float64 `json:"y_offset"`
 	Radius  float64 `json:"radius"`
 	Color   int32   `json:"color"`
 }
+
+type CosmeticPaintText struct {
+	// Weight multiplier for the text. Defaults to 9x is not specified
+	Weight uint8 `json:"weight,omitempty" bson:"weight,omitempty"`
+	// Shadows applied to the text
+	Shadows []CosmeticPaintShadow `json:"shadows,omitempty" bson:"shadows,omitempty"`
+	// Text tranformation
+	Transform CosmeticPaintTextTransform `json:"transform,omitempty" bson:"transform,omitempty"`
+	// Text stroke
+	Stroke *CosmeticPaintStroke `json:"stroke,omitempty" bson:"stroke,omitempty"`
+	// (css) font variant property. non-standard
+	Variant string `json:"variant" bson:"variant"`
+}
+
+type CosmeticPaintStroke struct {
+	// Stroke color
+	Color int32 `json:"color" bson:"color"`
+	// Stroke width
+	Width float64 `json:"width" bson:"width"`
+}
+
+type CosmeticPaintTextTransform string
+
+const (
+	CosmeticPaintTextTransformUppercase CosmeticPaintTextTransform = "uppercase"
+	CosmeticPaintTextTransformLowercase CosmeticPaintTextTransform = "lowercase"
+)
+
+type CosmeticPaintFlair struct {
+	// The kind of sprite
+	Kind CosmeticPaintFlairKind `json:"kind" bson:"kind"`
+	// The X offset of the flair (%)
+	OffsetX float64 `json:"x_offset" bson:"x_offset"`
+	// The Y offset of the flair (%)
+	OffsetY float64 `json:"y_offset" bson:"y_offset"`
+	// The width of the flair
+	Width float64 `json:"width" bson:"width"`
+	// The height of the flair
+	Height float64 `json:"height" bson:"height"`
+	// Base64-encoded image or vector data
+	Data string `json:"data" bson:"data"`
+}
+
+type CosmeticPaintFlairKind string
+
+const (
+	CosmeticPaintSpriteKindImage  CosmeticPaintFlairKind = "IMAGE"
+	CosmeticPaintSpriteKindVector CosmeticPaintFlairKind = "VECTOR"
+	CosmeticPaintSpriteKindText   CosmeticPaintFlairKind = "TEXT"
+)
 
 type CosmeticBadgeModel struct {
 	ID      primitive.ObjectID `json:"id"`
@@ -112,24 +207,82 @@ func (x *modelizer) Paint(v structures.Cosmetic[structures.CosmeticDataPaint]) C
 		Name:     v.Name,
 		Function: CosmeticPaintFunction(v.Data.Function),
 		Color:    color,
-		Repeat:   v.Data.Repeat,
-		Angle:    v.Data.Angle,
-		Shape:    v.Data.Shape,
-		ImageURL: v.Data.ImageURL,
-		Stops: utils.Map(v.Data.Stops, func(v structures.CosmeticPaintGradientStop) CosmeticPaintGradientStop {
-			return CosmeticPaintGradientStop{
-				At:    v.At,
-				Color: v.Color.Sum(),
+		Gradients: utils.Map(v.Data.Gradients, func(x structures.CosmeticPaintGradient) CosmeticPaintGradient {
+			return CosmeticPaintGradient{
+				Function:     CosmeticPaintFunction(x.Function),
+				CanvasRepeat: CosmeticPaintCanvasRepeat(x.CanvasRepeat),
+				Size:         x.Size,
+				Stops: utils.Map(x.Stops, func(x structures.CosmeticPaintGradientStop) CosmeticPaintGradientStop {
+					return CosmeticPaintGradientStop{
+						At:       x.At,
+						Color:    x.Color.Sum(),
+						CenterAt: x.CenterAt,
+					}
+				}),
+				ImageURL: x.ImageURL,
+				Shape:    x.Shape,
+				Angle:    x.Angle,
+				Repeat:   x.Repeat,
+				At:       x.At,
 			}
 		}),
-		Shadows: utils.Map(v.Data.DropShadows, func(v structures.CosmeticPaintDropShadow) CosmeticPaintDropShadow {
-			return CosmeticPaintDropShadow{
+		Shadows: utils.Map(v.Data.DropShadows, func(v structures.CosmeticPaintDropShadow) CosmeticPaintShadow {
+			return CosmeticPaintShadow{
 				OffsetX: v.OffsetX,
 				OffsetY: v.OffsetY,
 				Radius:  v.Radius,
 				Color:   v.Color.Sum(),
 			}
 		}),
+		Flairs: utils.Map(v.Data.Flairs, func(v structures.CosmeticPaintFlair) CosmeticPaintFlair {
+			return CosmeticPaintFlair{
+				Kind:    CosmeticPaintFlairKind(v.Kind),
+				OffsetX: v.OffsetX,
+				OffsetY: v.OffsetY,
+				Width:   v.Width,
+				Height:  v.Height,
+				Data:    v.Data,
+			}
+		}),
+		Text: func() *CosmeticPaintText {
+			if v.Data.Text == nil {
+				return nil
+			}
+
+			return &CosmeticPaintText{
+				Weight: v.Data.Text.Weight,
+				Shadows: utils.Map(v.Data.Text.Shadows, func(v structures.CosmeticPaintDropShadow) CosmeticPaintShadow {
+					return CosmeticPaintShadow{
+						OffsetX: v.OffsetX,
+						OffsetY: v.OffsetY,
+						Radius:  v.Radius,
+						Color:   v.Color.Sum(),
+					}
+				}),
+				Transform: CosmeticPaintTextTransform(v.Data.Text.Transform),
+				Stroke: func() *CosmeticPaintStroke {
+					if v.Data.Text.Stroke == nil {
+						return nil
+					}
+
+					return &CosmeticPaintStroke{
+						Color: v.Data.Text.Stroke.Color.Sum(),
+						Width: v.Data.Text.Stroke.Width,
+					}
+				}(),
+				Variant: v.Data.Text.Variant,
+			}
+		}(),
+		Stops: utils.Map(v.Data.Stops, func(v structures.CosmeticPaintGradientStop) CosmeticPaintGradientStop {
+			return CosmeticPaintGradientStop{
+				At:    v.At,
+				Color: v.Color.Sum(),
+			}
+		}),
+		Repeat:   v.Data.Repeat,
+		Angle:    v.Data.Angle,
+		Shape:    v.Data.Shape,
+		ImageURL: v.Data.ImageURL,
 	}
 }
 

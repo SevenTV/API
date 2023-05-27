@@ -52,11 +52,11 @@ spec:
                   fieldPath: metadata.name
           resources:
             limits:
-              cpu: 1000m
-              memory: 1792Mi
+              cpu: 1500m
+              memory: 3250Mi
             requests:
-              cpu: 750m
-              memory: 1792Mi
+              cpu: 1250m
+              memory: 3Gi
           volumeMounts:
             - name: config
               mountPath: /app/config.yaml
@@ -169,7 +169,7 @@ data:
       max_page: 25
 
       buckets:
-        gql_v3: [50, 2]
+        gql_v3: [85, 4]
         gql_v2: [5, 3]
         image_processing: [4, 60]
       emotes:
@@ -203,27 +203,27 @@ data:
       beta_paint_entitlement_id: 63bdff9723e3c08ccb76494c
 
     chatterino:
-      version: 7.4.3
+      version: 7.4.4
       stable:
         win:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Installer.exe
-          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Portable.zip
-          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Installer.exe
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Installer.exe
+          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Portable.zip
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Installer.exe
         linux:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7-x86_64.AppImage
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7-x86_64.AppImage
         macos:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.dmg
-          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.dmg
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.dmg
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.dmg
       beta:
         win:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Installer.exe
-          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Portable.zip
-          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.Installer.exe
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Installer.exe
+          portable_download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Portable.zip
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.Installer.exe
         linux:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7-x86_64.AppImage
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7-x86_64.AppImage
         macos:
-          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.dmg
-          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.3/Chatterino7.dmg
+          download: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.dmg
+          update_exe: https://github.com/SevenTV/chatterino7/releases/download/v7.4.4/Chatterino7.dmg
 
 ---
 apiVersion: networking.k8s.io/v1

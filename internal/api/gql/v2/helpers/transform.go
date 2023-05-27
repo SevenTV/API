@@ -265,7 +265,7 @@ func CosmeticStructureToModel(s structures.Cosmetic[bson.Raw]) *model.UserCosmet
 
 		f := strings.Replace(string(v.Data.Function), "_", "-", 1)
 		f = strings.ToLower(f)
-		v.Data.Function = structures.CosmeticPaintFunction(f)
+		v.Data.Function = structures.CosmeticPaintGradientFunction(f)
 
 		j, _ := json.Marshal(v.Data)
 
