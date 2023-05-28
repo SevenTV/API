@@ -17,6 +17,7 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 type Route struct {
@@ -33,6 +34,7 @@ func (r *Route) Config() rest.RouteConfig {
 		Method: rest.GET,
 		Children: []rest.Route{
 			newLogout(r.gctx),
+			newManual(r.gctx),
 		},
 		Middleware: []rest.Middleware{
 			bindCurrentAccessToken,
@@ -112,80 +114,14 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 			return errors.ErrInternalServerError()
 		}
 
-		// Create the user
-		if ub.User.ID.IsZero() {
-			ub.User = structures.User{
-				ID:           primitive.NewObjectIDFromTimestamp(time.Now()),
-				TokenVersion: 1.0,
-				RoleIDs:      []primitive.ObjectID{},
-				Editors:      []structures.UserEditor{},
-				Connections:  []structures.UserConnection[bson.Raw]{formatUserConnection(id, platform, b, grant)},
-				State: structures.UserState{
-					LastLoginDate: time.Now(),
-					LastVisitDate: time.Now(),
-				},
-			}
-
-			ub.User.SetDiscriminator("")
-			ub.User.InferUsername()
-
-			if _, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).InsertOne(ctx, ub.User); err != nil {
-				ctx.Log().Errorw("auth, insert user", "error", err)
-
-				return errors.ErrInternalServerError()
-			}
-		} else {
-			// User already exists; update their data
-			didUpdate := ub.UpdateConnection(id, b)
-			if !didUpdate { // if the connection didn't exist, create it
-				// Check that the connection isn't already owned by another user
-				count, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, bson.M{
-					"connections.id": id,
-				})
-				if err != nil {
-					ctx.Log().Errorw("auth, failed to check if connection is bound to another location")
-
-					return errors.ErrInternalServerError()
-				}
-
-				if count > 0 {
-					return errors.ErrInsufficientPrivilege().SetDetail("This connection is already bound to another user")
-				}
-
-				con := formatUserConnection(id, platform, b, grant)
-				ub.AddConnection(con)
-
-				// eventapi: dispatch the connection create event
-				r.gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
-					ID:    ub.User.ID,
-					Kind:  structures.ObjectKindUser,
-					Actor: r.gctx.Inst().Modelizer.User(ub.User).ToPartial(),
-					Pushed: []events.ChangeField{{
-						Key:   "connections",
-						Index: utils.PointerOf(int32(len(ub.User.Connections) - 1)),
-						Type:  events.ChangeFieldTypeObject,
-						Value: r.gctx.Inst().Modelizer.UserConnection(con),
-					}},
-				}, events.EventCondition{"object_id": ub.User.ID.Hex()})
-			}
-
-			t := time.Now()
-			ub.User.State.LastLoginDate = t
-			ub.Update.Set("state.last_login_at", t)
-
-			if _, err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
-				"_id": ub.User.ID,
-			}, ub.Update); err != nil {
-				ctx.Log().Errorw("auth, update user", "error", err)
-			}
+		err = setupUser(r.gctx, ctx, b, ub, id, platform, grant)
+		if err != nil {
+			return errors.From(err)
 		}
 
-		// Sign an access token
-		token, expiry, err := r.gctx.Inst().Auth.CreateAccessToken(ub.User.ID, ub.User.TokenVersion)
+		token, expiry, err := setupToken(r.gctx, ub)
 		if err != nil {
-			ctx.Log().Errorw("auth, create access token", "error", err)
-
-			return errors.ErrInternalServerError()
+			return errors.From(err)
 		}
 
 		// Set a cookie
@@ -222,6 +158,98 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 	}
 
 	return nil
+}
+
+func setupUser(
+	gctx global.Context,
+	ctx *rest.Ctx,
+	b []byte,
+	ub *structures.UserBuilder,
+	id string,
+	platform structures.UserConnectionPlatform,
+	grant auth.OAuth2AuthorizedResponse,
+) errors.APIError {
+	// Create the user
+	if ub.User.ID.IsZero() {
+		ub.User = structures.User{
+			ID:           primitive.NewObjectIDFromTimestamp(time.Now()),
+			TokenVersion: 1.0,
+			RoleIDs:      []primitive.ObjectID{},
+			Editors:      []structures.UserEditor{},
+			Connections:  []structures.UserConnection[bson.Raw]{formatUserConnection(id, platform, b, grant)},
+			State: structures.UserState{
+				LastLoginDate: time.Now(),
+				LastVisitDate: time.Now(),
+			},
+		}
+
+		ub.User.SetDiscriminator("")
+		ub.User.InferUsername()
+
+		if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).InsertOne(ctx, ub.User); err != nil {
+			ctx.Log().Errorw("auth, insert user", "error", err)
+
+			return errors.ErrInternalServerError()
+		}
+	} else {
+		// User already exists; update their data
+		didUpdate := ub.UpdateConnection(id, b)
+		if !didUpdate { // if the connection didn't exist, create it
+			// Check that the connection isn't already owned by another user
+			count, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, bson.M{
+				"connections.id": id,
+			})
+			if err != nil {
+				ctx.Log().Errorw("auth, failed to check if connection is bound to another location")
+
+				return errors.ErrInternalServerError()
+			}
+
+			if count > 0 {
+				return errors.ErrInsufficientPrivilege().SetDetail("This connection is already bound to another user")
+			}
+
+			con := formatUserConnection(id, platform, b, grant)
+			ub.AddConnection(con)
+
+			// eventapi: dispatch the connection create event
+			gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+				ID:    ub.User.ID,
+				Kind:  structures.ObjectKindUser,
+				Actor: gctx.Inst().Modelizer.User(ub.User).ToPartial(),
+				Pushed: []events.ChangeField{{
+					Key:   "connections",
+					Index: utils.PointerOf(int32(len(ub.User.Connections) - 1)),
+					Type:  events.ChangeFieldTypeObject,
+					Value: gctx.Inst().Modelizer.UserConnection(con),
+				}},
+			}, events.EventCondition{"object_id": ub.User.ID.Hex()})
+		}
+
+		t := time.Now()
+		ub.User.State.LastLoginDate = t
+		ub.Update.Set("state.last_login_at", t)
+
+		if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(ctx, bson.M{
+			"_id": ub.User.ID,
+		}, ub.Update); err != nil {
+			ctx.Log().Errorw("auth, update user", "error", err)
+		}
+	}
+
+	return nil
+}
+
+func setupToken(gctx global.Context, ub *structures.UserBuilder) (token string, expiry time.Time, err error) {
+	// Sign an access token
+	token, expiry, err = gctx.Inst().Auth.CreateAccessToken(ub.User.ID, ub.User.TokenVersion)
+	if err != nil {
+		zap.S().Errorw("auth, create access token", "error", err)
+
+		return "", time.Time{}, errors.ErrInternalServerError()
+	}
+
+	return token, expiry, nil
 }
 
 func formatUserConnection(id string, platform structures.UserConnectionPlatform, b []byte, grant auth.OAuth2AuthorizedResponse) structures.UserConnection[bson.Raw] {

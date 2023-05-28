@@ -16,6 +16,7 @@ import (
 	"github.com/nicklaw5/helix"
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"github.com/valyala/fasthttp"
@@ -42,10 +43,12 @@ type authorizer struct {
 	JWTSecret string
 	Domain    string
 	Secure    bool
+	Redis     redis.Instance
 	Config    configure.PlatformConfig
 
 	helixFactory   func() (*helix.Client, error)
 	discordFactory func(token string) (*discordgo.Session, error)
+	kickClient     *http.Client
 }
 
 const (
@@ -53,12 +56,13 @@ const (
 	COOKIE_AUTH = "seventv-auth"
 )
 
-func New(opt AuthorizerOptions) Authorizer {
+func New(ctx context.Context, opt AuthorizerOptions) Authorizer {
 	a := &authorizer{
 		JWTSecret: opt.JWTSecret,
 		Domain:    opt.Domain,
 		Secure:    opt.Secure,
 		Config:    opt.Config,
+		Redis:     opt.Redis,
 	}
 
 	a.helixFactory = func() (*helix.Client, error) {
@@ -72,6 +76,10 @@ func New(opt AuthorizerOptions) Authorizer {
 		return discordgo.New("Bearer " + token)
 	}
 
+	if a.Config.Kick.ChallengeToken != "" && a.Config.Kick.API != "" {
+		a.kickClient = newKickClient(ctx, a.Config.Kick.ChallengeToken)
+	}
+
 	return a
 }
 
@@ -80,6 +88,7 @@ type AuthorizerOptions struct {
 	Domain    string
 	Secure    bool
 	Config    configure.PlatformConfig
+	Redis     redis.Instance
 }
 
 // CreateCSRFToken creates a CSRF token
@@ -289,6 +298,8 @@ func (a *authorizer) ExchangeCode(ctx context.Context, provider structures.UserC
 
 			return grant, err
 		}
+	case structures.UserConnectionPlatformKick:
+		break
 	}
 
 	if err != nil {

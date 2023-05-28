@@ -311,6 +311,10 @@ type PlatformConfig struct {
 		API      string            `mapstructure:"api" json:"api"`
 		Channels map[string]string `mapstructure:"channels" json:"channels"`
 	} `mapstructure:"discord" json:"discord"`
+	Kick struct {
+		API            string `mapstructure:"api" json:"api"`
+		ChallengeToken string `mapstructure:"challenge_token" json:"challenge_token"`
+	} `mapstructure:"kick" json:"kick"`
 }
 
 type Labels []struct {

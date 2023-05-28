@@ -152,11 +152,12 @@ func main() {
 	}
 
 	{
-		gctx.Inst().Auth = auth.New(auth.AuthorizerOptions{
+		gctx.Inst().Auth = auth.New(gctx, auth.AuthorizerOptions{
 			JWTSecret: config.Credentials.JWTSecret,
 			Domain:    config.Http.Cookie.Domain,
 			Secure:    config.Http.Cookie.Secure,
 			Config:    config.Platforms,
+			Redis:     gctx.Inst().Redis,
 		})
 	}
 

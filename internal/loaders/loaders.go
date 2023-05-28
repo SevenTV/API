@@ -71,6 +71,7 @@ func New(ctx context.Context, mngo mongo.Instance, rdis redis.Instance, quer *qu
 		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch, "id"),
 		structures.UserConnectionPlatformYouTube: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformYouTube, "id"),
 		structures.UserConnectionPlatformDiscord: userByConnectionLoader(ctx, l, structures.UserConnectionPlatformDiscord, "id"),
+		structures.UserConnectionPlatformKick:    userByConnectionLoader(ctx, l, structures.UserConnectionPlatformKick, "id"),
 	}
 	l.userByConnectionUsername = map[structures.UserConnectionPlatform]*dataloader.DataLoader[string, structures.User]{
 		structures.UserConnectionPlatformTwitch:  userByConnectionLoader(ctx, l, structures.UserConnectionPlatformTwitch, "data.login"),
