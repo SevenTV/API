@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -107,6 +108,10 @@ func (r *verifyRoute) Handler(ctx *rest.Ctx) errors.APIError {
 		// Verify the code
 		code, err := r.gctx.Inst().Redis.Get(ctx, codeKey)
 		if err != nil {
+			if err == redis.Nil {
+				return errors.ErrUnauthorized().SetDetail("Missing Code")
+			}
+
 			ctx.Log().Errorw("failed to get redis key", "error", err)
 
 			return errors.ErrInternalServerError()

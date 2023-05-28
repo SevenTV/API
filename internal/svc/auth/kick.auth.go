@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,9 +35,11 @@ func (a *authorizer) KickUserData(slug string) (string, []byte, error) {
 		return "", nil, nil
 	}
 
+	n := rand.Int31()
+
 	res, err := a.kickClient.Do(&http.Request{
 		Method: http.MethodGet,
-		URL:    &url.URL{Scheme: "https", Host: "kick.com", Path: "/api/v2/channels/" + slug},
+		URL:    &url.URL{Scheme: "https", Host: "kick.com", Path: "/api/v2/channels/" + slug, RawQuery: "7tv-bust" + strconv.Itoa(int(n))},
 		Header: http.Header{
 			"User-Agent":   {"SevenTV-API/3"},
 			"Content-Type": {"application/json"},
