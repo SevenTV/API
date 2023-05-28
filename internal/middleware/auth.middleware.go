@@ -53,21 +53,22 @@ func Auth(gctx global.Context) Middleware {
 		lastVisitDidChange := user.State.LastVisitDate.Before(time.Now().Add(-time.Hour * 1))
 		usernameDidChange := false
 
-		// Check for username change
-		// Find primary user account
+		/*
+			// Check for username change
+			// Find primary user account
+				if len(user.Connections) > 0 {
+					conn := user.Connections[0]
+					connUsername, connDisplayName := conn.Username()
 
-		if len(user.Connections) > 0 {
-			conn := user.Connections[0]
-			connUsername, connDisplayName := conn.Username()
+					usernameDidChange = connUsername != user.Username
+					if usernameDidChange {
+						user.Username, user.DisplayName = connUsername, connDisplayName
 
-			usernameDidChange = connUsername != user.Username
-			if usernameDidChange {
-				user.Username, user.DisplayName = connUsername, connDisplayName
-
-				user.SetDiscriminator("")
-				user.InferUsername()
-			}
-		}
+						user.SetDiscriminator("")
+						user.InferUsername()
+					}
+				}
+		*/
 
 		if ipDidChange || lastVisitDidChange || usernameDidChange {
 			user.State.ClientIP = clientIP

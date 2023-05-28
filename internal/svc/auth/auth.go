@@ -76,7 +76,7 @@ func New(ctx context.Context, opt AuthorizerOptions) Authorizer {
 		return discordgo.New("Bearer " + token)
 	}
 
-	if a.Config.Kick.ChallengeToken != "" && a.Config.Kick.API != "" {
+	if a.Config.Kick.ChallengeToken != "" {
 		a.kickClient = newKickClient(ctx, a.Config.Kick.ChallengeToken)
 	}
 

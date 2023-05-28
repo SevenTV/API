@@ -84,21 +84,7 @@ func (r *verifyRoute) Handler(ctx *rest.Ctx) errors.APIError {
 
 		ub := structures.NewUserBuilder(structures.User{})
 
-		actor, actorOk := ctx.GetActor()
-
-		// Query existing user?
-		if actorOk {
-			if err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
-				"$or": bson.A{
-					bson.M{"connections.id": id},
-					bson.M{"_id": actor.ID},
-				},
-			}).Decode(&ub.User); err != nil && err != mongo.ErrNoDocuments {
-				ctx.Log().Errorw("auth, find user", "error", err)
-
-				return errors.ErrInternalServerError()
-			}
-		}
+		actor, _ := ctx.GetActor()
 
 		// Convert JSON to BSON
 		var connData bson.M
@@ -129,6 +115,18 @@ func (r *verifyRoute) Handler(ctx *rest.Ctx) errors.APIError {
 		// Verify the code
 		if !strings.Contains(utils.B2S(userData), string(code)) {
 			return errors.ErrUnauthorized().SetDetail("Invalid Code")
+		}
+
+		// Query existing user?
+		if err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
+			"$or": bson.A{
+				bson.M{"connections.id": id},
+				bson.M{"_id": actor.ID},
+			},
+		}).Decode(&ub.User); err != nil && err != mongo.ErrNoDocuments {
+			ctx.Log().Errorw("auth, find user", "error", err)
+
+			return errors.ErrInternalServerError()
 		}
 
 		if err = setupUser(r.gctx, ctx, b, ub, id, platform, auth.OAuth2AuthorizedResponse{}); err != nil {
