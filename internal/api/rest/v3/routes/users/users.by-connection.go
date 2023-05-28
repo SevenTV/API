@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/seventv/api/data/model"
@@ -61,7 +60,6 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Fetch user data
 	user, err := r.Ctx.Inst().Loaders.UserByConnectionID(platform).Load(connID)
-	fmt.Println(">", platform, connID, user, err)
 	if err != nil {
 		return errors.From(err)
 	}

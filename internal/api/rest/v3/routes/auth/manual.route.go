@@ -70,7 +70,8 @@ func (r *verifyRoute) Handler(ctx *rest.Ctx) errors.APIError {
 			return errors.ErrInternalServerError()
 		}
 
-		ctx.WriteString(code)
+		_, _ = ctx.WriteString(code)
+
 		return nil
 	} else {
 		// request to verify the code

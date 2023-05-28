@@ -11,10 +11,6 @@ import (
 	"github.com/seventv/common/structures/v3"
 )
 
-type kickRoundtripper struct {
-	token string
-}
-
 type KickUserData struct {
 	ID     int    `json:"id"`
 	UserID int    `json:"user_id"`
@@ -53,6 +49,9 @@ func (a *authorizer) KickUserData(slug string) (string, []byte, error) {
 
 	// read body to bytes
 	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", nil, err
+	}
 
 	u := KickUserData{}
 	if err = json.Unmarshal(b, &u); err != nil {
