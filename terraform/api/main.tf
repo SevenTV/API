@@ -101,12 +101,16 @@ resource "kubernetes_deployment" "api" {
             name           = "metrics"
           }
           port {
+            container_port = 9200
+            name           = "health"
+          }
+          port {
             container_port = 9300
             name           = "pprof"
           }
           port {
-            container_port = 9500
-            name           = "health"
+            container_port = 9400
+            name           = "event-bridge"
           }
           readiness_probe {
             initial_delay_seconds = 5
@@ -200,14 +204,19 @@ resource "kubernetes_service" "api" {
       target_port = "metrics"
     }
     port {
+      name = "health"
+      port = 9200
+      target_port = "health"
+    }
+    port {
       name = "pprof"
       port = 9300
       target_port = "pprof"
     }
     port {
-      name = "health"
-      port = 9500
-      target_port = "health"
+      name = "event-bridge"
+      port = 9400
+      target_port = "event-bridge"
     }
   }
 }

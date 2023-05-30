@@ -38,7 +38,7 @@ pprof:
 
 event_bridge:
   enabled: true
-  bind: 0.0.0.0:9700
+  bind: 0.0.0.0:9400
 
 limits:
   max_page: 25
