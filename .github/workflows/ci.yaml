@@ -116,44 +116,22 @@ jobs:
       - name: Build App
         run: make build
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
-        uses: aws-actions/amazon-ecr-login@v1
-
       - name: Make build context
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         run: |
           docker context create builders
 
       - name: Setup buildx
         uses: docker/setup-buildx-action@v2
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         with:
           install: true
           endpoint: builders
 
       - name: Build docker image
         uses: docker/build-push-action@v4
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
         with:
           context: .
           file: docker/partial.Dockerfile
-          # cache-from: |
-          #   type=registry,ref=gha
-          # cache-to: |
-          #   type=registry,ref=gha,mode=max
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
             ghcr.io/seventv/api:latest
             ghcr.io/seventv/api:${{ github.sha }}
           push: true
