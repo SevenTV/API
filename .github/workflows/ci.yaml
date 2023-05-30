@@ -148,6 +148,8 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
+            ghcr.io/seventv/api:latest
+            ghcr.io/seventv/api:${{ github.sha }}
           push: true
 
       - name: Update deployment template
