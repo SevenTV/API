@@ -48,11 +48,7 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	// Filter out unsupported platforms
 	platform := structures.UserConnectionPlatform(strings.ToUpper(platformArg))
-	switch platform {
-	case structures.UserConnectionPlatformTwitch:
-	case structures.UserConnectionPlatformYouTube:
-	case structures.UserConnectionPlatformDiscord:
-	default:
+	if !platform.Supported() {
 		return errors.ErrUnknownUserConnection().SetDetail("'%s' is not supported", platform)
 	}
 

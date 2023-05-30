@@ -21,6 +21,10 @@ var allowedHeaders = []string{
 	"X-SevenTV-Version",
 }
 
+var exposedHeaders = []string{
+	"X-Access-Token",
+}
+
 func CORS(gctx global.Context) Middleware {
 	return func(ctx *fasthttp.RequestCtx) errors.APIError {
 		reqHost := utils.B2S(ctx.Request.Header.Peek("Origin"))
@@ -29,6 +33,7 @@ func CORS(gctx global.Context) Middleware {
 
 		ctx.Response.Header.Set("Access-Control-Allow-Credentials", strconv.FormatBool(allowCredentials))
 		ctx.Response.Header.Set("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ", "))
+		ctx.Response.Header.Set("Access-Control-Expose-Headers", strings.Join(exposedHeaders, ", "))
 		ctx.Response.Header.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE")
 		ctx.Response.Header.Set("Access-Control-Allow-Origin", reqHost)
 		ctx.Response.Header.Set("Vary", "Origin")

@@ -148,6 +148,7 @@ data:
           - https://7tv.app
           - https://twitch.tv
           - https://www.twitch.tv
+          - https://kick.com
 
     health:
       enabled: true
