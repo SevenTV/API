@@ -1,6 +1,6 @@
 <template>
 	<main class="apps">
-		<p>In development</p>
+		<h1>In Development...</h1>
 	</main>
 </template>
 
@@ -14,8 +14,10 @@ main.apps {
 	margin-right: 15%;
 	margin-left: 15%;
 
-	p {
-		margin-bottom: 1em;
+	h1 {
+		margin-top: 5em;
+		font-size: 2em;
+		text-align: center;
 	}
 }
 </style>

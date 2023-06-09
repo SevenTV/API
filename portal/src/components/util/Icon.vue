@@ -1,18 +1,5 @@
 <template>
-	<font-awesome-icon :size="size" :icon="[lib ?? (pro ? 'far' : 'fas'), icon]" />
+	<svg xmlns="http://www.w3.org/2000/svg" height="1em" fill="#FFFFFF" viewBox="0 0 50 50">
+		<path d="M 0 7.5 L 0 12.5 L 50 12.5 L 50 7.5 Z M 0 22.5 L 0 27.5 L 50 27.5 L 50 22.5 Z M 0 37.5 L 0 42.5 L 50 42.5 L 50 37.5 Z"></path>
+	</svg>
 </template>
-
-<script setup lang="ts">
-import { useStore } from "@/store/main";
-import { storeToRefs } from "pinia";
-
-defineProps<{
-	icon: string;
-	lib?: string;
-	size?: Size;
-}>();
-
-const { faPro: pro } = storeToRefs(useStore());
-
-type Size = "xs" | "sm" | "md" | "lg" | "xl";
-</script>
