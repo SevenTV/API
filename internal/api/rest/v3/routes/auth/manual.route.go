@@ -32,6 +32,7 @@ func (r *verifyRoute) Config() rest.RouteConfig {
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
 			bindCurrentAccessToken,
+			middleware.SetCacheControl(r.gctx, 0, []string{"no-cache"}),
 			middleware.Auth(r.gctx, false),
 		},
 	}

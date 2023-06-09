@@ -1,8 +1,6 @@
 package user
 
 import (
-	"strings"
-
 	"github.com/seventv/api/data/query"
 	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
@@ -53,8 +51,6 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 
 	filter := utils.Ternary(id.IsZero(), bson.M{"$or": bson.A{
 		bson.M{"connections.id": key},
-		bson.M{"connections.data.login": strings.ToLower(key)},
-		bson.M{"username": strings.ToLower(key)},
 	}}, bson.M{
 		"_id": id,
 	})

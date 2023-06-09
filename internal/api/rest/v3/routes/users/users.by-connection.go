@@ -27,7 +27,7 @@ func (r *userConnectionRoute) Config() rest.RouteConfig {
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
-			middleware.SetCacheControl(r.Ctx, 60, []string{"public"}),
+			middleware.SetCacheControl(r.Ctx, 600, []string{"public"}),
 		},
 	}
 }
@@ -129,6 +129,10 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if !emoteSetModel.ID.IsZero() {
 		userConnModel.EmoteSet = &emoteSetModel
+	}
+
+	if len(emoteSetModel.Emotes) == 0 {
+		ctx.Response.Header.Set("Cache-Control", "max-age=10")
 	}
 
 	return ctx.JSON(rest.OK, userConnModel)

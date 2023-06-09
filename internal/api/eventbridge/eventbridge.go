@@ -65,10 +65,12 @@ func New(gctx global.Context) <-chan struct{} {
 				zap.S().Errorw("eventapi bridge command failed", "error", err)
 			}
 
-			if len(result) > 0 {
-				if err := json.NewEncoder(w).Encode(result); err != nil {
-					zap.S().Errorw("eventapi bridge command failed", "error", err)
-				}
+			if result == nil {
+				result = []events.Message[json.RawMessage]{}
+			}
+
+			if err := json.NewEncoder(w).Encode(result); err != nil {
+				zap.S().Errorw("eventapi bridge command failed", "error", err)
 			}
 
 			w.WriteHeader(200)
