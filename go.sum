@@ -336,12 +336,6 @@ github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee h1:8Iv5m6xEo1NR1Avp
 github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee/go.mod h1:qwtSXrKuJh/zsFQ12yEE89xfCrGKK63Rr7ctU/uCo4g=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
-github.com/seventv/common v0.0.0-20230520215117-329d4f6c8680 h1:qZS9KubLRpQ7FJlF65t9xjzQCcQEaxFv+/W+PJmb/HY=
-github.com/seventv/common v0.0.0-20230520215117-329d4f6c8680/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
-github.com/seventv/common v0.0.0-20230523123640-a3d24613572e h1:T9UFnNeKoPcCuisHGQfPFuepJAPkf55OvH1COfLU9CA=
-github.com/seventv/common v0.0.0-20230523123640-a3d24613572e/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
-github.com/seventv/common v0.0.0-20230528184736-5fee5961058b h1:7Am3gf0W9azFawC60kbJlYlTry/5Awh4+M/KCotblMA=
-github.com/seventv/common v0.0.0-20230528184736-5fee5961058b/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/common v0.0.0-20230528214454-1a842fd909aa h1:kIYvE8Ii1VmbTNQzI22QMiufnQZeG3vWURrCHd4ZH2I=
 github.com/seventv/common v0.0.0-20230528214454-1a842fd909aa/go.mod h1:jHHFe3uNMyzb/ReDqMvaI/A1euvV/PW/G+2PhcWQqWw=
 github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48 h1:IqWrtt/yob45YnOQ5Wwkbf8qP22eKVtg0WzfyEkGnFg=
