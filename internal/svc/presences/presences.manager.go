@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	MOST_UNIQUE_PRESENCES_PER_IP = 3
+	MOST_UNIQUE_PRESENCES_PER_IP = 5
 )
 
 type PresenceManager[T structures.UserPresenceData] interface {
