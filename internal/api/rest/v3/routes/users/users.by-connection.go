@@ -66,6 +66,8 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	uc, i := user.Connections.Get(connID)
 	if i == -1 {
+		ctx.Response.Header.Set("Cache-Control", "max-age=0")
+
 		return errors.ErrUnknownUserConnection()
 	}
 
