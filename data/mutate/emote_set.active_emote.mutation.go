@@ -265,17 +265,73 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 						}).SetDetail("You cannot request this emote for Personal Use because it is not publicly listed")
 					}
 
-					// Construct & write new mod request
-					mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
-						SetKind(structures.MessageKindModRequest).
-						SetAuthorID(actor.ID).
-						SetData(structures.MessageDataModRequest{
-							TargetKind: structures.ObjectKindEmote,
-							TargetID:   tgt.emote.ID,
-							Wish:       "personal_use",
-						})
-					if err := m.SendModRequestMessage(ctx, mb); err != nil {
-						z.Errorw("failed to send personal_use mod request message", "error", err)
+					// Check for existing mod request
+					cur, err := m.mongo.Collection(mongo.CollectionNameMessages).Aggregate(ctx, mongo.Pipeline{
+						{{
+							Key: "$match",
+							Value: bson.M{ // find mod request messages targeting this emote
+								"kind":             structures.MessageKindModRequest,
+								"data.target_kind": structures.ObjectKindEmote,
+								"data.target_id":   tgt.emote.ID,
+							},
+						}},
+						{{
+							Key: "$lookup",
+							Value: mongo.Lookup{ // join with read states
+								From:         mongo.CollectionNameMessagesRead,
+								LocalField:   "_id",
+								ForeignField: "message_id",
+								As:           "read_states",
+							},
+						}},
+						{{
+							Key: "$project", // return true if read states exist
+							Value: bson.M{"is_pending": bson.M{
+								"$gt": bson.A{bson.M{"$size": bson.M{"$filter": bson.M{
+									"input": "$read_states",
+									"as":    "rs",
+									"cond":  bson.M{"$eq": bson.A{"$$rs.read", false}},
+								}}}, 0},
+							}},
+						}},
+					})
+					if err != nil {
+						z.Errorw("failed to check for existing mod request (aggregation couldn't be formulated)")
+
+						return errors.ErrInternalServerError()
+					}
+
+					states := []struct {
+						IsPending bool `bson:"is_pending"`
+					}{}
+					if err := cur.All(ctx, &states); err != nil {
+						z.Errorw("failed to check for existing mod request (could not return from cursor)")
+
+						return errors.ErrInternalServerError()
+					}
+
+					// If there is a pending mod request, skip
+					alreadyRequested := false
+
+					for _, state := range states {
+						if alreadyRequested = state.IsPending; alreadyRequested {
+							break
+						}
+					}
+
+					if !alreadyRequested {
+						// Construct & write new mod request
+						mb := structures.NewMessageBuilder(structures.Message[structures.MessageDataModRequest]{}).
+							SetKind(structures.MessageKindModRequest).
+							SetAuthorID(actor.ID).
+							SetData(structures.MessageDataModRequest{
+								TargetKind: structures.ObjectKindEmote,
+								TargetID:   tgt.emote.ID,
+								Wish:       "personal_use",
+							})
+						if err := m.SendModRequestMessage(ctx, mb); err != nil {
+							z.Errorw("failed to send personal_use mod request message", "error", err)
+						}
 					}
 				}
 
