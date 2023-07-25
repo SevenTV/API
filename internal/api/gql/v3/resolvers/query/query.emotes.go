@@ -102,7 +102,7 @@ func (r *Resolver) Emotes(ctx context.Context, queryValue string, pageArg *int, 
 		page = 1
 	}
 
-	if page > r.Ctx.Config().Limits.MaxPage {
+	if page > r.Ctx.Config().Limits.MaxPage && !actor.HasPermission(structures.RolePermissionEditAnyEmote) {
 		page = r.Ctx.Config().Limits.MaxPage
 	}
 
