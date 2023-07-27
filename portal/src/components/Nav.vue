@@ -11,7 +11,9 @@
 			</div>
 		</router-link>
 
-		<button class="toggle-collapse" @click="toggleNav">Menu</button>
+		<button class="toggle-collapse" @click="toggleNav">
+			<Icon />
+		</button>
 		<div class="collapse">
 			<div class="nav-links">
 				<div v-for="link of navLinks" :key="link.route">
@@ -42,6 +44,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import Logo from "@svg/Logo.vue";
+import Icon from "@components/util/Icon.vue"
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -108,22 +111,23 @@ nav {
 	.logo {
 		display: flex;
 		color: #e12d2d;
-		width: 1em;
-		height: 1em;
+		width: 1.25em;
+		height: 1.25em;
 		margin-right: 0.25em;
 		font-size: 1.25em;
 		background-repeat: no-repeat;
 		background-size: cover;
+		justify-content: center;
+		align-items: center;
 	}
 
-	.text .name {
+	.name {
 		font-weight: 700;
 		font-family: "Work Sans", sans-serif;
 		font-size: 1.25em;
 	}
 
 	.dev-stage-text {
-		width: 0;
 		position: relative;
 		font-size: 0.5em;
 		bottom: -1em;
@@ -143,7 +147,7 @@ nav {
 .account {
 	display: flex;
 	flex-wrap: wrap;
-	width: 20%;
+	width: 10%;
 }
 
 .env {
@@ -311,7 +315,12 @@ nav {
 
 	.toggle-collapse {
 		margin-left: auto;
-		display: block;
+		display: flex;
+		align-content: center;
+	}
+
+	.text{
+		width: auto;
 	}
 }
 </style>
