@@ -13,6 +13,8 @@ resource "kubernetes_secret" "app" {
   data = {
     "config.yaml" = templatefile("${path.module}/config.template.yaml", {
       bind                  = "0.0.0.0:3000"
+      website_url           = var.website_url
+      cdn_url               = var.cdn_url
       http_addr             = var.http_addr
       http_port_gql         = var.http_port_gql
       http_port_rest        = var.http_port_rest
@@ -25,9 +27,13 @@ resource "kubernetes_secret" "app" {
       discord_client_id     = var.discord_client_id
       discord_client_secret = var.discord_client_secret
       discord_redirect_uri  = var.discord_redirect_uri
+      discord_api           = ""
+      discord_channels      = yamlencode([])
+      kick_challenge_token  = ""
       mongo_uri             = local.infra.mongodb_uri
       mongo_username        = local.infra.mongodb_user_app.username
       mongo_password        = local.infra.mongodb_user_app.password
+      mongo_database        = "7tv"
       redis_address         = local.infra.redis_host
       redis_username        = "default"
       redis_password        = local.infra.redis_password
@@ -327,7 +333,7 @@ resource "kubernetes_ingress_v1" "app" {
   }
 }
 
-resource "kubernetes_horizontal_pod_autoscaler_v2" "apil" {
+resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
   metadata {
     name      = "api"
     namespace = kubernetes_namespace.app.metadata[0].name
@@ -368,17 +374,19 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "apil" {
     behavior {
       scale_down {
         stabilization_window_seconds = 300
-        policies {
-          type  = "Pods"
-          value = 1
+        policy {
+          type           = "Pods"
+          value          = 1
+          period_seconds = 15
         }
       }
 
       scale_up {
         stabilization_window_seconds = 120
-        policies {
-          type  = "Pods"
-          value = 1
+        policy {
+          type           = "Pods"
+          value          = 1
+          period_seconds = 15
         }
       }
     }
