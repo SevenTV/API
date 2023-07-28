@@ -19,10 +19,16 @@ type AnyPayload interface {
 }
 
 type HelloPayload struct {
-	HeartbeatInterval uint32              `json:"heartbeat_interval"`
-	SessionID         string              `json:"session_id"`
-	SubscriptionLimit int32               `json:"subscription_limit"`
-	Actor             *primitive.ObjectID `json:"actor,omitempty"`
+	HeartbeatInterval uint32                   `json:"heartbeat_interval"`
+	SessionID         string                   `json:"session_id"`
+	SubscriptionLimit int32                    `json:"subscription_limit"`
+	Actor             *primitive.ObjectID      `json:"actor,omitempty"`
+	Instance          HelloPayloadInstanceInfo `json:"instance,omitempty"`
+}
+
+type HelloPayloadInstanceInfo struct {
+	Name       string `json:"name"`
+	Population int32  `json:"population"`
 }
 
 type AckPayload struct {
