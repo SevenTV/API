@@ -13,7 +13,7 @@ resource "kubernetes_secret" "app" {
   data = {
     "config.yaml" = templatefile("${path.module}/config.template.yaml", {
       bind                  = "0.0.0.0:3000"
-      website_url           = var.website_url
+      website_url           = "https://${local.infra.primary_zone}"
       cdn_url               = var.cdn_url
       http_addr             = var.http_addr
       http_port_gql         = var.http_port_gql
