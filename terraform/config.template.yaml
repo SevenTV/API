@@ -1,0 +1,55 @@
+level: info
+
+website_url: ${website_url}
+cdn_url: ${cdn_url}
+
+http:
+  addr: ${http_addr}
+  ports:
+    gql: ${http_port_gql}
+    rest: ${http_port_rest}
+
+  cookie:
+    domain: ${cookie_domain}
+    secure: ${cookie_secure}
+    whitelist: ${cookie_whitelist}
+
+plaftorms:
+  twitch:
+    client_id: ${twitch_client_id}
+    client_secret: ${twitch_client_secret}
+    redirect_uri: ${twitch_redirect_uri}
+  discord:
+    client_id: ${discord_client_id}
+    client_secret: ${discord_client_secret}
+    redirect_uri: ${discord_redirect_uri}
+    api: ${discord_api}
+    channels: ${discord_channels}
+  kick:
+    challenge_token: ${kick_challenge_token}
+
+monitoring:
+  enabled: true
+  bind: 0.0.0.0:9100
+
+pprof:
+  enabled: false
+  bind: 0.0.0.0:9300
+
+mongo:
+  uri: ${mongo_uri}
+  database: ${mongo_database}
+  username: ${mongo_username}
+  password: ${mongo_password}
+
+redis:
+  addresses:
+    - ${redis_address}
+  sentinel: true
+  master_name: "mymaster"
+  username: ${redis_username}
+  password: ${redis_password}
+
+health:
+  enabled: true
+  bind: 0.0.0.0:9200

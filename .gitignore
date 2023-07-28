@@ -6,6 +6,7 @@ out/
 tmp/
 *.yaml
 !example.config.yaml
+!terraform/config.template.yaml
 !docker-compose.yaml
 !.github/**/*.yaml
 *-gqlgen.go
