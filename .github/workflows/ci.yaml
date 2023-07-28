@@ -154,14 +154,18 @@ jobs:
 
     steps:
       - name: Checkout code
+        id: ok
+        if: env.DEPLOY != 'none'
         uses: actions/checkout@v3
 
       - name: "Setup Terraform"
+        if: steps.ok.outcome == 'success'
         uses: hashicorp/setup-terraform@v1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: "Terraform Init"
+        if: steps.ok.outcome == 'success'
         id: init
         env:
           TF_WORKSPACE: ${{ env.DEPLOY }}
@@ -169,18 +173,22 @@ jobs:
         continue-on-error: true
 
       - name: "Terraform Workspace"
+        if: steps.ok.outcome == 'success'
         run: terraform workspace select -or-create=true ${{ env.DEPLOY }}
 
       - name: Terraform fmt
+        if: steps.ok.outcome == 'success'
         id: fmt
         run: terraform fmt -check
         continue-on-error: true
 
       - name: Terraform Validate
+        if: steps.ok.outcome == 'success'
         id: validate
         run: terraform validate -no-color
 
       - name: Terraform Variables
+        if: steps.ok.outcome == 'success'
         run: |
           cat <<EOF > *.auto.tfvars
             image_url="ghcr.io/seventv/API:${{ env.DEPLOY }}-${{ github.sha }}"
@@ -189,11 +197,12 @@ jobs:
           EOF
 
       - name: "Terraform Plan"
+        if: steps.ok.outcome == 'success'
         id: plan
         run: terraform plan -no-color
 
       - uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
+        if: steps.ok.outcome == 'success' && github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
@@ -251,7 +260,7 @@ jobs:
             }
 
       - name: "Terraform Apply"
-        if: env.deploy != 'none'
+        if: steps.ok.outcome == 'success'
         id: apply
         run: terraform apply -no-color -auto-approve
         continue-on-error: true
