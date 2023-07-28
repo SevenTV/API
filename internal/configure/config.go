@@ -141,9 +141,11 @@ type Config struct {
 	} `mapstructure:"redis" json:"redis"`
 
 	Mongo struct {
-		URI    string `mapstructure:"uri" json:"uri"`
-		DB     string `mapstructure:"db" json:"db"`
-		Direct bool   `mapstructure:"direct" json:"direct"`
+		URI      string `mapstructure:"uri" json:"uri"`
+		Username string `mapstructure:"username" json:"username"`
+		Password string `mapstructure:"password" json:"password"`
+		DB       string `mapstructure:"db" json:"db"`
+		Direct   bool   `mapstructure:"direct" json:"direct"`
 	} `mapstructure:"mongo" json:"mongo"`
 
 	Health struct {
