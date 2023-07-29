@@ -100,7 +100,7 @@ jobs:
         run: make generate
 
       - name: Build Dev Portal Frontend
-        run: make ${{ (env.DEPLOY_PROD == 'true' && 'portal') || 'portal_stage' }}
+        run: make ${{ (env.DEPLOY == 'prod' && 'portal') || 'portal_stage' }}
 
       - name: Run Linter
         run: make lint

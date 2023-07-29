@@ -20,7 +20,7 @@ resource "kubernetes_secret" "app" {
       http_port_rest        = var.http_port_rest
       cookie_domain         = local.infra.secondary_zone
       cookie_secure         = true
-      cookie_whitelist      = var.cookie_whitelist
+      cookie_whitelist      = yamlencode(var.cookie_whitelist)
       twitch_client_id      = var.twitch_client_id
       twitch_client_secret  = var.twitch_client_secret
       twitch_redirect_uri   = var.twitch_redirect_uri
@@ -142,7 +142,7 @@ resource "kubernetes_deployment" "app" {
               memory = "4Gi"
             }
             limits = {
-              cpu    = "1250m"
+              cpu    = "1750m"
               memory = "4.25Gi"
             }
           }

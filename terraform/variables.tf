@@ -31,10 +31,6 @@ variable "image_pull_policy" {
   default = "Always"
 }
 
-variable "website_url" {
-  type = string
-}
-
 variable "cdn_url" {
   type = string
 }
