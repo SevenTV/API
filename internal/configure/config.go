@@ -279,6 +279,7 @@ type Config struct {
 	} `mapstructure:"message_queue" json:"message_queue"`
 
 	S3 struct {
+		Enabled        bool   `mapstructure:"enabled" json:"enabled"`
 		AccessToken    string `mapstructure:"access_token" json:"access_token"`
 		SecretKey      string `mapstructure:"secret_key" json:"secret_key"`
 		Region         string `mapstructure:"region" json:"region"`

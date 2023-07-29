@@ -73,7 +73,7 @@ resource "kubernetes_deployment" "app" {
       spec {
         container {
           name  = "api"
-          image = var.image_url
+          image = local.image_url
 
           port {
             name           = "gql"
@@ -154,24 +154,26 @@ resource "kubernetes_deployment" "app" {
           }
 
           liveness_probe {
-            tcp_socket {
+            http_get {
               port = "health"
+              path = "/"
             }
             initial_delay_seconds = 10
             timeout_seconds       = 5
             period_seconds        = 5
-            success_threshold     = 2
+            success_threshold     = 1
             failure_threshold     = 4
           }
 
           readiness_probe {
-            tcp_socket {
+            http_get {
               port = "health"
+              path = "/"
             }
             initial_delay_seconds = 10
             timeout_seconds       = 5
             period_seconds        = 5
-            success_threshold     = 2
+            success_threshold     = 1
             failure_threshold     = 3
           }
 
