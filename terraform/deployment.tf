@@ -205,13 +205,13 @@ resource "kubernetes_service" "app" {
     port {
       name        = "gql"
       port        = 3000
-      target_port = "http"
+      target_port = "gql"
     }
 
     port {
       name        = "rest"
       port        = 3100
-      target_port = "http"
+      target_port = "rest"
     }
 
     port {
@@ -376,6 +376,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
     behavior {
       scale_down {
         stabilization_window_seconds = 300
+        select_policy                = "Min"
         policy {
           type           = "Pods"
           value          = 1
@@ -385,6 +386,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
 
       scale_up {
         stabilization_window_seconds = 120
+        select_policy                = "Min"
         policy {
           type           = "Pods"
           value          = 1
