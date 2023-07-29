@@ -38,7 +38,7 @@ pprof:
 
 mongo:
   uri: ${mongo_uri}
-  database: ${mongo_database}
+  db: ${mongo_database}
   username: ${mongo_username}
   password: ${mongo_password}
 

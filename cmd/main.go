@@ -105,9 +105,11 @@ func main() {
 
 	{
 		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{
-			URI:    config.Mongo.URI,
-			DB:     config.Mongo.DB,
-			Direct: config.Mongo.Direct,
+			URI:      config.Mongo.URI,
+			DB:       config.Mongo.DB,
+			Direct:   config.Mongo.Direct,
+			Username: config.Mongo.Username,
+			Password: config.Mongo.Password,
 		})
 		if err != nil {
 			zap.S().Fatalw("failed to setup mongo handler",

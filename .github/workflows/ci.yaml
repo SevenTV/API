@@ -141,7 +141,6 @@ jobs:
             ghcr.io/seventv/api:${{ env.DEPLOY }}-latest
           push: true
 
-
   validate:
     name: API Deploy Validation
     needs: ci
@@ -191,7 +190,7 @@ jobs:
         if: steps.ok.outcome == 'success'
         run: |
           cat <<EOF > *.auto.tfvars
-            image_url="ghcr.io/seventv/API:${{ env.DEPLOY }}-${{ github.sha }}"
+            image_url="ghcr.io/seventv/api:${{ env.DEPLOY }}-${{ github.sha }}"
             image_pull_policy="IfNotPresent"
 
           EOF
