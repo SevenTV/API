@@ -131,6 +131,7 @@ func (r *userConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 
 	if !emoteSetModel.ID.IsZero() {
 		userConnModel.EmoteSet = &emoteSetModel
+		userConnModel.EmoteSetID = &emoteSetModel.ID
 	}
 
 	if len(emoteSetModel.Emotes) == 0 {

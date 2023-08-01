@@ -58,12 +58,15 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 	username, displayName := v.Username()
 
 	var set *EmoteSetModel
+	var setID *primitive.ObjectID
 
 	if v.EmoteSet != nil {
 		s := x.EmoteSet(*v.EmoteSet)
 		set = &s
+		setID = &v.EmoteSetID
 	} else if !v.EmoteSetID.IsZero() {
 		set = utils.PointerOf(x.EmoteSet(structures.EmoteSet{ID: v.EmoteSetID}))
+		setID = &v.EmoteSetID
 	}
 
 	return UserConnectionModel{
@@ -74,6 +77,7 @@ func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserCo
 		LinkedAt:      v.LinkedAt.UnixMilli(),
 		EmoteCapacity: int32(v.EmoteSlots),
 		EmoteSet:      set,
+		EmoteSetID:    setID,
 	}
 }
 
