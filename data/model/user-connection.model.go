@@ -57,8 +57,10 @@ var (
 func (x *modelizer) UserConnection(v structures.UserConnection[bson.Raw]) UserConnectionModel {
 	username, displayName := v.Username()
 
-	var set *EmoteSetModel
-	var setID *primitive.ObjectID
+	var (
+		set   *EmoteSetModel
+		setID *primitive.ObjectID
+	)
 
 	if v.EmoteSet != nil {
 		s := x.EmoteSet(*v.EmoteSet)
