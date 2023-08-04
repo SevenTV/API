@@ -12,9 +12,25 @@ http:
   cookie:
     domain: ${cookie_domain}
     secure: ${cookie_secure}
-    whitelist: ${cookie_whitelist}
+    whitelist:
+      - ${website_url}
+      - https://twitch.tv
+      - httts://www.twitch.tv
+      - https://kick.com
 
-plaftorms:
+limits:
+  max_page: 25
+  buckets:
+    gql_v3: [250, 2]
+    image_processing: [20, 60]
+  emotes:
+    max_tags: 6
+    max_width: 1000
+    max_height: 1000
+  quota:
+    max_active_mod_requests: 3
+
+platforms:
   twitch:
     client_id: ${twitch_client_id}
     client_secret: ${twitch_client_secret}
@@ -53,3 +69,6 @@ redis:
 health:
   enabled: true
   bind: 0.0.0.0:9200
+
+credentials:
+  jwt_secret: ${jwt_secret}

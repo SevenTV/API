@@ -20,6 +20,12 @@ variable "namespace" {
   default = "app"
 }
 
+variable "production" {
+  description = "Whether or not to scale resources to a production state"
+  type        = bool
+  default     = false
+}
+
 variable "image_url" {
   type     = string
   nullable = true
@@ -48,11 +54,6 @@ variable "http_port_gql" {
 variable "http_port_rest" {
   type    = number
   default = 3100
-}
-
-variable "cookie_whitelist" {
-  type    = list(string)
-  default = []
 }
 
 variable "twitch_client_id" {

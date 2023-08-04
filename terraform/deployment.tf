@@ -1,4 +1,4 @@
-resource "kubernetes_namespace" "app" {
+data "kubernetes_namespace" "app" {
   metadata {
     name = var.namespace
   }
@@ -20,10 +20,9 @@ resource "kubernetes_secret" "app" {
       http_port_rest        = var.http_port_rest
       cookie_domain         = local.infra.secondary_zone
       cookie_secure         = true
-      cookie_whitelist      = yamlencode(var.cookie_whitelist)
       twitch_client_id      = var.twitch_client_id
       twitch_client_secret  = var.twitch_client_secret
-      twitch_redirect_uri   = var.twitch_redirect_uri
+      twitch_redirect_uri   = "https://${local.infra.secondary_zone}/v3/auth?platform=twitch&callback=true"
       discord_client_id     = var.discord_client_id
       discord_client_secret = var.discord_client_secret
       discord_redirect_uri  = var.discord_redirect_uri
@@ -37,17 +36,26 @@ resource "kubernetes_secret" "app" {
       redis_address         = local.infra.redis_host
       redis_username        = "default"
       redis_password        = local.infra.redis_password
+      jwt_secret            = random_id.jwt-secret.hex
     })
   }
+}
+
+resource "random_id" "jwt-secret" {
+  byte_length = 64
 }
 
 resource "kubernetes_deployment" "app" {
   metadata {
     name      = "api"
-    namespace = kubernetes_namespace.app.metadata[0].name
+    namespace = data.kubernetes_namespace.app.metadata[0].name
     labels = {
       app = "api"
     }
+  }
+
+  lifecycle {
+    replace_triggered_by = [kubernetes_secret.app]
   }
 
   timeouts {
@@ -60,6 +68,14 @@ resource "kubernetes_deployment" "app" {
     selector {
       match_labels = {
         app = "api"
+      }
+    }
+
+    strategy {
+      type = "RollingUpdate"
+      rolling_update {
+        max_surge       = "25%"
+        max_unavailable = "15%"
       }
     }
 
@@ -126,24 +142,14 @@ resource "kubernetes_deployment" "app" {
             }
           }
 
-          lifecycle {
-            // Pre-stop hook is used to send a fallback signal to the container
-            // to gracefully remove all connections ahead of shutdown
-            pre_stop {
-              exec {
-                command = ["sh", "-c", "sleep 5 && echo \"1\" >> shutdown"]
-              }
-            }
-          }
-
           resources {
             requests = {
-              cpu    = "1500m"
-              memory = "4Gi"
+              cpu    = var.production ? "1500m" : "100m"
+              memory = var.production ? "4Gi" : "600Mi"
             }
             limits = {
-              cpu    = "1750m"
-              memory = "4.25Gi"
+              cpu    = var.production ? "1750m" : "150m"
+              memory = var.production ? "4.25Gi" : "700Mi"
             }
           }
 
@@ -194,7 +200,7 @@ resource "kubernetes_deployment" "app" {
 resource "kubernetes_service" "app" {
   metadata {
     name      = "api"
-    namespace = kubernetes_namespace.app.metadata[0].name
+    namespace = data.kubernetes_namespace.app.metadata[0].name
   }
 
   spec {
@@ -249,7 +255,7 @@ resource "kubernetes_service" "app" {
 resource "kubernetes_ingress_v1" "app" {
   metadata {
     name      = "api"
-    namespace = kubernetes_namespace.app.metadata[0].name
+    namespace = data.kubernetes_namespace.app.metadata[0].name
     annotations = {
       "kubernetes.io/ingress.class"                         = "nginx"
       "external-dns.alpha.kubernetes.io/target"             = local.infra.cloudflare_tunnel_hostname
@@ -338,7 +344,7 @@ resource "kubernetes_ingress_v1" "app" {
 resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
   metadata {
     name      = "api"
-    namespace = kubernetes_namespace.app.metadata[0].name
+    namespace = data.kubernetes_namespace.app.metadata[0].name
   }
 
   spec {
