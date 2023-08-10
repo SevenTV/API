@@ -15,7 +15,7 @@ http:
     whitelist:
       - ${website_url}
       - https://twitch.tv
-      - httts://www.twitch.tv
+      - https://www.twitch.tv
       - https://kick.com
 
 limits:
@@ -65,6 +65,22 @@ redis:
   master_name: "mymaster"
   username: ${redis_username}
   password: ${redis_password}
+
+message_queue:
+  mode: "RMQ"
+  image_processor_jobs_queue_name: "seventv_image_processor_jobs"
+  image_processor_results_queue_name: "seventv_image_processor_results"
+  image_processor_user_pictures_results_queue_name: "seventv_image_processor_user_pictures_results"
+  rmq:
+    uri: ${rmq_uri}
+    max_reconnect_attempts: 25
+
+s3:
+  region: ${s3_region}
+  access_token: ${s3_access_key}
+  secret_key: ${s3_secret_key}
+  internal_bucket: ${s3_internal_bucket}
+  public_bucket: ${s3_public_bucket}
 
 health:
   enabled: true
