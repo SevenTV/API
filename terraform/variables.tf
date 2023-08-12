@@ -85,3 +85,16 @@ variable "discord_redirect_uri" {
   type    = string
   default = ""
 }
+
+variable "s3" {
+  type = object({
+    endpoint        = string
+    region          = string
+    ak              = string
+    sk              = string
+    internal_bucket = string
+    public_bucket   = string
+  })
+  nullable = true
+  default  = null
+}

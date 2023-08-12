@@ -37,11 +37,12 @@ resource "kubernetes_secret" "app" {
       redis_username        = "default"
       redis_password        = local.infra.redis_password
       rmq_uri               = local.infra.rabbitmq_uri
-      s3_region             = local.infra.region
-      s3_access_key         = local.infra.s3_access_key.id
-      s3_secret_key         = local.infra.s3_access_key.secret
-      s3_internal_bucket    = local.infra.s3_bucket.internal
-      s3_public_bucket      = local.infra.s3_bucket.public
+      s3_region             = local.s3.region
+      s3_access_key         = local.s3.ak
+      s3_secret_key         = local.s3.sk
+      s3_internal_bucket    = local.s3.internal_bucket
+      s3_public_bucket      = local.s3.public_bucket
+      s3_endpoint           = local.s3.endpoint != null ? local.s3.endpoint : ""
       jwt_secret            = random_id.jwt-secret.hex
     })
   }
