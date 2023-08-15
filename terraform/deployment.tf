@@ -151,12 +151,12 @@ resource "kubernetes_deployment" "app" {
 
           resources {
             requests = {
-              cpu    = var.production ? "1500m" : "100m"
-              memory = var.production ? "4Gi" : "600Mi"
+              cpu    = local.infra.production ? "1500m" : "100m"
+              memory = local.infra.production ? "4Gi" : "600Mi"
             }
             limits = {
-              cpu    = var.production ? "1750m" : "150m"
-              memory = var.production ? "4.25Gi" : "700Mi"
+              cpu    = local.infra.production ? "1750m" : "150m"
+              memory = local.infra.production ? "4.25Gi" : "700Mi"
             }
           }
 
@@ -267,6 +267,8 @@ resource "kubernetes_ingress_v1" "app" {
       "kubernetes.io/ingress.class"                         = "nginx"
       "external-dns.alpha.kubernetes.io/target"             = local.infra.cloudflare_tunnel_hostname
       "external-dns.alpha.kubernetes.io/cloudflare-proxied" = "true"
+      "nginx.ingress.kubernetes.io/limit-connections" : "64"
+      "nginx.ingress.kubernetes.io/proxy-body-size" : "7m"
     }
   }
 
