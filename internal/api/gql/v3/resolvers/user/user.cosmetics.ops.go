@@ -4,14 +4,15 @@ import (
 	"context"
 	"strings"
 
-	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/internal/api/gql/v3/auth"
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/internal/api/gql/v3/auth"
+	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 )
 
 func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update model.UserCosmeticUpdate) (*bool, error) {
@@ -136,7 +137,7 @@ func (r *ResolverOps) Cosmetics(ctx context.Context, obj *model.UserOps, update 
 	}
 
 	if res.ModifiedCount > 0 {
-		r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+		r.Ctx.Inst().Events.Dispatch(events.EventTypeUpdateUser, events.ChangeMap{
 			ID:      obj.ID,
 			Kind:    structures.ObjectKindUser,
 			Actor:   r.Ctx.Inst().Modelizer.User(actor).ToPartial(),

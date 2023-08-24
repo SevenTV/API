@@ -3,7 +3,6 @@ package mutate
 import (
 	"context"
 
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -11,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 // SetRole: add or remove a role for the user
@@ -117,7 +118,7 @@ func (m *Mutate) SetRole(ctx context.Context, ub *structures.UserBuilder, opt Se
 	}
 
 	// Emit a event
-	m.events.Dispatch(ctx, events.EventTypeUpdateUser, cm, events.EventCondition{
+	m.events.Dispatch(events.EventTypeUpdateUser, cm, events.EventCondition{
 		"object_id": ub.User.ID.Hex(),
 	})
 

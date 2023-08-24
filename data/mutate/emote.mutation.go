@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -17,6 +16,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 const EMOTE_CLAIMANTS_MOST = 10
@@ -368,7 +369,7 @@ func (m *Mutate) EditEmote(ctx context.Context, eb *structures.EmoteBuilder, opt
 			for _, ver := range emote.Versions {
 				go func(ver structures.EmoteVersion) {
 					// Emit to the Event API
-					m.events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
+					m.events.Dispatch(events.EventTypeUpdateEmote, events.ChangeMap{
 						ID:      ver.ID,
 						Kind:    structures.ObjectKindEmote,
 						Actor:   m.modelizer.User(actor).ToPartial(),

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -16,6 +15,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 const (
@@ -376,7 +377,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 			})
 
 			// Publish a message to the Event API
-			m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+			m.events.Dispatch(events.EventTypeUpdateEmoteSet, events.ChangeMap{
 				ID:    esb.EmoteSet.ID,
 				Kind:  structures.ObjectKindEmoteSet,
 				Actor: m.modelizer.User(actor).ToPartial(),
@@ -463,7 +464,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 				})
 				esb.UpdateActiveEmote(tgt.ID, tgt.Name)
 
-				m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+				m.events.Dispatch(events.EventTypeUpdateEmoteSet, events.ChangeMap{
 					ID:    esb.EmoteSet.ID,
 					Kind:  structures.ObjectKindEmoteSet,
 					Actor: m.modelizer.User(actor).ToPartial(),
@@ -497,7 +498,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 					ID: tgt.ID,
 				})
 
-				m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+				m.events.Dispatch(events.EventTypeUpdateEmoteSet, events.ChangeMap{
 					ID:    esb.EmoteSet.ID,
 					Kind:  structures.ObjectKindEmoteSet,
 					Actor: m.modelizer.User(actor).ToPartial(),

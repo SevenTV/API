@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
@@ -17,6 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/internal/global"
 )
 
 func listen(gCtx global.Context) {
@@ -293,7 +294,7 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 				}, true)
 			}
 
-			epl.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateEmote, events.ChangeMap{
+			epl.Ctx.Inst().Events.Dispatch(events.EventTypeUpdateEmote, events.ChangeMap{
 				ID:      eb.Emote.ID,
 				Kind:    structures.ObjectKindEmote,
 				Actor:   epl.Ctx.Inst().Modelizer.User(emoteOwner).ToPartial(),

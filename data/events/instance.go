@@ -1,62 +1,33 @@
 package events
 
 import (
-	"context"
 	"encoding/json"
 	"hash/crc32"
 	"time"
 
-	"github.com/seventv/api/data/model"
-	"github.com/seventv/common/dataloader"
-	"github.com/seventv/common/redis"
+	"github.com/nats-io/nats.go"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/model"
 )
 
 type Instance interface {
-	Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition)
-	DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload]
+	Dispatch(t EventType, cm ChangeMap, cond ...EventCondition)
+	DispatchWithEffect(t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload]
 }
 
-type DataloaderPayload struct {
-	Key  string
-	Data string
+type EventsInst struct {
+	nc      *nats.Conn
+	subject string
 }
 
-type eventsInst struct {
-	ctx   context.Context
-	redis redis.Instance
-
-	dl *dataloader.DataLoader[DataloaderPayload, struct{}]
-}
-
-func NewPublisher(ctx context.Context, redis redis.Instance) Instance {
-	inst := &eventsInst{
-		ctx:   ctx,
-		redis: redis,
-		dl: dataloader.New(dataloader.Config[DataloaderPayload, struct{}]{
-			Fetch: func(keys []DataloaderPayload) ([]struct{}, []error) {
-				p := redis.RawClient().Pipeline()
-
-				for _, k := range keys {
-					p.Publish(ctx, k.Key, k.Data)
-				}
-
-				if _, err := p.Exec(ctx); err != nil {
-					zap.S().Warnw("failed to publish events",
-						"error", err.Error(),
-					)
-				}
-
-				return make([]struct{}, len(keys)), nil
-			},
-			Wait:     time.Duration(25) * time.Millisecond,
-			MaxBatch: 32,
-		}),
+func NewPublisher(nc *nats.Conn, subject string) Instance {
+	return &EventsInst{
+		nc:      nc,
+		subject: subject,
 	}
-
-	return inst
 }
 
 // systemUser is a placeholder for the ChangeMap actor when no actor was provided
@@ -67,7 +38,7 @@ var systemUser = model.UserModel{
 	DisplayName: structures.SystemUser.DisplayName,
 }
 
-func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap, cond ...EventCondition) {
+func (inst *EventsInst) Dispatch(t EventType, cm ChangeMap, cond ...EventCondition) {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -92,7 +63,7 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		Conditions: cond,
 	})
 
-	j, err := json.Marshal(msg)
+	data, err := json.Marshal(msg)
 	if err != nil {
 		zap.S().Warnw("failed to marshal event",
 			"error", err.Error(),
@@ -101,26 +72,17 @@ func (inst *eventsInst) Dispatch(ctx context.Context, t EventType, cm ChangeMap,
 		return
 	}
 
-	payloads := []DataloaderPayload{}
-	s := utils.B2S(j)
-
 	for _, c := range cond {
 		for _, b := range []bool{false, true} {
-			payloads = append(payloads, DataloaderPayload{
-				Key:  CreateDispatchKey(t, c, b),
-				Data: s,
-			})
+			err = inst.nc.Publish(inst.subject+"."+CreateDispatchKey(t, c, b), data)
+			if err != nil {
+				zap.S().Errorw("nats publish", "error", err)
+			}
 		}
 	}
-
-	go func() {
-		for _, p := range payloads {
-			_, _ = inst.dl.Load(p)
-		}
-	}()
 }
 
-func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
+func (inst *EventsInst) DispatchWithEffect(t EventType, cm ChangeMap, opt DispatchOptions, cond ...EventCondition) Message[DispatchPayload] {
 	if cm.Actor.ID.IsZero() {
 		cm.Actor = systemUser.ToPartial()
 	}
@@ -147,7 +109,7 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		Whisper:    opt.Whisper,
 	})
 
-	j, err := json.Marshal(msg)
+	data, err := json.Marshal(msg)
 	if err != nil {
 		zap.S().Warnw("failed to marshal event",
 			"error", err.Error(),
@@ -156,25 +118,16 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 		return msg
 	}
 
-	payloads := []DataloaderPayload{}
-	s := utils.B2S(j)
+	payloads := make(map[string][]byte)
 
 	if opt.Whisper == "" {
 		for _, c := range cond {
 			for _, b := range []bool{false, true} {
-				payloads = append(payloads, DataloaderPayload{
-					Key:  CreateDispatchKey(t, c, b),
-					Data: s,
-				})
+				payloads[CreateDispatchKey(t, c, b)] = data
 			}
 		}
 	} else {
-		payloads = append(payloads, DataloaderPayload{
-			Key: CreateDispatchKey(EventTypeWhisper, EventCondition{
-				"session_id": opt.Whisper,
-			}, false),
-			Data: s,
-		})
+		payloads[CreateDispatchKey(EventTypeWhisper, EventCondition{"session_id": opt.Whisper}, false)] = data
 	}
 
 	go func() {
@@ -182,8 +135,11 @@ func (inst *eventsInst) DispatchWithEffect(ctx context.Context, t EventType, cm 
 			<-time.After(opt.Delay)
 		}
 
-		for _, p := range payloads {
-			_, _ = inst.dl.Load(p)
+		for key, data := range payloads {
+			err = inst.nc.Publish(inst.subject+"."+key, data)
+			if err != nil {
+				zap.S().Errorw("nats publish", "error", err)
+			}
 		}
 	}()
 

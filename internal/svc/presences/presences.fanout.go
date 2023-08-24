@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/data/query"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/data/query"
 )
 
 type ChannelPresenceFanoutOptions struct {
@@ -81,7 +82,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 	dispatchCosmetic := func(cos structures.Cosmetic[bson.Raw]) {
 		// Cosmetic
-		_ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateCosmetic, events.ChangeMap{
+		_ = p.events.DispatchWithEffect(events.EventTypeCreateCosmetic, events.ChangeMap{
 			ID:         cos.ID,
 			Kind:       structures.ObjectKindCosmetic,
 			Contextual: true,
@@ -101,7 +102,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 		// Dispatch: Entitlement
 		dispatchFactory = append(dispatchFactory, func() (events.Message[events.DispatchPayload], error) {
-			msg := p.events.DispatchWithEffect(ctx, events.EventTypeCreateEntitlement, events.ChangeMap{
+			msg := p.events.DispatchWithEffect(events.EventTypeCreateEntitlement, events.ChangeMap{
 				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,
@@ -235,7 +236,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 			// Dispatch the Emote Set data
 			es.Emotes = make([]structures.ActiveEmote, 0)
-			_ = p.events.DispatchWithEffect(ctx, events.EventTypeCreateEmoteSet, events.ChangeMap{
+			_ = p.events.DispatchWithEffect(events.EventTypeCreateEmoteSet, events.ChangeMap{
 				ID:         es.ID,
 				Kind:       structures.ObjectKindEmoteSet,
 				Contextual: true,
@@ -269,7 +270,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 			// Dispatch the Emote Set's Emotes
 			go func(es structures.EmoteSet) {
-				p.events.DispatchWithEffect(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+				p.events.DispatchWithEffect(events.EventTypeUpdateEmoteSet, events.ChangeMap{
 					ID:         es.ID,
 					Kind:       structures.ObjectKindEmoteSet,
 					Contextual: true,
@@ -305,7 +306,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 
 		if !found || lostEntitlementKinds.Has(ent.Kind) {
 			// Entitlement is no longer active, send delete event
-			_ = p.events.DispatchWithEffect(ctx, events.EventTypeDeleteEntitlement, events.ChangeMap{
+			_ = p.events.DispatchWithEffect(events.EventTypeDeleteEntitlement, events.ChangeMap{
 				ID:         ent.ID,
 				Kind:       structures.ObjectKindEntitlement,
 				Contextual: true,

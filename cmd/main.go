@@ -12,6 +12,16 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
+	"github.com/nats-io/nats.go"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/mongo/indexing"
+	"github.com/seventv/common/redis"
+	"github.com/seventv/common/svc"
+	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/compactdisc"
+	messagequeue "github.com/seventv/message-queue/go"
+	"go.uber.org/zap"
+
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
@@ -30,14 +40,6 @@ import (
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
-	"github.com/seventv/common/mongo"
-	"github.com/seventv/common/mongo/indexing"
-	"github.com/seventv/common/redis"
-	"github.com/seventv/common/svc"
-	"github.com/seventv/common/svc/s3"
-	"github.com/seventv/compactdisc"
-	messagequeue "github.com/seventv/message-queue/go"
-	"go.uber.org/zap"
 )
 
 var (
@@ -184,13 +186,22 @@ func main() {
 		})
 	}
 
+	nc, err := nats.Connect(config.Nats.Url)
+	if err != nil {
+		zap.S().Fatalw("failed to connect to nats",
+			"error", err,
+		)
+	}
+
+	defer nc.Drain()
+	gctx.Inst().Events = events.NewPublisher(nc, config.Nats.Subject)
+
 	{
 		id := svc.AppIdentity{
 			Name: "API",
 			Web:  config.WebsiteURL,
 			CDN:  config.CdnURL,
 		}
-		gctx.Inst().Events = events.NewPublisher(gctx, gctx.Inst().Redis)
 
 		gctx.Inst().Limiter, err = limiter.New(gctx, gctx.Inst().Redis)
 		if err != nil {
