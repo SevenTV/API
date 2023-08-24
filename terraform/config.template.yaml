@@ -66,6 +66,10 @@ redis:
   username: ${redis_username}
   password: ${redis_password}
 
+nats:
+  url: ${nats_url}
+  subject: ${nats_subject}
+
 message_queue:
   mode: "RMQ"
   image_processor_jobs_queue_name: "seventv_image_processor_jobs"
