@@ -44,6 +44,7 @@ func (inst *EventsInst) Dispatch(t EventType, cm ChangeMap, cond ...EventConditi
 	}
 
 	// Dedupe hash
+	// TODO: is this dedupe necessary?
 	var dedupeHash *uint32
 
 	if cm.Object != nil {
@@ -73,6 +74,7 @@ func (inst *EventsInst) Dispatch(t EventType, cm ChangeMap, cond ...EventConditi
 	}
 
 	for _, c := range cond {
+		// TODO: check if it's necesary to publish for both bools
 		for _, b := range []bool{false, true} {
 			err = inst.nc.Publish(inst.subject+"."+CreateDispatchKey(t, c, b), data)
 			if err != nil {
