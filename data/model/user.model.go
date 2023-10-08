@@ -67,7 +67,7 @@ func (x *modelizer) User(v structures.User) UserModel {
 		if avatarURL == "" {
 			switch c.Platform {
 			case structures.UserConnectionPlatformTwitch:
-				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](c); err == nil {
+				if con, err := structures.ConvertUserConnection[structures.UserConnectionDataTwitch](c); err == nil && len(con.Data.ProfileImageURL) >= 6 {
 					avatarURL = twitchPictureSizeRegExp.ReplaceAllString(con.Data.ProfileImageURL[6:], "70x70")
 				}
 			case structures.UserConnectionPlatformYouTube:
