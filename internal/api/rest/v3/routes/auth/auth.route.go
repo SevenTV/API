@@ -87,7 +87,7 @@ func (r *Route) Handler(ctx *rest.Ctx) errors.APIError {
 		// Query existing user?
 		if err := r.gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).FindOne(ctx, bson.M{
 			"$or": bson.A{
-				bson.M{"connections.id": id},
+				bson.M{"connections.id": id, "connections.platform": platform},
 				bson.M{"_id": claim.Bind},
 			},
 		}).Decode(&ub.User); err != nil && err != mongo.ErrNoDocuments {
