@@ -28,6 +28,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 		zap.S().Errorw("mongo, failed to query emote sets", "error", err)
 		return qr.setError(err)
 	}
+
 	if err = cur.All(ctx, &items); err != nil {
 		zap.S().Errorw("mongo, failed to fetch emote sets", "error", err)
 
@@ -35,6 +36,7 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 	}
 
 	shouldGetOrigin := false
+
 	for _, opt := range opts {
 		if opt.FetchOrigins {
 			shouldGetOrigin = true
@@ -106,8 +108,10 @@ func applyOriginSets(sets []structures.EmoteSet, originSets []structures.EmoteSe
 			sort.Slice(set.Emotes, func(i, j int) bool {
 				return set.Emotes[i].Origin.ID.IsZero()
 			})
+
 			set.Origins[originIndex] = origin
 		}
+
 		sets[i] = set
 	}
 
@@ -116,21 +120,25 @@ func applyOriginSets(sets []structures.EmoteSet, originSets []structures.EmoteSe
 
 func getOriginIds(items []structures.EmoteSet) []primitive.ObjectID {
 	ids := make([]primitive.ObjectID, 0)
+
 	for _, set := range items {
 		for _, origin := range set.Origins {
 			// make sure we only add unique ids
 			matched := false
+
 			for _, id := range ids {
 				if id == origin.ID {
 					matched = true
 					break
 				}
 			}
+
 			if !matched {
 				ids = append(ids, origin.ID)
 			}
 		}
 	}
+
 	return ids
 }
 

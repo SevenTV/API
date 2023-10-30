@@ -193,7 +193,12 @@ func main() {
 		)
 	}
 
-	defer nc.Drain()
+	defer func() {
+		err = nc.Drain()
+		zap.S().Fatalw("failed to drain nats, is connection failing?",
+			"error", err,
+		)
+	}()
 	gctx.Inst().Events = events.NewPublisher(nc, config.Nats.Subject)
 
 	{
