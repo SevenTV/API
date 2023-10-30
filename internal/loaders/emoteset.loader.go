@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/seventv/api/data/query"
 	"github.com/seventv/common/dataloader"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"github.com/seventv/api/data/query"
 )
 
 func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
@@ -52,6 +53,8 @@ func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
 
 			return models, errs
 		},
+		// TODO: find optimal max batch size
+		MaxBatch: 50,
 	})
 }
 
