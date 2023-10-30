@@ -9,7 +9,6 @@ import (
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/aggregations"
-	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,107 +19,119 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 	qr := &QueryResult[structures.EmoteSet]{}
 	items := []structures.EmoteSet{}
 
-	opt := QueryEmoteSetsOptions{}
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-
-	// Fetch Emote Sets
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Aggregate(ctx, aggregations.Combine(
-		mongo.Pipeline{{{Key: "$match", Value: filter}}},
-		utils.Ternary(opt.FetchOrigins, mongo.Pipeline{
-			{{
-				Key: "$lookup",
-				Value: mongo.Lookup{
-					From:         mongo.CollectionNameEmoteSets,
-					LocalField:   "origins.id",
-					ForeignField: "_id",
-					As:           "origin_sets",
-				},
-			}},
-		}, mongo.Pipeline{}),
-		mongo.Pipeline{{{
-			Key: "$project",
-			Value: bson.M{
-				"set": "$$ROOT",
-				"origin_sets": bson.M{
-					"$arrayToObject": bson.A{
-						bson.M{"$map": bson.M{
-							"input": "$origin_sets",
-							"in": bson.M{
-								"k": bson.M{"$toString": "$$this._id"},
-								"v": "$$this",
-							},
-						}},
-					},
-				}},
-		}}},
-	), options.Aggregate().SetBatchSize(10))
+	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Find(
+		ctx,
+		filter,
+		options.Find().SetBatchSize(10),
+	)
 	if err != nil {
 		zap.S().Errorw("mongo, failed to query emote sets", "error", err)
-
-		return qr.setError(errors.ErrInternalServerError())
+		return qr.setError(err)
 	}
-
-	sets := []aggregatedSetWithOrigins{}
-	if err = cur.All(ctx, &sets); err != nil {
+	if err = cur.All(ctx, &items); err != nil {
 		zap.S().Errorw("mongo, failed to fetch emote sets", "error", err)
 
 		return qr.setError(errors.ErrInternalServerError())
 	}
 
-	for _, set := range sets {
-		emoteMap := make(map[primitive.ObjectID]int)
-		emoteNameMap := make(map[string]int)
+	shouldGetOrigin := false
+	for _, opt := range opts {
+		if opt.FetchOrigins {
+			shouldGetOrigin = true
+			break
+		}
+	}
 
-		emotes := make([]structures.ActiveEmote, len(set.Set.Emotes))
-		copy(emotes, set.Set.Emotes)
+	if !shouldGetOrigin {
+		return qr.setItems(items)
+	}
 
-		for i, ae := range emotes {
-			emoteMap[ae.ID] = i
-			emoteNameMap[ae.Name] = i
+	originsToFetch := getOriginIds(items)
+	// if there are no origins to fetch, return
+	if len(originsToFetch) == 0 {
+		return qr.setItems(items)
+	}
+
+	// fetch origins
+	originSets, err := q.EmoteSets(ctx, bson.M{"_id": bson.M{"$in": originsToFetch}}).Items()
+	if err != nil {
+		zap.S().Errorw("mongo, failed to fetch origin sets", "error", err)
+		return qr.setError(err)
+	}
+
+	return qr.setItems(applyOriginSets(items, originSets))
+}
+
+// applyOriginSets inserts origin sets into the emote sets
+func applyOriginSets(sets []structures.EmoteSet, originSets []structures.EmoteSet) []structures.EmoteSet {
+	originMap := make(map[primitive.ObjectID]structures.EmoteSet)
+	for _, set := range originSets {
+		originMap[set.ID] = set
+	}
+
+	for i, set := range sets {
+		emoteNameIndexes := make(map[string]int)
+		for emoteIndex, emote := range set.Emotes {
+			emoteNameIndexes[emote.Name] = emoteIndex
 		}
 
-		// Apply emotes from origins
-		for i, origin := range set.Set.Origins {
-			subset := set.OriginSets[origin.ID]
+		for originIndex, origin := range set.Origins {
+			subset := originMap[origin.ID]
 			if subset.ID.IsZero() {
 				continue // set wasn't found
 			}
 
 			origin.Set = &subset
 
-			for _, ae := range subset.Emotes {
-				if len(emotes) >= int(set.Set.Capacity) {
+			for _, emote := range subset.Emotes {
+				if len(set.Emotes) >= int(set.Capacity) {
 					break
 				}
 
-				if ix, ok := emoteNameMap[ae.Name]; ok {
-					if emotes[ix].ID == ae.ID {
+				if index, ok := emoteNameIndexes[emote.Name]; ok {
+					if set.Emotes[index].ID == emote.ID {
 						continue
 					}
 
-					ae.Origin = origin
-					emotes[ix] = ae
+					emote.Origin = origin
+					set.Emotes[index] = emote
 				} else {
-					ae.Origin = origin
-					emotes = append(emotes, ae)
+					// add emote to set emotes
+					emoteNameIndexes[emote.Name] = len(set.Emotes)
+					set.Emotes = append(set.Emotes, emote)
 				}
 			}
 
-			sort.Slice(emotes, func(i, j int) bool {
-				return emotes[i].Origin.ID.IsZero()
+			// TODO: figure out of this sort is needed
+			sort.Slice(set.Emotes, func(i, j int) bool {
+				return set.Emotes[i].Origin.ID.IsZero()
 			})
-
-			// resize emotes slice
-			set.Set.Emotes = emotes
-			set.Set.Origins[i].Set = &subset
+			set.Origins[originIndex] = origin
 		}
-
-		items = append(items, set.Set)
+		sets[i] = set
 	}
 
-	return qr.setItems(items)
+	return sets
+}
+
+func getOriginIds(items []structures.EmoteSet) []primitive.ObjectID {
+	ids := make([]primitive.ObjectID, 0)
+	for _, set := range items {
+		for _, origin := range set.Origins {
+			// make sure we only add unique ids
+			matched := false
+			for _, id := range ids {
+				if id == origin.ID {
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				ids = append(ids, origin.ID)
+			}
+		}
+	}
+	return ids
 }
 
 type aggregatedSetWithOrigins struct {
@@ -157,10 +168,6 @@ func (q *Query) UserEmoteSets(ctx context.Context, filter bson.M) (map[primitive
 	}
 
 	// Iterate over cursor
-	if err != nil {
-		return nil, err
-	}
-
 	for i := 0; cur.Next(ctx); i++ {
 		v := &aggregatedUserEmoteSets{}
 		if err = cur.Decode(v); err != nil {
