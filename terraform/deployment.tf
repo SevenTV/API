@@ -33,6 +33,8 @@ resource "kubernetes_secret" "app" {
       mongo_username        = local.infra.mongodb_user_app.username
       mongo_password        = local.infra.mongodb_user_app.password
       mongo_database        = "7tv"
+      nats_url              = "nats.database.svc.cluster.local:4222"
+      nats_subject          = var.nats_events_subject
       redis_address         = local.infra.redis_host
       redis_username        = "default"
       redis_password        = local.infra.redis_password
@@ -56,7 +58,7 @@ resource "kubernetes_deployment" "app" {
   metadata {
     name      = "api"
     namespace = data.kubernetes_namespace.app.metadata[0].name
-    labels = {
+    labels    = {
       app = "api"
     }
   }
@@ -261,8 +263,8 @@ resource "kubernetes_service" "app" {
 
 resource "kubernetes_ingress_v1" "app" {
   metadata {
-    name      = "api"
-    namespace = data.kubernetes_namespace.app.metadata[0].name
+    name        = "api"
+    namespace   = data.kubernetes_namespace.app.metadata[0].name
     annotations = {
       "kubernetes.io/ingress.class"                         = "nginx"
       "external-dns.alpha.kubernetes.io/target"             = local.infra.cloudflare_tunnel_hostname.regular

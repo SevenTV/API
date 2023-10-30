@@ -92,3 +92,8 @@ variable "s3" {
   nullable = true
   default  = null
 }
+
+variable "nats_events_subject" {
+  type    = string
+  default = ""
+}
