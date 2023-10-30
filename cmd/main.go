@@ -199,6 +199,7 @@ func main() {
 			"error", err,
 		)
 	}()
+
 	gctx.Inst().Events = events.NewPublisher(nc, config.Nats.Subject)
 
 	{

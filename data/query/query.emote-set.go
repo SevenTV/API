@@ -142,11 +142,6 @@ func getOriginIds(items []structures.EmoteSet) []primitive.ObjectID {
 	return ids
 }
 
-type aggregatedSetWithOrigins struct {
-	Set        structures.EmoteSet                        `bson:"set"`
-	OriginSets map[primitive.ObjectID]structures.EmoteSet `bson:"origin_sets"`
-}
-
 type QueryEmoteSetsOptions struct {
 	FetchOrigins bool
 }
