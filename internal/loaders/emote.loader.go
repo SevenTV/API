@@ -99,14 +99,22 @@ func getEmotesFromCache(ctx context.Context, x inst, baseKeys []primitive.Object
 
 	emotes := []structures.Emote{}
 
-	res := x.redis.RawClient().MGet(ctx, keys...)
-	if res.Err() != nil {
-		return nil, res.Err()
-	}
+	res := [][]byte{}
 
-	err := json.Unmarshal([]byte(res.String()), &emotes)
+	err := x.redis.RawClient().MGet(ctx, keys...).Scan(&res)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, v := range res {
+		var emote structures.Emote
+
+		err := json.Unmarshal(v, &emote)
+		if err != nil {
+			return nil, err
+		}
+
+		emotes = append(emotes, emote)
 	}
 
 	return emotes, nil
@@ -118,7 +126,7 @@ func setEmoteInCache(ctx context.Context, x inst, emote structures.Emote) error 
 		return err
 	}
 
-	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), string(data), 30*time.Second).Err()
+	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), data, 30*time.Second).Err()
 }
 
 func batchEmoteLoader(ctx context.Context, x inst, key string) BatchEmoteLoaderByID {
