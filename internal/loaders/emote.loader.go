@@ -117,6 +117,7 @@ func setEmoteInCache(ctx context.Context, x inst, emote structures.Emote) error 
 	if err != nil {
 		return err
 	}
+
 	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), string(data), 30*time.Second).Err()
 }
 
