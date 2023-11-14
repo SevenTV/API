@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/seventv/common/dataloader"
@@ -39,9 +40,6 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 			for i, key := range keys {
 				for _, emote := range cachedEmotes {
 					if emote.ID == key {
-						// TODO
-						zap.S().Info("Loaded emote from cache" + emote.Name)
-
 						items[i] = emote
 						continue keysLoop
 					}
@@ -101,7 +99,12 @@ func getEmotesFromCache(ctx context.Context, x inst, baseKeys []primitive.Object
 
 	emotes := []structures.Emote{}
 
-	err := x.redis.RawClient().MGet(ctx, keys...).Scan(&emotes)
+	res := x.redis.RawClient().MGet(ctx, keys...)
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	err := json.Unmarshal([]byte(res.String()), &emotes)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +113,11 @@ func getEmotesFromCache(ctx context.Context, x inst, baseKeys []primitive.Object
 }
 
 func setEmoteInCache(ctx context.Context, x inst, emote structures.Emote) error {
-	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), emote, 30*time.Second).Err()
+	data, err := json.Marshal(emote)
+	if err != nil {
+		return err
+	}
+	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), string(data), 30*time.Second).Err()
 }
 
 func batchEmoteLoader(ctx context.Context, x inst, key string) BatchEmoteLoaderByID {
