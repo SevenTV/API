@@ -8,6 +8,7 @@ import (
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
@@ -26,9 +27,33 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 				items[i] = structures.DeletedEmote
 			}
 
+			// Fetch emotes from cache
+			cachedEmotes, err := getEmotesFromCache(ctx, x, keys)
+			if err != nil {
+				zap.S().Errorw("redis failed to fetch emotes from cache", "error", err)
+				errs = append(errs, err)
+			}
+
+			remainingKeys := []primitive.ObjectID{}
+		keysLoop:
+			for i, key := range keys {
+				for _, emote := range cachedEmotes {
+					if emote.ID == key {
+						// TODO
+						zap.S().Info("Loaded emote from cache" + emote.Name)
+
+						items[i] = emote
+						continue keysLoop
+					}
+				}
+
+				// key was not found in cache, so we get it from mongo
+				remainingKeys = append(remainingKeys, key)
+			}
+
 			// Fetch emotes
 			emotes, err := x.query.Emotes(ctx, bson.M{
-				key: bson.M{"$in": keys},
+				key: bson.M{"$in": remainingKeys},
 			}).Items()
 
 			if err == nil {
@@ -40,15 +65,22 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 				}
 
 				for i, v := range keys {
-					if x, ok := m[v]; ok {
-						ver, _ := x.GetVersion(v)
+					if emote, ok := m[v]; ok {
+						ver, _ := emote.GetVersion(v)
 						if ver.ID.IsZero() {
 							continue
 						}
 
-						x.ID = v
-						x.VersionRef = &ver
-						items[i] = x
+						emote.ID = v
+						emote.VersionRef = &ver
+						items[i] = emote
+
+						// store emote in redis cache
+						err = setEmoteInCache(ctx, x, emote)
+						if err != nil {
+							zap.S().Errorw("redis failed to set emote in cache", "error", err)
+							errs = append(errs, err)
+						}
 					}
 				}
 			}
@@ -56,6 +88,29 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 			return items, errs
 		},
 	})
+}
+
+var cacheKeyEmotes = "cache.emotes."
+
+func getEmotesFromCache(ctx context.Context, x inst, baseKeys []primitive.ObjectID) ([]structures.Emote, error) {
+	keys := make([]string, len(baseKeys))
+
+	for _, key := range baseKeys {
+		keys = append(keys, cacheKeyEmotes+key.String())
+	}
+
+	emotes := []structures.Emote{}
+
+	err := x.redis.RawClient().MGet(ctx, keys...).Scan(&emotes)
+	if err != nil {
+		return nil, err
+	}
+
+	return emotes, nil
+}
+
+func setEmoteInCache(ctx context.Context, x inst, emote structures.Emote) error {
+	return x.redis.RawClient().Set(ctx, cacheKeyEmotes+emote.ID.String(), emote, 30*time.Second).Err()
 }
 
 func batchEmoteLoader(ctx context.Context, x inst, key string) BatchEmoteLoaderByID {
