@@ -13,6 +13,7 @@ import (
 
 func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 	go initCache()
+
 	return dataloader.New(dataloader.Config[primitive.ObjectID, structures.Emote]{
 		Wait: time.Millisecond * 25,
 		Fetch: func(keys []primitive.ObjectID) ([]structures.Emote, []error) {
@@ -102,7 +103,9 @@ func initCache() {
 func getEmotesFromCache(keys []primitive.ObjectID) map[primitive.ObjectID]structures.Emote {
 	cacheMx.Lock()
 	defer cacheMx.Unlock()
+
 	emotes := make(map[primitive.ObjectID]structures.Emote)
+
 	for _, key := range keys {
 		emote, ok := emoteCache[key]
 		if !ok {
