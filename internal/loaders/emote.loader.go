@@ -89,7 +89,7 @@ type cachedEmote struct {
 }
 
 func initCache() {
-	for range time.Tick(time.Minute) {
+	for range time.Tick(30 * time.Second) {
 		cacheMx.Lock()
 		for k, v := range emoteCache {
 			if time.Now().After(v.expire) {
@@ -124,7 +124,7 @@ func setEmoteInCache(emote structures.Emote) {
 
 	emoteCache[emote.ID] = cachedEmote{
 		emote:  emote,
-		expire: time.Now().Add(time.Minute * 5),
+		expire: time.Now().Add(time.Minute * 2),
 	}
 }
 
