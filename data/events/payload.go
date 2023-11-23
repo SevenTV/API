@@ -79,11 +79,11 @@ func CreateDispatchKey(t EventType, condition EventCondition, wildcard bool) str
 	s := strings.Builder{}
 
 	s.WriteString(OpcodeDispatch.PublishKey())
-	s.WriteString(":type:")
+	s.WriteString(".type.")
 	s.WriteString(utils.Ternary(wildcard, t.ObjectName()+".*", string(t)))
 
 	if len(condition) > 0 {
-		s.WriteString(":")
+		s.WriteString(".")
 
 		sorted := make([]string, len(condition))
 		h := sha256.New()
