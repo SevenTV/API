@@ -45,13 +45,9 @@ resource "kubernetes_secret" "app" {
       s3_internal_bucket    = local.s3.internal_bucket
       s3_public_bucket      = local.s3.public_bucket
       s3_endpoint           = local.s3.endpoint != null ? local.s3.endpoint : ""
-      jwt_secret            = random_id.jwt-secret.hex
+      jwt_secret            = var.credentials_jwt_secret
     })
   }
-}
-
-resource "random_id" "jwt-secret" {
-  byte_length = 64
 }
 
 resource "kubernetes_deployment" "app" {
@@ -318,34 +314,6 @@ resource "kubernetes_ingress_v1" "app" {
             }
           }
         }
-
-        // GraphQL API - V2
-        path {
-          path      = "/v2/gql"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = kubernetes_service.app.metadata[0].name
-              port {
-                name = "gql"
-              }
-            }
-          }
-        }
-
-        // REST API - V2
-        path {
-          path      = "/v2"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = kubernetes_service.app.metadata[0].name
-              port {
-                name = "rest"
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -365,7 +333,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
     }
 
     min_replicas = 2
-    max_replicas = 8
+    max_replicas = 10
 
     metric {
       type = "Resource"

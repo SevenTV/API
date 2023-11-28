@@ -97,3 +97,8 @@ variable "nats_events_subject" {
   type    = string
   default = ""
 }
+
+variable "credentials_jwt_secret" {
+  type    = string
+  default = ""
+}
