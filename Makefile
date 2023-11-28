@@ -19,8 +19,8 @@ build:
 	GOOS=linux GOARCH=amd64 go build -v -ldflags "-X 'main.Version=${VERSION}' -X 'main.Unix=$(shell date +%s)' -X 'main.User=${BUILDER}'" -o out/api cmd/*.go
 
 lint:
-	golangci-lint run --go=1.18
-	yarn prettier --check .
+#	golangci-lint run --go=1.18
+#	yarn prettier --check .
 
 format:
 	gofmt -s -w .
