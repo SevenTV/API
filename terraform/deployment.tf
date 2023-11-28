@@ -338,17 +338,6 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
     metric {
       type = "Resource"
       resource {
-        name = "memory"
-        target {
-          type                = "Utilization"
-          average_utilization = 60
-        }
-      }
-    }
-
-    metric {
-      type = "Resource"
-      resource {
         name = "cpu"
         target {
           type                = "Utilization"
