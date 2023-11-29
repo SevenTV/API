@@ -33,6 +33,9 @@ resource "kubernetes_secret" "app" {
       mongo_username        = local.infra.mongodb_user_app.username
       mongo_password        = local.infra.mongodb_user_app.password
       mongo_database        = "7tv"
+      meili_url             = "http://meilisearch.database.svc.cluster.local:7700"
+      meili_key             = var.meilisearch_key
+      meili_index           = "emotes"
       nats_url              = "nats.database.svc.cluster.local:4222"
       nats_subject          = var.nats_events_subject
       redis_address         = local.infra.redis_host
