@@ -103,7 +103,7 @@ variable "credentials_jwt_secret" {
   default = ""
 }
 
-varibale "meilisearch_key" {
+variable "meilisearch_key" {
   type    = string
   default = ""
 }
