@@ -65,7 +65,11 @@ meilisearch:
 
 redis:
   addresses:
-    - ${redis_address}
+    - redis-node-0.redis-headless.database.svc.cluster.local:26379
+    - redis-node-1.redis-headless.database.svc.cluster.local:26379
+    - redis-node-2.redis-headless.database.svc.cluster.local:26379
+    - redis-node-3.redis-headless.database.svc.cluster.local:26379
+    - redis-node-4.redis-headless.database.svc.cluster.local:26379
   sentinel: true
   master_name: "mymaster"
   username: ${redis_username}
