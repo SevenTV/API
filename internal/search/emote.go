@@ -1,6 +1,10 @@
 package search
 
-import "github.com/meilisearch/meilisearch-go"
+import (
+	"strconv"
+
+	"github.com/meilisearch/meilisearch-go"
+)
 
 type EmoteSearchOptions struct {
 	Limit     int64
@@ -48,7 +52,7 @@ func (s *MeiliSearch) SearchEmotes(query string, opt EmoteSearchOptions) ([]Emot
 		if filter != "" {
 			filter += " AND "
 		}
-		filter += "lifecycle = " + string(opt.Lifecycle)
+		filter += "lifecycle = " + strconv.Itoa(int(opt.Lifecycle))
 	}
 
 	if filter != "" {
