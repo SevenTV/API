@@ -64,7 +64,8 @@ func (s *MeiliSearch) SearchEmotes(query string, opt EmoteSearchOptions) ([]Emot
 	var hit map[string]interface{}
 	var emotes []EmoteResult
 
-	for _, hit = range res.Hits {
+	for _, result := range res.Hits {
+		hit = result.(map[string]interface{})
 		emotes = append(emotes, EmoteResult{
 			Name: hit["name"].(string),
 			Id:   hit["id"].(string),
