@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
@@ -83,7 +81,7 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 		count, err = q.redis.RawClient().Get(ctx, k.String()).Int64()
 		if err == redis.Nil { // query if not cached
 			count, _ = q.mongo.Collection(mongo.CollectionNameUsers).CountDocuments(ctx, match)
-			_ = q.redis.SetEX(ctx, k, count, time.Hour*6)
+			_ = q.redis.SetEX(ctx, k, count, 24*time.Hour)
 
 			// Update the emote document
 			_, _ = q.mongo.Collection(mongo.CollectionNameEmotes).UpdateOne(ctx, bson.M{
@@ -97,88 +95,90 @@ func (q *Query) EmoteChannels(ctx context.Context, emoteID primitive.ObjectID, p
 			})
 		}
 	}()
+	// TODO: emote channels disabled, re-enable
+	//
+	//cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
+	//	{{
+	//		Key:   "$match",
+	//		Value: match,
+	//	}},
+	//	{{
+	//		Key: "$sort",
+	//		Value: bson.D{
+	//			{Key: "state.role_position", Value: -1},
+	//			{Key: "connections.data.view_count", Value: -1},
+	//		},
+	//	}},
+	//	{{Key: "$skip", Value: (page - 1) * limit}},
+	//	{{
+	//		Key:   "$limit",
+	//		Value: limit,
+	//	}},
+	//	{{
+	//		Key: "$group",
+	//		Value: bson.M{
+	//			"_id": nil,
+	//			"users": bson.M{
+	//				"$push": "$$ROOT",
+	//			},
+	//		},
+	//	}},
+	//	{{
+	//		Key: "$lookup",
+	//		Value: mongo.Lookup{
+	//			From:         mongo.CollectionNameEntitlements,
+	//			LocalField:   "users._id",
+	//			ForeignField: "user_id",
+	//			As:           "role_entitlements",
+	//		},
+	//	}},
+	//	{{
+	//		Key: "$set",
+	//		Value: bson.M{
+	//			"role_entitlements": bson.M{
+	//				"$filter": bson.M{
+	//					"input": "$role_entitlements",
+	//					"as":    "ent",
+	//					"cond": bson.M{
+	//						"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
+	//					},
+	//				},
+	//			},
+	//		},
+	//	}},
+	//	{{
+	//		Key:   "$sort",
+	//		Value: bson.D{{Key: "users.state.role_position", Value: -1}, {Key: "users.username", Value: 1}},
+	//	}},
+	//})
+	//if err != nil {
+	//	return nil, count, err
+	//}
+	//
+	//v := &aggregatedEmoteChannelsResult{}
+	//
+	//cur.Next(ctx)
+	//
+	//if err := cur.Decode(v); err != nil {
+	//	if err == io.EOF {
+	//		return nil, count, errors.ErrNoItems()
+	//	}
+	//
+	//	return nil, count, err
+	//}
+	//
+	//qb := &QueryBinder{ctx, q}
+	//userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
+	//
+	//if err != nil {
+	//	return nil, 0, err
+	//}
 
-	cur, err := q.mongo.Collection(mongo.CollectionNameUsers).Aggregate(ctx, mongo.Pipeline{
-		{{
-			Key:   "$match",
-			Value: match,
-		}},
-		{{
-			Key: "$sort",
-			Value: bson.D{
-				{Key: "state.role_position", Value: -1},
-				{Key: "connections.data.view_count", Value: -1},
-			},
-		}},
-		{{Key: "$skip", Value: (page - 1) * limit}},
-		{{
-			Key:   "$limit",
-			Value: limit,
-		}},
-		{{
-			Key: "$group",
-			Value: bson.M{
-				"_id": nil,
-				"users": bson.M{
-					"$push": "$$ROOT",
-				},
-			},
-		}},
-		{{
-			Key: "$lookup",
-			Value: mongo.Lookup{
-				From:         mongo.CollectionNameEntitlements,
-				LocalField:   "users._id",
-				ForeignField: "user_id",
-				As:           "role_entitlements",
-			},
-		}},
-		{{
-			Key: "$set",
-			Value: bson.M{
-				"role_entitlements": bson.M{
-					"$filter": bson.M{
-						"input": "$role_entitlements",
-						"as":    "ent",
-						"cond": bson.M{
-							"$eq": bson.A{"$$ent.kind", structures.EntitlementKindRole},
-						},
-					},
-				},
-			},
-		}},
-		{{
-			Key:   "$sort",
-			Value: bson.D{{Key: "users.state.role_position", Value: -1}, {Key: "users.username", Value: 1}},
-		}},
-	})
-	if err != nil {
-		return nil, count, err
-	}
-
-	v := &aggregatedEmoteChannelsResult{}
-
-	cur.Next(ctx)
-
-	if err := cur.Decode(v); err != nil {
-		if err == io.EOF {
-			return nil, count, errors.ErrNoItems()
-		}
-
-		return nil, count, err
-	}
-
-	qb := &QueryBinder{ctx, q}
-	userMap, err := qb.MapUsers(v.Users, v.RoleEntitlements...)
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	users := make([]structures.User, len(userMap))
-	for i, u := range v.Users {
-		users[i] = userMap[u.ID]
-	}
+	users := make([]structures.User, 0)
+	//users := make([]structures.User, len(userMap))
+	//for i, u := range v.Users {
+	//	users[i] = userMap[u.ID]
+	//}
 
 	<-doneCh
 
