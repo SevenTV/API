@@ -7,6 +7,7 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 
 	"github.com/seventv/api/internal/search"
@@ -74,10 +75,11 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	result, totalCount, err := q.search.SearchEmotes(query, req)
 
-	emoteIds := bson.A{}
+	emoteIds := []primitive.ObjectID{}
 
 	for _, emote := range result {
-		emoteIds = append(emoteIds, emote.Id)
+		id, _ := primitive.ObjectIDFromHex(emote.Id)
+		emoteIds = append(emoteIds, id)
 	}
 
 	emotes, err := q.Emotes(ctx, bson.M{"_id": bson.M{"$in": emoteIds}}).Items()
