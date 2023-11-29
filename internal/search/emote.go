@@ -28,7 +28,7 @@ type EmoteResult struct {
 func (s *MeiliSearch) SearchEmotes(query string, opt EmoteSearchOptions) ([]EmoteResult, int64, error) {
 	req := &meilisearch.SearchRequest{}
 	if opt.Limit != 0 {
-		req.Limit = opt.Limit
+		req.HitsPerPage = opt.Limit
 	}
 	if opt.Page != 0 {
 		req.Page = opt.Page + 1
