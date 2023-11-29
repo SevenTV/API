@@ -3,7 +3,7 @@ data "terraform_remote_state" "infra" {
 
   config = {
     organization = "7tv"
-    workspaces = {
+    workspaces   = {
       name = local.infra_workspace_name
     }
   }
@@ -99,6 +99,11 @@ variable "nats_events_subject" {
 }
 
 variable "credentials_jwt_secret" {
+  type    = string
+  default = ""
+}
+
+varibale "meilisearch_key" {
   type    = string
   default = ""
 }
