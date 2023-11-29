@@ -107,7 +107,7 @@ func main() {
 	}
 
 	// INITIALIZE MEILISEARCH
-	gctx.Inst().Meilisearch = search.New(gctx)
+	gctx.Inst().Meilisearch = search.New(gctx.Config())
 
 	{
 		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{

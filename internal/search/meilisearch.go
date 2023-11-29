@@ -3,20 +3,20 @@ package search
 import (
 	"github.com/meilisearch/meilisearch-go"
 
-	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/configure"
 )
 
 type MeiliSearch struct {
 	emoteIndex *meilisearch.Index
 }
 
-func New(gctx global.Context) *MeiliSearch {
+func New(cfg *configure.Config) *MeiliSearch {
 	client := meilisearch.NewClient(meilisearch.ClientConfig{
-		Host:   gctx.Config().Meilisearch.Host,
-		APIKey: gctx.Config().Meilisearch.Key,
+		Host:   cfg.Meilisearch.Host,
+		APIKey: cfg.Meilisearch.Key,
 	})
 
-	index := client.Index(gctx.Config().Meilisearch.Index)
+	index := client.Index(cfg.Meilisearch.Index)
 
 	return &MeiliSearch{index}
 }
