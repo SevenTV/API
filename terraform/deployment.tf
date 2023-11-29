@@ -38,7 +38,6 @@ resource "kubernetes_secret" "app" {
       meili_index           = "emotes"
       nats_url              = "nats.database.svc.cluster.local:4222"
       nats_subject          = var.nats_events_subject
-      redis_address         = local.infra.redis_host
       redis_username        = "default"
       redis_password        = local.infra.redis_password
       rmq_uri               = local.infra.rabbitmq_uri
