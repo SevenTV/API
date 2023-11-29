@@ -153,6 +153,12 @@ type Config struct {
 		Direct   bool   `mapstructure:"direct" json:"direct"`
 	} `mapstructure:"mongo" json:"mongo"`
 
+	Meilisearch struct {
+		Host  string `mapstructure:"host" json:"host"`
+		Key   string `mapstructure:"key" json:"key"`
+		Index string `mapstructure:"index" json:"index"`
+	} `mapstructure:"meilisearch" json:"meilisearch"`
+
 	Health struct {
 		Enabled bool   `mapstructure:"enabled" json:"enabled"`
 		Bind    string `mapstructure:"bind" json:"bind"`

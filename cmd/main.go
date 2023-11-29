@@ -32,6 +32,7 @@ import (
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/loaders"
+	"github.com/seventv/api/internal/search"
 	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/api/internal/svc/health"
 	"github.com/seventv/api/internal/svc/limiter"
@@ -104,6 +105,9 @@ func main() {
 			)
 		}
 	}
+
+	// INITIALIZE MEILISEARCH
+	gctx.Inst().Meilisearch = search.New(gctx)
 
 	{
 		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{
@@ -220,7 +224,7 @@ func main() {
 			CDN:     config.CdnURL,
 			Website: config.WebsiteURL,
 		})
-		gctx.Inst().Query = query.New(gctx.Inst().Mongo, gctx.Inst().Redis)
+		gctx.Inst().Query = query.New(gctx.Inst().Mongo, gctx.Inst().Redis, gctx.Inst().Meilisearch)
 		gctx.Inst().Loaders = loaders.New(gctx, gctx.Inst().Mongo, gctx.Inst().Redis, gctx.Inst().Query)
 
 		gctx.Inst().Mutate = mutate.New(mutate.InstanceOptions{
