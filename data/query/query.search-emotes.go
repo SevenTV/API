@@ -73,6 +73,7 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 	}
 
 	result, totalCount, err := q.search.SearchEmotes(query, req)
+	zap.S().Infof("found emotes for query: \"%v\" \n%+v", query, result)
 
 	emoteIds := bson.A{}
 
