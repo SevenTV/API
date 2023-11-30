@@ -31,7 +31,7 @@ func (s *MeiliSearch) SearchEmotes(query string, opt EmoteSearchOptions) ([]Emot
 		req.HitsPerPage = opt.Limit
 	}
 	if opt.Page != 0 {
-		req.Page = opt.Page + 1
+		req.Page = opt.Page
 	}
 	if opt.Sort.By != "" {
 		req.Sort = []string{opt.Sort.By + ":" + map[bool]string{true: "asc", false: "desc"}[opt.Sort.Ascending]}
