@@ -18,7 +18,7 @@ const EMOTES_QUERY_LIMIT = 300
 func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]structures.Emote, int, error) {
 	req := search.EmoteSearchOptions{
 		Limit: int64(opt.Limit),
-		Page:  int64(opt.Page) + 1,
+		Page:  int64(opt.Page),
 		Sort: search.EmoteSortOptions{
 			By:        "channel_count",
 			Ascending: false,
