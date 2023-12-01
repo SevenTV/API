@@ -12,6 +12,16 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/bugsnag/panicwrap"
+	"github.com/nats-io/nats.go"
+	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/mongo/indexing"
+	"github.com/seventv/common/redis"
+	"github.com/seventv/common/svc"
+	"github.com/seventv/common/svc/s3"
+	"github.com/seventv/compactdisc"
+	messagequeue "github.com/seventv/message-queue/go"
+	"go.uber.org/zap"
+
 	"github.com/seventv/api/data/events"
 	"github.com/seventv/api/data/model"
 	"github.com/seventv/api/data/mutate"
@@ -22,6 +32,7 @@ import (
 	"github.com/seventv/api/internal/configure"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/api/internal/loaders"
+	"github.com/seventv/api/internal/search"
 	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/api/internal/svc/health"
 	"github.com/seventv/api/internal/svc/limiter"
@@ -30,14 +41,6 @@ import (
 	"github.com/seventv/api/internal/svc/presences"
 	"github.com/seventv/api/internal/svc/prometheus"
 	"github.com/seventv/api/internal/svc/youtube"
-	"github.com/seventv/common/mongo"
-	"github.com/seventv/common/mongo/indexing"
-	"github.com/seventv/common/redis"
-	"github.com/seventv/common/svc"
-	"github.com/seventv/common/svc/s3"
-	"github.com/seventv/compactdisc"
-	messagequeue "github.com/seventv/message-queue/go"
-	"go.uber.org/zap"
 )
 
 var (
@@ -103,11 +106,16 @@ func main() {
 		}
 	}
 
+	// INITIALIZE MEILISEARCH
+	gctx.Inst().Meilisearch = search.New(gctx.Config())
+
 	{
 		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{
-			URI:    config.Mongo.URI,
-			DB:     config.Mongo.DB,
-			Direct: config.Mongo.Direct,
+			URI:      config.Mongo.URI,
+			DB:       config.Mongo.DB,
+			Direct:   config.Mongo.Direct,
+			Username: config.Mongo.Username,
+			Password: config.Mongo.Password,
 		})
 		if err != nil {
 			zap.S().Fatalw("failed to setup mongo handler",
@@ -182,13 +190,28 @@ func main() {
 		})
 	}
 
+	nc, err := nats.Connect(config.Nats.Url)
+	if err != nil {
+		zap.S().Fatalw("failed to connect to nats",
+			"error", err,
+		)
+	}
+
+	defer func() {
+		err = nc.Drain()
+		zap.S().Fatalw("failed to drain nats, is connection failing?",
+			"error", err,
+		)
+	}()
+
+	gctx.Inst().Events = events.NewPublisher(nc, config.Nats.Subject)
+
 	{
 		id := svc.AppIdentity{
 			Name: "API",
 			Web:  config.WebsiteURL,
 			CDN:  config.CdnURL,
 		}
-		gctx.Inst().Events = events.NewPublisher(gctx, gctx.Inst().Redis)
 
 		gctx.Inst().Limiter, err = limiter.New(gctx, gctx.Inst().Redis)
 		if err != nil {
@@ -201,7 +224,7 @@ func main() {
 			CDN:     config.CdnURL,
 			Website: config.WebsiteURL,
 		})
-		gctx.Inst().Query = query.New(gctx.Inst().Mongo, gctx.Inst().Redis)
+		gctx.Inst().Query = query.New(gctx.Inst().Mongo, gctx.Inst().Redis, gctx.Inst().Meilisearch)
 		gctx.Inst().Loaders = loaders.New(gctx, gctx.Inst().Mongo, gctx.Inst().Redis, gctx.Inst().Query)
 
 		gctx.Inst().Mutate = mutate.New(mutate.InstanceOptions{

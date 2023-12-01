@@ -2,6 +2,7 @@ package loaders
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/seventv/common/dataloader"
@@ -11,6 +12,8 @@ import (
 )
 
 func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
+	go initCache()
+
 	return dataloader.New(dataloader.Config[primitive.ObjectID, structures.Emote]{
 		Wait: time.Millisecond * 25,
 		Fetch: func(keys []primitive.ObjectID) ([]structures.Emote, []error) {
@@ -26,9 +29,24 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 				items[i] = structures.DeletedEmote
 			}
 
+			// Fetch emotes from cache
+			cachedEmotes := getEmotesFromCache(keys)
+
+			remainingKeys := []primitive.ObjectID{}
+
+			for i, key := range keys {
+				if emote, ok := cachedEmotes[key]; ok {
+					items[i] = emote
+					continue
+				}
+
+				// key was not found in cache, so we get it from mongo
+				remainingKeys = append(remainingKeys, key)
+			}
+
 			// Fetch emotes
 			emotes, err := x.query.Emotes(ctx, bson.M{
-				key: bson.M{"$in": keys},
+				key: bson.M{"$in": remainingKeys},
 			}).Items()
 
 			if err == nil {
@@ -40,15 +58,18 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 				}
 
 				for i, v := range keys {
-					if x, ok := m[v]; ok {
-						ver, _ := x.GetVersion(v)
+					if emote, ok := m[v]; ok {
+						ver, _ := emote.GetVersion(v)
 						if ver.ID.IsZero() {
 							continue
 						}
 
-						x.ID = v
-						x.VersionRef = &ver
-						items[i] = x
+						emote.ID = v
+						emote.VersionRef = &ver
+						items[i] = emote
+
+						// store emote in cache
+						setEmoteInCache(emote)
 					}
 				}
 			}
@@ -56,6 +77,55 @@ func emoteLoader(ctx context.Context, x inst, key string) EmoteLoaderByID {
 			return items, errs
 		},
 	})
+}
+
+// TODO: clean up the code for cache to make it more universal for other loaders if needed
+var emoteCache = make(map[primitive.ObjectID]cachedEmote)
+var cacheMx = &sync.Mutex{}
+
+type cachedEmote struct {
+	emote  structures.Emote
+	expire time.Time
+}
+
+func initCache() {
+	for range time.Tick(30 * time.Second) {
+		cacheMx.Lock()
+		for k, v := range emoteCache {
+			if time.Now().After(v.expire) {
+				delete(emoteCache, k)
+			}
+		}
+		cacheMx.Unlock()
+	}
+}
+
+func getEmotesFromCache(keys []primitive.ObjectID) map[primitive.ObjectID]structures.Emote {
+	cacheMx.Lock()
+	defer cacheMx.Unlock()
+
+	emotes := make(map[primitive.ObjectID]structures.Emote)
+
+	for _, key := range keys {
+		emote, ok := emoteCache[key]
+		if !ok {
+			continue
+		}
+
+		emotes[key] = emote.emote
+	}
+
+	return emotes
+}
+
+func setEmoteInCache(emote structures.Emote) {
+	cacheMx.Lock()
+	defer cacheMx.Unlock()
+
+	emoteCache[emote.ID] = cachedEmote{
+		emote:  emote,
+		expire: time.Now().Add(time.Minute * 2),
+	}
 }
 
 func batchEmoteLoader(ctx context.Context, x inst, key string) BatchEmoteLoaderByID {

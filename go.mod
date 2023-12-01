@@ -8,14 +8,15 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.17.4
 	github.com/bugsnag/panicwrap v1.3.4
 	github.com/fasthttp/router v1.4.16
-	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-querystring v1.1.0
 	github.com/h2non/filetype v1.1.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/json-iterator/go v1.1.12
+	github.com/nats-io/nats.go v1.28.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.14.0
-	github.com/seventv/common v0.0.0-20230528214454-1a842fd909aa
+	github.com/seventv/common v0.0.0-20231109022220-2f3ccd557f7d
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
 	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
@@ -33,6 +34,10 @@ require (
 
 require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
+	github.com/meilisearch/meilisearch-go v0.26.0 // indirect
+	github.com/nats-io/nats-server/v2 v2.9.21 // indirect
+	github.com/nats-io/nkeys v0.4.4 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 )
 
@@ -71,7 +76,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
@@ -101,12 +106,12 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.6.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect

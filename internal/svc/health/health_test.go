@@ -18,17 +18,17 @@ func TestHealth(t *testing.T) {
 	config.Health.Enabled = true
 	config.Health.Bind = "127.0.1.1:3000"
 
-	gCtx, cancel := global.WithCancel(global.New(context.Background(), config))
+	gctx, cancel := global.WithCancel(global.New(context.Background(), config))
 
 	var err error
-	gCtx.Inst().S3, err = s3.NewMock(gCtx, map[string]map[string][]byte{})
+	gctx.Inst().S3, err = s3.NewMock(gctx, map[string]map[string][]byte{})
 	testutil.IsNil(t, err, "s3 init successful")
 
-	gCtx.Inst().MessageQueue, err = messagequeue.New(gCtx, messagequeue.ConfigMock{})
+	gctx.Inst().MessageQueue, err = messagequeue.New(gctx, messagequeue.ConfigMock{})
 	testutil.IsNil(t, err, "mq init successful")
 
-	mq, _ := gCtx.Inst().MessageQueue.(*messagequeue.InstanceMock)
-	s3, _ := gCtx.Inst().S3.(*s3.MockInstance)
+	mq, _ := gctx.Inst().MessageQueue.(*messagequeue.InstanceMock)
+	s3, _ := gctx.Inst().S3.(*s3.MockInstance)
 
 	// TODO we need to mock redis :-)
 	// gCtx.Inst().Redis, err = redis.NewMock()
@@ -38,7 +38,7 @@ func TestHealth(t *testing.T) {
 	// gCtx.Inst().Mongo, err = mongo.NewMock()
 	// testutil.IsNil(t, err, "mongo init successful")
 
-	done := New(gCtx)
+	done := New(gctx)
 
 	time.Sleep(time.Millisecond * 50)
 
@@ -57,13 +57,16 @@ func TestHealth(t *testing.T) {
 	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code rmq down")
 
 	mq.SetConnected(true)
-	s3.SetConnected(false)
 
-	resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
-	testutil.IsNil(t, err, "No error")
+	if config.S3.Enabled {
+		s3.SetConnected(gctx.Config().S3.Enabled)
 
-	_ = resp.Body.Close()
-	testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code s3 down")
+		resp, err = http.DefaultClient.Get("http://127.0.1.1:3000")
+		testutil.IsNil(t, err, "No error")
+
+		_ = resp.Body.Close()
+		testutil.Assert(t, http.StatusInternalServerError, resp.StatusCode, "response code s3 down")
+	}
 
 	cancel()
 

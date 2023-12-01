@@ -19,10 +19,16 @@ type AnyPayload interface {
 }
 
 type HelloPayload struct {
-	HeartbeatInterval uint32              `json:"heartbeat_interval"`
-	SessionID         string              `json:"session_id"`
-	SubscriptionLimit int32               `json:"subscription_limit"`
-	Actor             *primitive.ObjectID `json:"actor,omitempty"`
+	HeartbeatInterval uint32                   `json:"heartbeat_interval"`
+	SessionID         string                   `json:"session_id"`
+	SubscriptionLimit int32                    `json:"subscription_limit"`
+	Actor             *primitive.ObjectID      `json:"actor,omitempty"`
+	Instance          HelloPayloadInstanceInfo `json:"instance,omitempty"`
+}
+
+type HelloPayloadInstanceInfo struct {
+	Name       string `json:"name"`
+	Population int32  `json:"population"`
 }
 
 type AckPayload struct {
@@ -73,11 +79,11 @@ func CreateDispatchKey(t EventType, condition EventCondition, wildcard bool) str
 	s := strings.Builder{}
 
 	s.WriteString(OpcodeDispatch.PublishKey())
-	s.WriteString(":type:")
+	s.WriteString(".type.")
 	s.WriteString(utils.Ternary(wildcard, t.ObjectName()+".*", string(t)))
 
 	if len(condition) > 0 {
-		s.WriteString(":")
+		s.WriteString(".")
 
 		sorted := make([]string, len(condition))
 		h := sha256.New()

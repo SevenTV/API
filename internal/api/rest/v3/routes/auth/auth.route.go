@@ -6,11 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/internal/api/rest/middleware"
-	"github.com/seventv/api/internal/api/rest/rest"
-	"github.com/seventv/api/internal/global"
-	"github.com/seventv/api/internal/svc/auth"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -18,6 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/internal/api/rest/middleware"
+	"github.com/seventv/api/internal/api/rest/rest"
+	"github.com/seventv/api/internal/global"
+	"github.com/seventv/api/internal/svc/auth"
 )
 
 type Route struct {
@@ -213,7 +214,7 @@ func setupUser(
 			ub.AddConnection(con)
 
 			// eventapi: dispatch the connection create event
-			gctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+			gctx.Inst().Events.Dispatch(events.EventTypeUpdateUser, events.ChangeMap{
 				ID:    ub.User.ID,
 				Kind:  structures.ObjectKindUser,
 				Actor: gctx.Inst().Modelizer.User(ub.User).ToPartial(),

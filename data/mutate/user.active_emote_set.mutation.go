@@ -3,7 +3,6 @@ package mutate
 import (
 	"context"
 
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -11,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *structures.UserBuilder, opt SetUserActiveEmoteSet) error {
@@ -86,7 +87,7 @@ func (m *Mutate) SetUserConnectionActiveEmoteSet(ctx context.Context, ub *struct
 		newSet.Emotes = nil // don't send the emotes with the event
 		oldSet.Emotes = nil
 
-		m.events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+		m.events.Dispatch(events.EventTypeUpdateUser, events.ChangeMap{
 			ID:    ub.User.ID,
 			Kind:  structures.ObjectKindUser,
 			Actor: m.modelizer.User(actor).ToPartial(),

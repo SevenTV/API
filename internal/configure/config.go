@@ -140,11 +140,24 @@ type Config struct {
 		MasterName string   `mapstructure:"master_name" json:"master_name"`
 	} `mapstructure:"redis" json:"redis"`
 
+	Nats struct {
+		Url     string `mapstructure:"url" json:"url"`
+		Subject string `mapstructure:"subject" json:"subject"`
+	} `mapstructure:"nats" json:"nats"`
+
 	Mongo struct {
-		URI    string `mapstructure:"uri" json:"uri"`
-		DB     string `mapstructure:"db" json:"db"`
-		Direct bool   `mapstructure:"direct" json:"direct"`
+		URI      string `mapstructure:"uri" json:"uri"`
+		Username string `mapstructure:"username" json:"username"`
+		Password string `mapstructure:"password" json:"password"`
+		DB       string `mapstructure:"db" json:"db"`
+		Direct   bool   `mapstructure:"direct" json:"direct"`
 	} `mapstructure:"mongo" json:"mongo"`
+
+	Meilisearch struct {
+		Host  string `mapstructure:"host" json:"host"`
+		Key   string `mapstructure:"key" json:"key"`
+		Index string `mapstructure:"index" json:"index"`
+	} `mapstructure:"meilisearch" json:"meilisearch"`
 
 	Health struct {
 		Enabled bool   `mapstructure:"enabled" json:"enabled"`
@@ -277,6 +290,7 @@ type Config struct {
 	} `mapstructure:"message_queue" json:"message_queue"`
 
 	S3 struct {
+		Enabled        bool   `mapstructure:"enabled" json:"enabled"`
 		AccessToken    string `mapstructure:"access_token" json:"access_token"`
 		SecretKey      string `mapstructure:"secret_key" json:"secret_key"`
 		Region         string `mapstructure:"region" json:"region"`

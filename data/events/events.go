@@ -116,7 +116,7 @@ func (op Opcode) String() string {
 }
 
 func (op Opcode) PublishKey() string {
-	return fmt.Sprintf("events:%s:%s", "op", strings.ToLower(op.String()))
+	return fmt.Sprintf("events.%s.%s", "op", strings.ToLower(op.String()))
 }
 
 type CloseCode uint16

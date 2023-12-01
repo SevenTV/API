@@ -99,7 +99,7 @@ func DoRateLimit(
 		limit,
 		1,
 	).Result(); err != nil {
-		return 0, 0, 0, errors.ErrInternalServerError().SetDetail("Rate Limiter Error")
+		return 0, 0, 0, errors.ErrInternalServerError().SetDetail("Rate Limiter Error:", err)
 	} else {
 		a := make([]int64, 3)
 

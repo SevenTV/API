@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func New(gCtx global.Context) <-chan struct{} {
+func New(gctx global.Context) <-chan struct{} {
 	done := make(chan struct{})
 
 	srv := fasthttp.Server{
@@ -29,9 +29,9 @@ func New(gCtx global.Context) <-chan struct{} {
 				mongoDown bool
 			)
 
-			if gCtx.Inst().Redis != nil {
+			if gctx.Inst().Redis != nil {
 				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				if err := gCtx.Inst().Redis.Ping(lCtx); err != nil {
+				if err := gctx.Inst().Redis.Ping(lCtx); err != nil {
 					zap.S().Warnw("redis is not responding",
 						"error", err,
 					)
@@ -41,15 +41,15 @@ func New(gCtx global.Context) <-chan struct{} {
 			}
 
 			lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			mqDown = gCtx.Inst().MessageQueue != nil && !gCtx.Inst().MessageQueue.Connected(lCtx)
+			mqDown = gctx.Inst().MessageQueue != nil && !gctx.Inst().MessageQueue.Connected(lCtx)
 			cancel()
 			if mqDown {
 				zap.S().Warnw("mq is not connected")
 			}
 
-			if gCtx.Inst().S3 != nil {
+			if gctx.Config().S3.Enabled && gctx.Inst().S3 != nil {
 				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				if _, err := gCtx.Inst().S3.ListBuckets(lCtx); err != nil {
+				if _, err := gctx.Inst().S3.ListBuckets(lCtx); err != nil {
 					s3Down = true
 					zap.S().Warnw("s3 is not responding",
 						"error", err,
@@ -58,9 +58,9 @@ func New(gCtx global.Context) <-chan struct{} {
 				cancel()
 			}
 
-			if gCtx.Inst().Mongo != nil {
+			if gctx.Inst().Mongo != nil {
 				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				if err := gCtx.Inst().Mongo.Ping(lCtx); err != nil {
+				if err := gctx.Inst().Mongo.Ping(lCtx); err != nil {
 					mongoDown = true
 					zap.S().Warnw("mongo is not responding",
 						"error", err,
@@ -78,10 +78,10 @@ func New(gCtx global.Context) <-chan struct{} {
 	go func() {
 		defer close(done)
 		zap.S().Infow("Health enabled",
-			"bind", gCtx.Config().Health.Bind,
+			"bind", gctx.Config().Health.Bind,
 		)
 
-		if err := srv.ListenAndServe(gCtx.Config().Health.Bind); err != nil {
+		if err := srv.ListenAndServe(gctx.Config().Health.Bind); err != nil {
 			zap.S().Fatalw("failed to bind health",
 				"error", err,
 			)
@@ -89,7 +89,7 @@ func New(gCtx global.Context) <-chan struct{} {
 	}()
 
 	go func() {
-		<-gCtx.Done()
+		<-gctx.Done()
 
 		_ = srv.Shutdown()
 	}()

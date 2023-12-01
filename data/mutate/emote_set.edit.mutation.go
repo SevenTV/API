@@ -3,13 +3,14 @@ package mutate
 import (
 	"context"
 
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
@@ -159,7 +160,7 @@ func (m *Mutate) UpdateEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 		}
 
 		// Dispatch an event
-		m.events.Dispatch(ctx, events.EventTypeUpdateEmoteSet, events.ChangeMap{
+		m.events.Dispatch(events.EventTypeUpdateEmoteSet, events.ChangeMap{
 			ID:      esb.EmoteSet.ID,
 			Kind:    structures.ObjectKindEmoteSet,
 			Actor:   m.modelizer.User(actor).ToPartial(),

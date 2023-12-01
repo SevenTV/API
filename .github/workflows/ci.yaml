@@ -14,26 +14,27 @@ on:
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Deploy location"
+        description: "Which environment to deploy to"
         required: true
         default: "none"
         type: choice
         options:
-          - production
-          - staging
+          - prod
+          - test
           - none
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DEPLOY: ${{ (inputs.deploy != 'none' && inputs.deploy) || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'prod') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') && 'prod') || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'test') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'dev') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'staged')) && 'test') || 'none' }}
+
 jobs:
   ci:
     name: API Lint, Build, Test, Deploy
     runs-on: aws-runner
     env:
-      DEPLOY_PROD: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'production') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') }}
-      DEPLOY_STAGE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'staging') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'dev') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'staged')) }}
       GOLANGCI_LINT_CACHE: /home/runner/.cache/golangci-lint
     concurrency:
       group: ${{ github.workflow }}-ci-${{ github.ref }}
@@ -99,7 +100,7 @@ jobs:
         run: make generate
 
       - name: Build Dev Portal Frontend
-        run: make ${{ (env.DEPLOY_PROD == 'true' && 'portal') || 'portal_stage' }}
+        run: make ${{ (env.DEPLOY == 'prod' && 'portal') || 'portal_stage' }}
 
       - name: Run Linter
         run: make lint
@@ -110,64 +111,155 @@ jobs:
       - name: Build App
         run: make build
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
-        uses: aws-actions/amazon-ecr-login@v1
-
       - name: Make build context
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
+        if: env.DEPLOY != 'none'
         run: |
           docker context create builders
 
       - name: Setup buildx
         uses: docker/setup-buildx-action@v2
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
+        if: env.DEPLOY != 'none'
         with:
           install: true
           endpoint: builders
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
       - name: Build docker image
         uses: docker/build-push-action@v4
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
+        if: env.DEPLOY != 'none'
         with:
           context: .
           file: docker/partial.Dockerfile
-          # cache-from: |
-          #   type=registry,ref=gha
-          # cache-to: |
-          #   type=registry,ref=gha,mode=max
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
+            ghcr.io/seventv/api:${{ env.DEPLOY }}-${{ github.sha }}
+            ghcr.io/seventv/api:${{ env.DEPLOY }}-latest
           push: true
 
-      - name: Update deployment template
-        uses: danielr1996/envsubst-action@1.1.0
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
-        env:
-          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ (env.DEPLOY_PROD == 'true' && '7tv') || '7tv-stage' }}/api:${{ github.sha }}
+  validate:
+    name: API Deploy Validation
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout code
+        id: ok
+        if: env.DEPLOY != 'none'
+        uses: actions/checkout@v3
+
+      - name: "Setup Terraform"
+        if: steps.ok.outcome == 'success'
+        uses: hashicorp/setup-terraform@v1
         with:
-          input: k8s/${{ (env.DEPLOY_PROD == 'true' && 'production') || 'staging' }}.template.yaml
-          output: k8s/deploy.yaml
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: Setup Kubectl
-        uses: azure/setup-kubectl@v3.0
-
-      - name: Deploy to k8s
-        if: ${{ env.DEPLOY_PROD == 'true' || env.DEPLOY_STAGE == 'true' }}
+      - name: "Terraform Init"
+        if: steps.ok.outcome == 'success'
+        id: init
         env:
-          KUBE_CONFIG_DATA: ${{ (env.DEPLOY_PROD == 'true' && secrets.KUBECONFIG) || secrets.KUBECONFIG_STAGE }}
-        run: |
-          mkdir -p ~/.kube
-          (echo $KUBE_CONFIG_DATA | base64 -d) >> ~/.kube/config
+          TF_WORKSPACE: ${{ env.DEPLOY }}
+        run: terraform init
+        continue-on-error: true
 
-          kubectl apply -f k8s/deploy.yaml
+      - name: "Terraform Workspace"
+        if: steps.ok.outcome == 'success'
+        run: terraform workspace select -or-create=true ${{ env.DEPLOY }}
+
+      - name: Terraform fmt
+        if: steps.ok.outcome == 'success'
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Validate
+        if: steps.ok.outcome == 'success'
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Variables
+        if: steps.ok.outcome == 'success'
+        run: |
+          cat <<EOF > *.auto.tfvars
+            image_url="ghcr.io/seventv/api:${{ env.DEPLOY }}-${{ github.sha }}"
+            image_pull_policy="IfNotPresent"
+
+          EOF
+
+      - name: "Terraform Plan"
+        if: steps.ok.outcome == 'success'
+        id: plan
+        run: terraform plan -no-color
+
+      - uses: actions/github-script@v6
+        if: steps.ok.outcome == 'success' && github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style')
+            })
+
+            // 2. Prepare format of the comment
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+
+            </details>
+
+            *Actor: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+      - name: "Terraform Apply"
+        if: steps.ok.outcome == 'success'
+        id: apply
+        run: terraform apply -no-color -auto-approve
+        continue-on-error: true

@@ -2,249 +2,154 @@ package query
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
+	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/seventv/common/errors"
-	"github.com/seventv/common/mongo"
-	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
-	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/internal/search"
 )
 
 const EMOTES_QUERY_LIMIT = 300
 
 func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]structures.Emote, int, error) {
+	req := search.EmoteSearchOptions{
+		Limit: int64(opt.Limit),
+		Page:  int64(opt.Page),
+		Sort: search.EmoteSortOptions{
+			By:        "channel_count",
+			Ascending: false,
+		},
+		Lifecycle: int32(structures.EmoteLifecycleLive),
+	}
+
 	// Define limit (how many emotes can be returned in a single query)
-	limit := opt.Limit
-	if limit > EMOTES_QUERY_LIMIT {
-		limit = EMOTES_QUERY_LIMIT
-	} else if limit < 1 {
-		limit = 1
+	if req.Limit > EMOTES_QUERY_LIMIT {
+		req.Limit = EMOTES_QUERY_LIMIT
+	} else if req.Limit < 1 {
+		req.Limit = 1
 	}
 
 	// Define page
-	page := 1
-	if opt.Page > page {
-		page = opt.Page
-	} else if opt.Page < 1 {
-		page = 1
+	if req.Page < 1 {
+		req.Page = 1
 	}
 
 	// Define default filter
-	filter := opt.Filter
-	if filter == nil {
-		filter = &SearchEmotesFilter{
-			CaseSensitive: utils.PointerOf(false),
-			ExactMatch:    utils.PointerOf(false),
-			IgnoreTags:    utils.PointerOf(false),
-			Document:      bson.M{},
-		}
-	}
+	//filter := opt.Filter
+	//if filter == nil {
+	//	filter = &SearchEmotesFilter{
+	//		CaseSensitive: utils.PointerOf(false),
+	//		ExactMatch:    utils.PointerOf(false),
+	//		IgnoreTags:    utils.PointerOf(false),
+	//		Document:      bson.M{},
+	//	}
+	//}
 
 	// Define the query string
 	query := strings.Trim(opt.Query, " ")
 
 	// Set up db query
-	_, err := q.Bans(ctx, BanQueryOptions{ // remove emotes made by usersa who own nothing and are happy
-		Filter: bson.M{"effects": bson.M{"$bitsAnySet": structures.BanEffectNoOwnership | structures.BanEffectMemoryHole}},
-	})
-	if err != nil {
-		return nil, 0, err
-	}
-
-	stateMatch := bson.D{
-		{Key: "state.lifecycle", Value: structures.EmoteLifecycleLive},
-	}
 
 	// Apply permission checks
 	// omit unlisted/private emotes
-	privileged := int(1)
 	if opt.Actor == nil || !opt.Actor.HasPermission(structures.RolePermissionEditAnyEmote) {
-		privileged = 0
-
-		stateMatch = append(stateMatch, bson.E{
-			Key:   "state.listed",
-			Value: true,
-		})
-	}
-
-	match := bson.D{
-		{Key: "versions", Value: bson.M{
-			"$elemMatch": stateMatch,
-		}},
-	}
-
-	if len(filter.Document) > 0 {
-		for k, v := range filter.Document {
-			match = append(match, bson.E{Key: k, Value: v})
-		}
-	}
-
-	// Apply name/tag query
-	h := sha256.New()
-	h.Write(utils.S2B(query))
-	h.Write([]byte{byte(privileged)})
-
-	queryKey := q.redis.ComposeKey("common", fmt.Sprintf("emote-search:%s", hex.EncodeToString((h.Sum(nil)))))
-	cpargs := bson.A{}
-
-	sorter := bson.M{}
-
-	// Handle exact match
-	if filter.ExactMatch != nil && *filter.ExactMatch {
-		// For an exact mathc we will use the $text operator
-		// rather than $indexOfCP because name/tags are indexed fields
-		match = append(match, bson.E{Key: "$text", Value: bson.M{
-			"$search":        query,
-			"$caseSensitive": filter.CaseSensitive != nil && *filter.CaseSensitive,
-		}})
-
-		sorter = bson.M{"score": bson.M{"$meta": "textScore"}}
-
-		h.Write(utils.S2B("FILTER_EXACT"))
-	}
-
-	if len(query) > 0 {
-		or := bson.A{}
-
-		if filter.CaseSensitive != nil && *filter.CaseSensitive {
-			cpargs = append(cpargs, "$name", query)
-
-			h.Write(utils.S2B("FILTER_CASE_SENSITIVE"))
-		} else {
-			cpargs = append(cpargs, bson.M{"$toLower": "$name"}, strings.ToLower(query))
-		}
-
-		or = append(or, bson.M{
-			"$expr": bson.M{
-				"$gt": bson.A{bson.M{"$indexOfCP": cpargs}, -1},
-			},
-		})
-
-		// Add tag search
-		if filter.IgnoreTags == nil || !*filter.IgnoreTags {
-			qVal := query
-			if len(qVal) > 0 && qVal[0] == '#' {
-				qVal = qVal[1:]
-			}
-
-			or = append(or, bson.M{
-				"$expr": bson.M{
-					"$gt": bson.A{
-						bson.M{"$indexOfCP": bson.A{bson.M{"$reduce": bson.M{
-							"input":        "$tags",
-							"initialValue": " ",
-							"in":           bson.M{"$concat": bson.A{"$$value", "$$this"}},
-						}}, strings.ToLower(qVal)}},
-						-1,
-					},
-				},
-			})
-
-			h.Write(utils.S2B("FILTER_IGNORE_TAGS"))
-		}
-
-		if len(or) > 0 {
-			match = append(match, bson.E{Key: "$or", Value: or})
-		}
+		req.Listed = true
 	}
 
 	if opt.Sort != nil && len(opt.Sort) > 0 {
-		sorter = opt.Sort
-	}
-
-	if len(filter.Document) > 0 {
-		optBytes, _ := json.Marshal(filter.Document)
-		h.Write(optBytes)
-	}
-
-	mtx := q.mtx("SearchEmotes")
-	mtx.Lock()
-
-	totalCount, countErr := q.redis.RawClient().Get(ctx, string(queryKey)).Int()
-	wg := sync.WaitGroup{}
-
-	if countErr == redis.Nil {
-		wg.Add(1)
-
-		go func() { // Run a separate pipeline to return the total count that could be paginated
-			defer func() {
-				mtx.Unlock()
-				wg.Done()
-			}()
-
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			defer cancel()
-
-			value, err := q.mongo.Collection(mongo.CollectionNameEmotes).CountDocuments(ctx, match)
-			if err != nil {
-				zap.S().Errorw("mongo, failed to count emotes() gql query",
-					"error", err,
-					"match", match,
-				)
-
-				return
+		for key, value := range opt.Sort {
+			sort := search.EmoteSortOptions{
+				By: key,
 			}
-
-			totalCount = int(value)
-
-			// Return total count & cache
-			dur := utils.Ternary(query == "", time.Hour*24, time.Hour*12)
-
-			if err = q.redis.SetEX(ctx, queryKey, totalCount, dur); err != nil {
-				zap.S().Errorw("redis, failed to save total list count of emotes() gql query",
-					"error", err,
-					"key", queryKey,
-					"count", totalCount,
-				)
+			if value.(int32) > 0 {
+				sort.Ascending = true
 			}
-		}()
-	} else {
-		mtx.Unlock()
+			req.Sort = sort
+			break
+		}
 	}
 
-	wg.Wait()
+	result, totalCount, err := q.search.SearchEmotes(query, req)
 
-	// Paginate and fetch the relevant emotes
-	result := []structures.Emote{}
-	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Find(
-		ctx,
-		match,
-		options.Find().
-			SetSort(sorter).
-			SetSkip(int64((page-1)*limit)).
-			SetLimit(int64(limit)),
-	)
+	emoteIds := []primitive.ObjectID{}
 
+	for _, emote := range result {
+		id, _ := primitive.ObjectIDFromHex(emote.Id)
+		emoteIds = append(emoteIds, id)
+	}
+
+	emotes, err := q.Emotes(ctx, bson.M{"_id": bson.M{"$in": emoteIds}}).Items()
 	if err != nil {
 		zap.S().Errorw("mongo, failed to find emotes() gql query",
 			"error", err,
-			"match", match,
-			"sort", sorter,
-			"skip", (page-1)*limit,
-			"limit", limit,
 		)
 
 		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
 	}
 
-	if err = cur.All(ctx, &result); err != nil {
-		return nil, 0, errors.ErrInternalServerError().SetDetail(err.Error())
+	return sortEmoteSearchResults(emotes, req.Sort.By, req.Sort.Ascending), int(totalCount), nil
+}
+
+func sortEmoteSearchResults(emotes []structures.Emote, sortBy string, ascending bool) []structures.Emote {
+	if sortBy == "" || len(sortBy) == 0 {
+		return emotes
 	}
 
-	// wait for total count to finish
-	wg.Wait()
+	switch sortBy {
+	case "channel_count":
+		sort.Slice(emotes, func(i, j int) bool {
+			// get sum count of all versions per emote
+			var emote1Count int32
+			var emote2Count int32
 
-	return result, totalCount, nil
+			for _, version := range emotes[i].Versions {
+				emote1Count += version.State.ChannelCount
+			}
+
+			for _, version := range emotes[j].Versions {
+				emote2Count += version.State.ChannelCount
+			}
+
+			if ascending {
+				return emote1Count < emote2Count
+			}
+
+			return emote1Count > emote2Count
+		})
+	case "created_at":
+		sort.Slice(emotes, func(i, j int) bool {
+			// find earliest created at data per emote
+			emote1CreatedAt := time.Now()
+			emote2CreatedAt := time.Now()
+
+			for _, version := range emotes[i].Versions {
+				// is this version older than the current earliest?
+				if emote1CreatedAt.Sub(version.CreatedAt) > 0 {
+					emote1CreatedAt = version.CreatedAt
+				}
+			}
+
+			for _, version := range emotes[j].Versions {
+				if emote2CreatedAt.Sub(version.CreatedAt) > 0 {
+					emote2CreatedAt = version.CreatedAt
+				}
+			}
+
+			if ascending {
+				return emote1CreatedAt.Before(emote2CreatedAt)
+			}
+
+			return emote1CreatedAt.After(emote2CreatedAt)
+		})
+	}
+
+	return emotes
 }
 
 type SearchEmotesOptions struct {

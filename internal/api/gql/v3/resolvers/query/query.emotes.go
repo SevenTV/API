@@ -9,23 +9,24 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/seventv/api/data/model/modelgql"
-	"github.com/seventv/api/data/query"
-	"github.com/seventv/api/internal/api/gql/v3/auth"
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
-	"github.com/seventv/api/internal/svc/limiter"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"github.com/seventv/api/data/model/modelgql"
+	"github.com/seventv/api/data/query"
+	"github.com/seventv/api/internal/api/gql/v3/auth"
+	"github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/api/internal/svc/limiter"
 )
 
 const EMOTES_QUERY_LIMIT = 300
 
 var sortFieldMap = map[string]string{
-	"age":        "_id",
-	"popularity": "versions.state.channel_count",
+	"age":        "created_at",
+	"popularity": "channel_count",
 }
 
 func (r *Resolver) Emote(ctx context.Context, id primitive.ObjectID) (*model.Emote, error) {

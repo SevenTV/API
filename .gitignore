@@ -6,6 +6,7 @@ out/
 tmp/
 *.yaml
 !example.config.yaml
+!terraform/config.template.yaml
 !docker-compose.yaml
 !.github/**/*.yaml
 *-gqlgen.go
@@ -16,3 +17,17 @@ internal/rest/v*/docs
 go.work
 go.work.sum
 !.golangci.yaml
+
+# Terraform local state files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

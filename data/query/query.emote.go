@@ -28,11 +28,11 @@ func (q *Query) Emotes(ctx context.Context, filter bson.M) *QueryResult[structur
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmotes).Aggregate(ctx, mongo.Pipeline{
 		{{
 			Key:   "$match",
-			Value: bson.M{"owner_id": bson.M{"$not": bson.M{"$in": bans.NoOwnership.KeySlice()}}},
+			Value: filter,
 		}},
 		{{
 			Key:   "$match",
-			Value: filter,
+			Value: bson.M{"owner_id": bson.M{"$not": bson.M{"$in": bans.NoOwnership.KeySlice()}}},
 		}},
 		{{
 			Key: "$group",

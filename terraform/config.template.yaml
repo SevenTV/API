@@ -1,0 +1,104 @@
+level: info
+
+website_url: ${website_url}
+cdn_url: ${cdn_url}
+
+http:
+  addr: ${http_addr}
+  ports:
+    gql: ${http_port_gql}
+    rest: ${http_port_rest}
+
+  cookie:
+    domain: ${cookie_domain}
+    secure: ${cookie_secure}
+    whitelist:
+      - ${website_url}
+      - https://twitch.tv
+      - https://www.twitch.tv
+      - https://kick.com
+
+limits:
+  max_page: 25
+  buckets:
+    gql_v3: [ 250, 2 ]
+    image_processing: [ 20, 60 ]
+  emotes:
+    max_tags: 6
+    max_width: 1000
+    max_height: 1000
+  quota:
+    max_active_mod_requests: 3
+
+platforms:
+  twitch:
+    client_id: ${twitch_client_id}
+    client_secret: ${twitch_client_secret}
+    redirect_uri: ${twitch_redirect_uri}
+  discord:
+    client_id: ${discord_client_id}
+    client_secret: ${discord_client_secret}
+    redirect_uri: ${discord_redirect_uri}
+    api: ${discord_api}
+    channels: ${discord_channels}
+  kick:
+    challenge_token: ${kick_challenge_token}
+
+monitoring:
+  enabled: true
+  bind: 0.0.0.0:9100
+
+pprof:
+  enabled: false
+  bind: 0.0.0.0:9300
+
+mongo:
+  uri: ${mongo_uri}
+  db: ${mongo_database}
+  username: ${mongo_username}
+  password: ${mongo_password}
+
+meilisearch:
+  host: ${meili_url}
+  key: ${meili_key}
+  index: ${meili_index}
+
+redis:
+  addresses:
+    - redis-node-0.redis-headless.database.svc.cluster.local:26379
+    - redis-node-1.redis-headless.database.svc.cluster.local:26379
+    - redis-node-2.redis-headless.database.svc.cluster.local:26379
+    - redis-node-3.redis-headless.database.svc.cluster.local:26379
+    - redis-node-4.redis-headless.database.svc.cluster.local:26379
+  sentinel: true
+  master_name: "mymaster"
+  username: ${redis_username}
+  password: ${redis_password}
+
+nats:
+  url: ${nats_url}
+  subject: ${nats_subject}
+
+message_queue:
+  mode: "RMQ"
+  image_processor_jobs_queue_name: "seventv_image_processor_jobs"
+  image_processor_results_queue_name: "seventv_image_processor_results"
+  image_processor_user_pictures_results_queue_name: "seventv_image_processor_user_pictures_results"
+  rmq:
+    uri: ${rmq_uri}
+    max_reconnect_attempts: 25
+
+s3:
+  region: "${s3_region}"
+  access_token: "${s3_access_key}"
+  secret_key: "${s3_secret_key}"
+  internal_bucket: "${s3_internal_bucket}"
+  public_bucket: "${s3_public_bucket}"
+  endpoint: "${s3_endpoint}"
+
+health:
+  enabled: true
+  bind: 0.0.0.0:9200
+
+credentials:
+  jwt_secret: ${jwt_secret}

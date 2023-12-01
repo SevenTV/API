@@ -3,12 +3,13 @@ package mutate
 import (
 	"context"
 
-	"github.com/seventv/api/data/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
 )
 
 func (m *Mutate) DeleteEmoteSet(ctx context.Context, esb *structures.EmoteSetBuilder, opt EmoteSetMutationOptions) error {
@@ -55,7 +56,7 @@ func (m *Mutate) DeleteEmoteSet(ctx context.Context, esb *structures.EmoteSetBui
 	}
 
 	// Emit event
-	m.events.Dispatch(ctx, events.EventTypeDeleteEmoteSet, events.ChangeMap{
+	m.events.Dispatch(events.EventTypeDeleteEmoteSet, events.ChangeMap{
 		ID:    esb.EmoteSet.OwnerID,
 		Kind:  structures.ObjectKindEmoteSet,
 		Actor: m.modelizer.User(actor).ToPartial(),

@@ -17,21 +17,25 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/internal/search"
 )
 
 type Query struct {
-	mongo mongo.Instance
-	redis redis.Instance
-	c     *cache.Cache
-	mx    *sync_map.Map[string, *sync.Mutex]
+	mongo  mongo.Instance
+	redis  redis.Instance
+	search *search.MeiliSearch
+	c      *cache.Cache
+	mx     *sync_map.Map[string, *sync.Mutex]
 }
 
-func New(mongoInst mongo.Instance, redisInst redis.Instance) *Query {
+func New(mongoInst mongo.Instance, redisInst redis.Instance, search *search.MeiliSearch) *Query {
 	return &Query{
-		mongo: mongoInst,
-		redis: redisInst,
-		c:     cache.New(time.Minute*1, time.Minute*5),
-		mx:    &sync_map.Map[string, *sync.Mutex]{},
+		mongo:  mongoInst,
+		redis:  redisInst,
+		search: search,
+		c:      cache.New(time.Minute*1, time.Minute*5),
+		mx:     &sync_map.Map[string, *sync.Mutex]{},
 	}
 }
 

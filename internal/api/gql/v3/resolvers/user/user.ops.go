@@ -3,13 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/seventv/api/data/events"
-	"github.com/seventv/api/data/model/modelgql"
-	"github.com/seventv/api/data/mutate"
-	"github.com/seventv/api/internal/api/gql/v3/auth"
-	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
-	"github.com/seventv/api/internal/api/gql/v3/gen/model"
-	"github.com/seventv/api/internal/api/gql/v3/types"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -17,6 +10,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
+
+	"github.com/seventv/api/data/events"
+	"github.com/seventv/api/data/model/modelgql"
+	"github.com/seventv/api/data/mutate"
+	"github.com/seventv/api/internal/api/gql/v3/auth"
+	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
+	"github.com/seventv/api/internal/api/gql/v3/gen/model"
+	"github.com/seventv/api/internal/api/gql/v3/types"
 )
 
 type ResolverOps struct {
@@ -138,7 +139,7 @@ func (r *ResolverOps) Connections(ctx context.Context, obj *model.UserOps, id st
 				return nil, errors.ErrInternalServerError()
 			}
 
-			r.Ctx.Inst().Events.Dispatch(ctx, events.EventTypeUpdateUser, events.ChangeMap{
+			r.Ctx.Inst().Events.Dispatch(events.EventTypeUpdateUser, events.ChangeMap{
 				ID:    obj.ID,
 				Kind:  structures.ObjectKindUser,
 				Actor: r.Ctx.Inst().Modelizer.User(ub.User).ToPartial(),
