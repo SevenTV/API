@@ -28,7 +28,7 @@ limits:
     max_width: 1000
     max_height: 1000
   quota:
-    max_active_mod_requests: 3
+    max_active_mod_requests: 10
 
 platforms:
   twitch:
