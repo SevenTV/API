@@ -28,7 +28,7 @@ resource "kubernetes_secret" "app" {
       discord_redirect_uri  = var.discord_redirect_uri
       discord_api           = ""
       discord_channels      = yamlencode([])
-      kick_challenge_token  = ""
+      kick_challenge_token  = var.kick_challenge_token
       mongo_uri             = local.infra.mongodb_uri
       mongo_username        = local.infra.mongodb_user_app.username
       mongo_password        = local.infra.mongodb_user_app.password

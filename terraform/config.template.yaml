@@ -63,6 +63,10 @@ meilisearch:
   key: ${meili_key}
   index: ${meili_index}
 
+event_bridge:
+  enabled: true
+  bind: 0.0.0.0:9700
+
 redis:
   addresses:
     - redis-node-0.redis-headless.database.svc.cluster.local:26379

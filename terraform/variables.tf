@@ -80,6 +80,11 @@ variable "discord_redirect_uri" {
   default = ""
 }
 
+variable "kick_challenge_token" {
+  type = string
+  default = ""
+}
+
 variable "s3" {
   type = object({
     endpoint        = string
