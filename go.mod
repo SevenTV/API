@@ -19,7 +19,7 @@ require (
 	github.com/seventv/common v0.0.0-20231109022220-2f3ccd557f7d
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
-	github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643
+	github.com/seventv/message-queue/go v0.0.0-20231201171845-1bb9d5db6881
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
 	github.com/swaggo/swag v1.8.10

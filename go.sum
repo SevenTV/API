@@ -364,6 +364,8 @@ github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324 h1:iU3w
 github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324/go.mod h1:0AAXPHKWVVbOdHlfSsL4xwRAxSYgI+v/XPHJeb8XbLs=
 github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643 h1:7DAXa8jZl3f3mltSEaqLFir+qLkDKx/J04LcxcpdEhA=
 github.com/seventv/message-queue/go v0.0.0-20220721124044-9fd23bda9643/go.mod h1:L1iYDSmltUnxlVGX9RayCoVi3e8aNtFrrLJL6Jv+mrM=
+github.com/seventv/message-queue/go v0.0.0-20231201171845-1bb9d5db6881 h1:hftRpO0JO4o+EKJFwTMK5jW2ayMR3PLgCJm9tBKp5tI=
+github.com/seventv/message-queue/go v0.0.0-20231201171845-1bb9d5db6881/go.mod h1:L1iYDSmltUnxlVGX9RayCoVi3e8aNtFrrLJL6Jv+mrM=
 github.com/spf13/afero v1.9.3 h1:41FoI0fD7OR7mGcKE/aOiLkGreyf8ifIOQmJANWogMk=
 github.com/spf13/afero v1.9.3/go.mod h1:iUV7ddyEEZPO5gA3zD4fJt6iStLlL+Lg4m2cihcDf8Y=
 github.com/spf13/cast v1.5.0 h1:rj3WzYc11XZaIZMPKmwP96zkFEnnAmV8s6XbB2aY32w=
