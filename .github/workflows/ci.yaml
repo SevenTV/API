@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEPLOY: ${{ (inputs.deploy != 'none' && inputs.deploy) || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'prod') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') && 'prod') || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'test') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'dev') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'staged')) && 'test') || 'none' }}
+  DEPLOY: ${{ (inputs.deploy != 'none' && inputs.deploy) || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'prod') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'master') && 'prod') || ((github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'test') || (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name == 'dev' && 'test') || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'staged')) && 'test') || 'none' }}
 
 jobs:
   ci:
