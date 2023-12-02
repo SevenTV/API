@@ -52,23 +52,22 @@ func Auth(gctx global.Context) Middleware {
 		ipDidChange := clientIP != "" && user.State.ClientIP != clientIP
 		lastVisitDidChange := user.State.LastVisitDate.Before(time.Now().Add(-time.Hour * 1))
 		usernameDidChange := false
+		currentUsername := user.Username
 
-		/*
-			// Check for username change
-			// Find primary user account
-				if len(user.Connections) > 0 {
-					conn := user.Connections[0]
-					connUsername, connDisplayName := conn.Username()
+		// Check for username change
+		// Find primary user account
+		if len(user.Connections) > 0 {
+			conn := user.Connections[0]
+			connUsername, connDisplayName := conn.Username()
 
-					usernameDidChange = connUsername != user.Username
-					if usernameDidChange {
-						user.Username, user.DisplayName = connUsername, connDisplayName
+			usernameDidChange = connUsername != user.Username || connDisplayName != user.DisplayName
+			if usernameDidChange {
+				user.Username, user.DisplayName = connUsername, connDisplayName
 
-						user.SetDiscriminator("")
-						user.InferUsername()
-					}
-				}
-		*/
+				user.SetDiscriminator("")
+				user.InferUsername()
+			}
+		}
 
 		if ipDidChange || lastVisitDidChange || usernameDidChange {
 			user.State.ClientIP = clientIP
@@ -82,6 +81,7 @@ func Auth(gctx global.Context) Middleware {
 				m["username"] = user.Username
 				m["display_name"] = user.DisplayName
 				m["state.username_changed_at"] = time.Now()
+				m["state.former_username"] = currentUsername
 			}
 
 			if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameUsers).UpdateOne(gctx, bson.M{
