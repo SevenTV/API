@@ -13,10 +13,11 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/json-iterator/go v1.1.12
+	github.com/meilisearch/meilisearch-go v0.26.0
 	github.com/nats-io/nats.go v1.28.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.14.0
-	github.com/seventv/common v0.0.0-20231109022220-2f3ccd557f7d
+	github.com/seventv/common v0.0.0-20231202052307-1d4dd4479600
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
 	github.com/seventv/message-queue/go v0.0.0-20231201171845-1bb9d5db6881
@@ -34,7 +35,6 @@ require (
 
 require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
-	github.com/meilisearch/meilisearch-go v0.26.0 // indirect
 	github.com/nats-io/nats-server/v2 v2.9.21 // indirect
 	github.com/nats-io/nkeys v0.4.4 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
