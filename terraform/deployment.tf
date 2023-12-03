@@ -26,7 +26,7 @@ resource "kubernetes_secret" "app" {
       discord_client_id     = var.discord_client_id
       discord_client_secret = var.discord_client_secret
       discord_redirect_uri  = var.discord_redirect_uri
-      discord_api           = ""
+      discord_api           = "http://compactdisc:3000"
       discord_channels      = yamlencode([])
       kick_challenge_token  = var.kick_challenge_token
       mongo_uri             = local.infra.mongodb_uri
