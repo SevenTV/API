@@ -86,10 +86,6 @@ func applyOriginSets(sets []structures.EmoteSet, originSets []structures.EmoteSe
 			origin.Set = &subset
 
 			for _, emote := range subset.Emotes {
-				if len(set.Emotes) >= int(set.Capacity) {
-					break
-				}
-
 				if index, ok := emoteNameIndexes[emote.Name]; ok {
 					if set.Emotes[index].ID == emote.ID {
 						continue
@@ -98,6 +94,11 @@ func applyOriginSets(sets []structures.EmoteSet, originSets []structures.EmoteSe
 					emote.Origin = origin
 					set.Emotes[index] = emote
 				} else {
+					// don't exceed capacity, but we still replace other origin set emotes
+					if len(set.Emotes) >= int(set.Capacity) {
+						continue
+					}
+
 					// add emote to set emotes
 					emoteNameIndexes[emote.Name] = len(set.Emotes)
 					set.Emotes = append(set.Emotes, emote)
