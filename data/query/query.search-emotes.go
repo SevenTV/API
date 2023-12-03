@@ -40,6 +40,12 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 		req.Page = 1
 	}
 
+	if opt.Filter != nil {
+		if opt.Filter.ExactMatch != nil {
+			req.Exact = *opt.Filter.ExactMatch
+		}
+	}
+
 	// Define default filter
 	//filter := opt.Filter
 	//if filter == nil {

@@ -10,6 +10,7 @@ type EmoteSearchOptions struct {
 	Limit     int64
 	Page      int64
 	Sort      EmoteSortOptions
+	Exact     bool
 	Personal  bool
 	Listed    bool
 	Lifecycle int32
@@ -57,6 +58,10 @@ func (s *MeiliSearch) SearchEmotes(query string, opt EmoteSearchOptions) ([]Emot
 
 	if filter != "" {
 		req.Filter = filter
+	}
+
+	if opt.Exact {
+		query = "\"" + query + "\""
 	}
 
 	res, err := s.emoteIndex.Search(query, req)
