@@ -87,7 +87,7 @@ func (r *youtubeVerify) Handler(ctx *rest.Ctx) rest.APIError {
 		ID:         channel.Id,
 		Platform:   structures.UserConnectionPlatformYouTube,
 		LinkedAt:   time.Now(),
-		EmoteSlots: 600,
+		EmoteSlots: 1000,
 		EmoteSetID: tw.EmoteSetID, // infer set from twitch conn if it exists
 	}).SetID(channel.Id).
 		SetPlatform(structures.UserConnectionPlatformYouTube).
