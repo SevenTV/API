@@ -22,6 +22,7 @@ func (r *Route) Config() rest.RouteConfig {
 			newUserConnection(r.Ctx),
 			newPictureUpload(r.Ctx),
 			newUserPresenceWriteRoute(r.Ctx),
+			newUserDeleteRoute(r.Ctx),
 		},
 		Middleware: []rest.Middleware{},
 	}
