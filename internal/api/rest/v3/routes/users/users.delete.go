@@ -41,9 +41,11 @@ func (r *userDeleteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrInternalServerError()
 	}
 
+	// TODO: add deletion to audit log
+
 	return ctx.JSON(rest.OK, res)
 }
 
 type userDeleteResponse struct {
-	DocumentDeletedCount int `json:"documentDeletedCount"`
+	DocumentDeletedCount int `json:"document_deleted_count"`
 }
