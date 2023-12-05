@@ -67,7 +67,7 @@ resource "kubernetes_deployment" "app" {
 
   timeouts {
     create = "4m"
-    update = "2m"
+    update = "5m"
     delete = "2m"
   }
 
