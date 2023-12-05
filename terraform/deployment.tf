@@ -152,11 +152,11 @@ resource "kubernetes_deployment" "app" {
           resources {
             requests = {
               cpu    = local.infra.production ? "1000m" : "100m"
-              memory = local.infra.production ? "4Gi" : "600Mi"
+              memory = local.infra.production ? "4.5Gi" : "600Mi"
             }
             limits = {
               cpu    = local.infra.production ? "1000m" : "100m"
-              memory = local.infra.production ? "4Gi" : "600Mi"
+              memory = local.infra.production ? "4.5Gi" : "600Mi"
             }
           }
 
@@ -336,7 +336,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
     }
 
     min_replicas = 2
-    max_replicas = 10
+    max_replicas = 14
 
     metric {
       type = "Resource"
