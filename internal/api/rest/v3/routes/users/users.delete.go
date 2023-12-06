@@ -2,6 +2,7 @@ package users
 
 import (
 	"github.com/seventv/common/errors"
+	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
 
 	"github.com/seventv/api/internal/api/rest/rest"
@@ -30,18 +31,29 @@ func (r *userDeleteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.ErrUnauthorized()
 	}
 
-	userID, err := ctx.UserValue("user.id").ObjectID()
+	victimID, err := ctx.UserValue("user.id").ObjectID()
 	if err != nil {
 		return errors.From(err)
 	}
 
 	res := userDeleteResponse{}
 	// delete user
-	if res.DocumentDeletedCount, err = r.gctx.Inst().Mutate.DeleteUser(ctx, userID); err != nil {
+	if res.DocumentDeletedCount, err = r.gctx.Inst().Mutate.DeleteUser(ctx, victimID); err != nil {
 		return errors.ErrInternalServerError()
 	}
 
-	// TODO: add deletion to audit log
+	// Create audit log
+	log := structures.NewAuditLogBuilder(structures.AuditLog{}).
+		SetKind(structures.AuditLogKindDeleteUser).
+		SetActor(actor.ID).
+		SetTargetKind(structures.ObjectKindEmoteSet).
+		SetTargetID(victimID)
+
+	if _, err = r.gctx.Inst().Mongo.Collection(mongo.CollectionNameAuditLogs).InsertOne(ctx, log.AuditLog); err != nil {
+		ctx.Log().Errorw("mongo, failed to write audit log entry for deleted user")
+	}
+
+	ctx.Log().Infow("user deleted", "victim_id", victimID)
 
 	return ctx.JSON(rest.OK, res)
 }

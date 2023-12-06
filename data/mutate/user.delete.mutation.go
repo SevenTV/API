@@ -10,24 +10,27 @@ import (
 
 func (m *Mutate) DeleteUser(ctx context.Context, userID primitive.ObjectID) (int, error) {
 	docsDeletedCount := 0
+
+	// Delete all EUD
 	for _, query := range userDeleteQueries(userID) {
-		res, err := m.mongo.Collection(query.collection).DeleteMany(context.TODO(), query.filter)
+		res, err := m.mongo.Collection(query.collection).DeleteMany(ctx, query.filter)
 		if err != nil {
 			return 0, err
 		}
 		docsDeletedCount += int(res.DeletedCount)
 	}
+
 	return docsDeletedCount, nil
 }
 
-func userDeleteQueries(user primitive.ObjectID) []userDeleteQuery {
+func userDeleteQueries(userID primitive.ObjectID) []userDeleteQuery {
 	return []userDeleteQuery{
-		{mongo.CollectionNameEmoteSets, bson.M{"owner_id": user}},
-		{mongo.CollectionNameMessages, bson.M{"author_id": user}},
-		{mongo.CollectionNameMessagesRead, bson.M{"author_id": user}},
-		{mongo.CollectionNameUserPresences, bson.M{"user_id": user}},
-		{mongo.CollectionNameUsers, bson.M{"_id": user}},
-		//{mongo.CollectionNameEntitlements, bson.M{"user_id": user}},
+		{mongo.CollectionNameEmoteSets, bson.M{"owner_id": userID}},
+		{mongo.CollectionNameMessages, bson.M{"author_id": userID}},
+		{mongo.CollectionNameMessagesRead, bson.M{"author_id": userID}},
+		{mongo.CollectionNameUserPresences, bson.M{"user_id": userID}},
+		{mongo.CollectionNameUsers, bson.M{"_id": userID}},
+		// {mongo.CollectionNameEntitlements, bson.M{"user_id": user}},
 	}
 }
 
