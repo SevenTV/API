@@ -111,11 +111,12 @@ func main() {
 
 	{
 		gctx.Inst().Mongo, err = mongo.Setup(gctx, mongo.SetupOptions{
-			URI:      config.Mongo.URI,
-			DB:       config.Mongo.DB,
-			Direct:   config.Mongo.Direct,
-			Username: config.Mongo.Username,
-			Password: config.Mongo.Password,
+			URI:         config.Mongo.URI,
+			DB:          config.Mongo.DB,
+			Direct:      config.Mongo.Direct,
+			Username:    config.Mongo.Username,
+			Password:    config.Mongo.Password,
+			HedgedReads: config.Mongo.HedgedReads,
 		})
 		if err != nil {
 			zap.S().Fatalw("failed to setup mongo handler",
@@ -153,7 +154,7 @@ func main() {
 			})
 		}
 		if err != nil {
-			zap.S().Fatalw("failed to setup mq handler",
+			zap.S().Errorw("failed to setup mq handler",
 				"error", err,
 			)
 		}
@@ -192,14 +193,14 @@ func main() {
 
 	nc, err := nats.Connect(config.Nats.Url)
 	if err != nil {
-		zap.S().Fatalw("failed to connect to nats",
+		zap.S().Errorw("failed to connect to nats",
 			"error", err,
 		)
 	}
 
 	defer func() {
 		err = nc.Drain()
-		zap.S().Fatalw("failed to drain nats, is connection failing?",
+		zap.S().Errorw("failed to drain nats, is connection failing?",
 			"error", err,
 		)
 	}()
