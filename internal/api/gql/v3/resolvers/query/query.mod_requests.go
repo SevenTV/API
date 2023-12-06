@@ -48,7 +48,7 @@ func (r *Resolver) ModRequests(ctx context.Context, afterIDArg *primitive.Object
 		Actor:  &actor,
 		Filter: match,
 		Limit:  limit,
-		Sort:   bson.M{"_id": 1},
+		Sort:   bson.M{"_id": 1, "weight": -1},
 		Targets: map[structures.ObjectKind]bool{
 			structures.ObjectKindEmote: true,
 		},
