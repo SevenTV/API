@@ -40,24 +40,6 @@ func New(gctx global.Context) <-chan struct{} {
 				cancel()
 			}
 
-			lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-			mqDown = gctx.Inst().MessageQueue != nil && !gctx.Inst().MessageQueue.Connected(lCtx)
-			cancel()
-			if mqDown {
-				zap.S().Warnw("mq is not connected")
-			}
-
-			if gctx.Config().S3.Enabled && gctx.Inst().S3 != nil {
-				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-				if _, err := gctx.Inst().S3.ListBuckets(lCtx); err != nil {
-					s3Down = true
-					zap.S().Warnw("s3 is not responding",
-						"error", err,
-					)
-				}
-				cancel()
-			}
-
 			if gctx.Inst().Mongo != nil {
 				lCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 				if err := gctx.Inst().Mongo.Ping(lCtx); err != nil {
