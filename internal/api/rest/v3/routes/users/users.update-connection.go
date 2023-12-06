@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
 	"github.com/seventv/api/internal/global"
 )
@@ -24,6 +25,9 @@ func (r *userUpdateConnectionRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
 		URI:    "/{user.id}/connections/{user-connection.id}",
 		Method: rest.PATCH,
+		Middleware: []rest.Middleware{
+			middleware.Auth(r.gctx, true),
+		},
 	}
 }
 
@@ -31,7 +35,7 @@ func (r *userUpdateConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	// make sure actor has permission to delete users
 	actor, ok := ctx.GetActor()
 	if !ok || !actor.HasPermission(structures.RolePermissionManageUsers) {
-		return errors.ErrUnauthorized()
+		return errors.ErrInsufficientPrivilege()
 	}
 
 	userID, err := ctx.UserValue("user.id").ObjectID()

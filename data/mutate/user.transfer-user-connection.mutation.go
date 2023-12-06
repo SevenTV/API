@@ -10,6 +10,11 @@ import (
 )
 
 func (m *Mutate) TransferUserConnection(ctx context.Context, transferer, transferee structures.User, connectionID string) error {
+	// Check permissions
+	if transferer.GetHighestRole().Position <= transferee.GetHighestRole().Position {
+		return errors.ErrInsufficientPrivilege()
+	}
+
 	// Get connection from the outgoing user
 	connection, i := transferer.Connections.Get(connectionID)
 	if i == -1 {

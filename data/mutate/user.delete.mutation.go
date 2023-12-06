@@ -2,30 +2,45 @@ package mutate
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/structures/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/zap"
 )
 
-func (m *Mutate) DeleteUser(ctx context.Context, userID primitive.ObjectID) (int, error) {
+func (m *Mutate) DeleteUser(ctx context.Context, opt DeleteUserOptions) (int, error) {
 	docsDeletedCount := 0
 
+	if opt.Victim.ID.IsZero() || opt.Actor.ID.IsZero() {
+		return 0, errors.ErrInternalIncompleteMutation()
+	}
+
+	if opt.Actor.GetHighestRole().Position <= opt.Victim.GetHighestRole().Position {
+		return 0, errors.ErrInsufficientPrivilege()
+	}
+	fmt.Println(opt.Victim, opt.Actor)
+
 	// Delete all EUD
-	for _, query := range userDeleteQueries(userID) {
+	for _, query := range userDeleteQueries(opt.Victim.ID) {
 		res, err := m.mongo.Collection(query.collection).DeleteMany(ctx, query.filter)
 		if err != nil {
+			zap.S().Errorw("mutate, DeleteUser()", "error", err)
+
 			return 0, err
 		}
+
 		docsDeletedCount += int(res.DeletedCount)
 	}
 
 	// Delete editor references
 	if _, err := m.mongo.Collection(mongo.CollectionNameUsers).UpdateMany(ctx, bson.M{
-		"editors.id": userID,
+		"editors.id": opt.Victim.ID,
 	}, bson.M{
-		"$pull": bson.M{"editors": bson.M{"id": userID}},
+		"$pull": bson.M{"editors": bson.M{"id": opt.Victim.ID}},
 	}); err != nil {
 		zap.S().Errorw("mutate, DeleteUser(), failed to remove editor references", "error", err)
 	}
@@ -47,4 +62,9 @@ func userDeleteQueries(userID primitive.ObjectID) []userDeleteQuery {
 type userDeleteQuery struct {
 	collection mongo.CollectionName
 	filter     bson.M
+}
+
+type DeleteUserOptions struct {
+	Actor  structures.User
+	Victim structures.User
 }

@@ -4,7 +4,10 @@ import (
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
+	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/seventv/api/data/mutate"
+	"github.com/seventv/api/internal/api/rest/middleware"
 	"github.com/seventv/api/internal/api/rest/rest"
 	"github.com/seventv/api/internal/global"
 )
@@ -21,6 +24,9 @@ func (r *userDeleteRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
 		URI:    "/{user.id}",
 		Method: rest.DELETE,
+		Middleware: []rest.Middleware{
+			middleware.Auth(r.gctx, true),
+		},
 	}
 }
 
@@ -28,7 +34,7 @@ func (r *userDeleteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 	// make sure actor has permission to delete users
 	actor, ok := ctx.GetActor()
 	if !ok || !actor.HasPermission(structures.RolePermissionManageUsers) {
-		return errors.ErrUnauthorized()
+		return errors.ErrInsufficientPrivilege()
 	}
 
 	victimID, err := ctx.UserValue("user.id").ObjectID()
@@ -36,10 +42,24 @@ func (r *userDeleteRoute) Handler(ctx *rest.Ctx) rest.APIError {
 		return errors.From(err)
 	}
 
+	victim, err := r.gctx.Inst().Query.Users(ctx, bson.M{
+		"_id": victimID,
+	}).First()
+	if err != nil {
+		if errors.Compare(err, errors.ErrNoItems()) {
+			return errors.ErrUnknownUser()
+		}
+
+		return errors.From(err)
+	}
+
 	res := userDeleteResponse{}
 	// delete user
-	if res.DocumentDeletedCount, err = r.gctx.Inst().Mutate.DeleteUser(ctx, victimID); err != nil {
-		return errors.ErrInternalServerError()
+	if res.DocumentDeletedCount, err = r.gctx.Inst().Mutate.DeleteUser(ctx, mutate.DeleteUserOptions{
+		Actor:  actor,
+		Victim: victim,
+	}); err != nil {
+		return errors.From(err)
 	}
 
 	// Create audit log
