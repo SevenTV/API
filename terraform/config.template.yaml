@@ -57,6 +57,7 @@ mongo:
   db: ${mongo_database}
   username: ${mongo_username}
   password: ${mongo_password}
+  hedged_reads: ${mongo_hedged_reads}
 
 meilisearch:
   host: ${meili_url}
