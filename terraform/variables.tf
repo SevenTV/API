@@ -85,6 +85,11 @@ variable "kick_challenge_token" {
   default = ""
 }
 
+variable "mongo_use_hedged_reads" {
+  type = bool
+  default = true
+}
+
 variable "s3" {
   type = object({
     endpoint        = string

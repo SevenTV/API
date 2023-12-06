@@ -146,11 +146,12 @@ type Config struct {
 	} `mapstructure:"nats" json:"nats"`
 
 	Mongo struct {
-		URI      string `mapstructure:"uri" json:"uri"`
-		Username string `mapstructure:"username" json:"username"`
-		Password string `mapstructure:"password" json:"password"`
-		DB       string `mapstructure:"db" json:"db"`
-		Direct   bool   `mapstructure:"direct" json:"direct"`
+		URI         string `mapstructure:"uri" json:"uri"`
+		Username    string `mapstructure:"username" json:"username"`
+		Password    string `mapstructure:"password" json:"password"`
+		DB          string `mapstructure:"db" json:"db"`
+		Direct      bool   `mapstructure:"direct" json:"direct"`
+		HedgedReads bool   `mapstructure:"hedged_reads" json:"hedged_reads"`
 	} `mapstructure:"mongo" json:"mongo"`
 
 	Meilisearch struct {
