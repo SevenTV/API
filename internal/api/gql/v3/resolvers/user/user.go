@@ -78,14 +78,25 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 	users, errs := r.Ctx.Inst().Loaders.UserByID().LoadAll(ids)
 	result := []*model.UserEditor{}
 
-	for _, e := range obj.Editors {
-		for _, u := range users {
-			if e.ID == u.ID {
-				e.User = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(u).ToPartial())
-				result = append(result, e)
+	for i, e := range obj.Editors {
+		if errs[i] != nil {
+			e.User = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(structures.DeletedUser).ToPartial())
+			e.User.ID = e.ID
 
-				break
+			result = append(result, e)
+
+			continue
+		}
+
+		for _, u := range users {
+			if e.ID != u.ID {
+				continue
 			}
+
+			e.User = modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(u).ToPartial())
+			result = append(result, e)
+
+			break
 		}
 	}
 
@@ -96,7 +107,7 @@ func (r *Resolver) Editors(ctx context.Context, obj *model.User) ([]*model.UserE
 		return a.AddedAt.After(b.AddedAt)
 	})
 
-	return result, multierror.Append(nil, errs...).ErrorOrNil()
+	return result, nil
 }
 
 func (r *Resolver) EditorOf(ctx context.Context, obj *model.User) ([]*model.UserEditor, error) {
