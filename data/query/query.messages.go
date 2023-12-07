@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -185,8 +184,6 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 
 		q.redis.SetEX(ctx, rKey, v.Count, time.Minute*5)
 	}()
-
-	fmt.Println(opt.Sort)
 
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 		matcherPipeline,
