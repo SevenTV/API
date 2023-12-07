@@ -33,7 +33,7 @@ env:
 jobs:
   ci:
     name: API Lint, Build, Test, Deploy
-    runs-on: aws-runner
+    runs-on: seventv
     env:
       GOLANGCI_LINT_CACHE: /home/runner/.cache/golangci-lint
     concurrency:
@@ -144,7 +144,7 @@ jobs:
   validate:
     name: API Deploy Validation
     needs: ci
-    runs-on: ubuntu-latest
+    runs-on: seventv
     permissions:
       pull-requests: write
     defaults:

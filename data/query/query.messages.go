@@ -2,10 +2,16 @@ package query
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
+	"github.com/seventv/common/redis"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/structures/v3/aggregations"
 	"go.mongodb.org/mongo-driver/bson"
@@ -89,7 +95,7 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	qr := &QueryResult[structures.Message[bson.Raw]]{}
 
 	if opt.Sort == nil {
-		opt.Sort = bson.M{"_id": -1}
+		opt.Sort = bson.D{{Key: "_id", Value: -1}}
 	}
 
 	if opt.UnreadOnly {
@@ -119,8 +125,25 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
+	h := sha256.New()
+
+	fb, err := json.Marshal(filter)
+	if err == nil {
+		h.Write(fb)
+	}
+
+	rKey := q.redis.ComposeKey("api", "messages", hex.EncodeToString(h.Sum(nil)), "count")
+
 	go func() {
 		defer wg.Done()
+
+		count, err := q.redis.Get(ctx, rKey)
+		if err != redis.Nil {
+			n, _ := strconv.ParseInt(count, 10, 64)
+
+			qr.setTotal(n)
+			return
+		}
 
 		cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
 			matcherPipeline,
@@ -158,6 +181,8 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 		}
 
 		qr.setTotal(v.Count)
+
+		q.redis.SetEX(ctx, rKey, v.Count, time.Minute*5)
 	}()
 
 	cur, err := q.mongo.Collection(mongo.CollectionNameMessagesRead).Aggregate(ctx, aggregations.Combine(
@@ -180,6 +205,7 @@ func (q *Query) Messages(ctx context.Context, filter bson.M, opt MessageQueryOpt
 							bson.M{
 								"timestamp": "$timestamp",
 								"read":      "$read",
+								"weight":    "$weight",
 							},
 						},
 					},
@@ -233,7 +259,7 @@ type ModRequestMessagesQueryOptions struct {
 	Targets             map[structures.ObjectKind]bool
 	TargetIDs           []primitive.ObjectID
 	Filter              bson.M
-	Sort                bson.M
+	Sort                bson.D
 	Limit               int
 	SkipPermissionCheck bool
 }
@@ -244,5 +270,5 @@ type MessageQueryOptions struct {
 	UnreadOnly       bool
 	MessageFilter    bson.M
 	FilterRecipients []primitive.ObjectID
-	Sort             bson.M
+	Sort             bson.D
 }

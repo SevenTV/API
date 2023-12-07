@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.MessageBuilder[structures.MessageDataModRequest]) error {
+func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.MessageBuilder[structures.MessageDataModRequest], weight int32) error {
 	if mb == nil {
 		return errors.ErrInternalIncompleteMutation()
 	} else if mb.IsTainted() {
@@ -60,6 +60,7 @@ func (m *Mutate) SendModRequestMessage(ctx context.Context, mb *structures.Messa
 		MessageID: msgID,
 		Kind:      structures.MessageKindModRequest,
 		Timestamp: time.Now(),
+		Weight:    weight,
 	})
 
 	mb.MarkAsTainted()
