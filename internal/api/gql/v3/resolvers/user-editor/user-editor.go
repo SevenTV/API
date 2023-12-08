@@ -25,7 +25,7 @@ func (r *Resolver) User(ctx context.Context, obj *model.UserEditor) (*model.User
 
 	u, err := r.Ctx.Inst().Loaders.UserByID().Load(obj.ID)
 	if err != nil {
-		return nil, err
+		return modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(structures.DeletedUser).ToPartial()), nil
 	}
 
 	return modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(u).ToPartial()), nil

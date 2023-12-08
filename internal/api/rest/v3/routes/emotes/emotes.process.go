@@ -276,7 +276,10 @@ func (epl *EmoteProcessingListener) HandleResultEvent(ctx context.Context, evt t
 						ActorCountryName: actorCountryName,
 						ActorCountryCode: actorCountryCode,
 					})
-				if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb); err != nil {
+
+				rsWeight := utils.Ternary(emoteOwner.HasPermission(structures.RolePermissionFeatureMessagingPriority), 100, 0)
+
+				if err = epl.Ctx.Inst().Mutate.SendModRequestMessage(ctx, mb, int32(rsWeight)); err != nil {
 					zap.S().Errorw("failed to send mod request message for new emote",
 						"error", err,
 						"EMOTE_ID", id,

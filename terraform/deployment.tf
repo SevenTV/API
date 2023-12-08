@@ -33,6 +33,7 @@ resource "kubernetes_secret" "app" {
       mongo_username        = local.infra.mongodb_user_app.username
       mongo_password        = local.infra.mongodb_user_app.password
       mongo_database        = "7tv"
+      mongo_hedged_reads    = var.mongo_use_hedged_reads
       meili_url             = "http://meilisearch.database.svc.cluster.local:7700"
       meili_key             = var.meilisearch_key
       meili_index           = "emotes"
@@ -56,18 +57,14 @@ resource "kubernetes_deployment" "app" {
   metadata {
     name      = "api"
     namespace = data.kubernetes_namespace.app.metadata[0].name
-    labels    = {
+    labels = {
       app = "api"
     }
   }
 
-  lifecycle {
-    replace_triggered_by = [kubernetes_secret.app]
-  }
-
   timeouts {
     create = "4m"
-    update = "2m"
+    update = "5m"
     delete = "2m"
   }
 
@@ -152,11 +149,11 @@ resource "kubernetes_deployment" "app" {
           resources {
             requests = {
               cpu    = local.infra.production ? "1000m" : "100m"
-              memory = local.infra.production ? "4Gi" : "600Mi"
+              memory = local.infra.production ? "4.5Gi" : "600Mi"
             }
             limits = {
               cpu    = local.infra.production ? "1000m" : "100m"
-              memory = local.infra.production ? "4Gi" : "600Mi"
+              memory = local.infra.production ? "4.5Gi" : "600Mi"
             }
           }
 
@@ -261,8 +258,8 @@ resource "kubernetes_service" "app" {
 
 resource "kubernetes_ingress_v1" "app" {
   metadata {
-    name        = "api"
-    namespace   = data.kubernetes_namespace.app.metadata[0].name
+    name      = "api"
+    namespace = data.kubernetes_namespace.app.metadata[0].name
     annotations = {
       "kubernetes.io/ingress.class"                         = "nginx"
       "external-dns.alpha.kubernetes.io/target"             = local.infra.cloudflare_tunnel_hostname.regular
@@ -335,8 +332,8 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "api" {
       name        = kubernetes_deployment.app.metadata[0].name
     }
 
-    min_replicas = 2
-    max_replicas = 10
+    min_replicas = local.infra.production ? 5 : 1
+    max_replicas = 14
 
     metric {
       type = "Resource"

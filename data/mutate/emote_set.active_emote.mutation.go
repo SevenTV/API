@@ -330,7 +330,7 @@ func (m *Mutate) EditEmotesInSet(ctx context.Context, esb *structures.EmoteSetBu
 								TargetID:   tgt.emote.ID,
 								Wish:       "personal_use",
 							})
-						if err := m.SendModRequestMessage(ctx, mb); err != nil {
+						if err := m.SendModRequestMessage(ctx, mb, 0); err != nil {
 							z.Errorw("failed to send personal_use mod request message", "error", err)
 						}
 					}
