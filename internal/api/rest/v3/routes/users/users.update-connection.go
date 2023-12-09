@@ -73,7 +73,7 @@ func (r *userUpdateConnectionRoute) Handler(ctx *rest.Ctx) rest.APIError {
 			return errors.From(err)
 		}
 
-		if err = r.gctx.Inst().Mutate.TransferUserConnection(ctx, target, victim, connectionID); err != nil {
+		if err = r.gctx.Inst().Mutate.TransferUserConnection(ctx, actor, target, victim, connectionID); err != nil {
 			return errors.From(err)
 		}
 	}
