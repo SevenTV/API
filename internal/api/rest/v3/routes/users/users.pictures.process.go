@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/seventv/api/internal/events"
 	"github.com/seventv/api/internal/global"
 	"github.com/seventv/common/mongo"
 	"github.com/seventv/common/structures/v3"
@@ -176,8 +175,6 @@ func (ppl *PictureProcessingListener) HandleResultEvent(ctx context.Context, evt
 		l.Errorw("failed to update user avatar id", "error", err)
 		return err
 	}
-
-	events.Publish(ppl.Ctx, "users", actor.ID)
 
 	if actor.Avatar != nil && actor.Avatar.ID != aid {
 		// Delete the old avatar

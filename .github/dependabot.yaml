@@ -1,16 +1,16 @@
 version: 2
 updates:
-    - package-ecosystem: npm
-      open-pull-requests-limit: 0
-      schedule:
-          interval: daily
-          time: "00:00"
-      directory: "/"
-      target-branch: dev
-    - package-ecosystem: github-actions
-      directory: "/"
-      target-branch: dev
-      schedule:
-          interval: daily
-          time: "00:00"
-      open-pull-requests-limit: 0
+  - package-ecosystem: npm
+    open-pull-requests-limit: 0
+    schedule:
+      interval: daily
+      time: "00:00"
+    directory: "/"
+    target-branch: dev
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: dev
+    schedule:
+      interval: daily
+      time: "00:00"
+    open-pull-requests-limit: 0

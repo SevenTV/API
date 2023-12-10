@@ -10,7 +10,6 @@ import (
 	"github.com/seventv/common/utils"
 	"go.uber.org/zap"
 
-	v2 "github.com/seventv/api/internal/api/gql/v2"
 	v3 "github.com/seventv/api/internal/api/gql/v3"
 	"github.com/seventv/api/internal/middleware"
 	"github.com/valyala/fasthttp"
@@ -23,7 +22,6 @@ func New(gctx global.Context) error {
 	}
 
 	gqlv3 := v3.GqlHandlerV3(gctx)
-	gqlv2 := v2.GqlHandlerV2(gctx)
 
 	router := router.New()
 
@@ -34,9 +32,6 @@ func New(gctx global.Context) error {
 
 	router.GET(fmt.Sprintf("/v3%s/gql", gctx.Config().Http.VersionSuffix), v3Route)
 	router.POST(fmt.Sprintf("/v3%s/gql", gctx.Config().Http.VersionSuffix), v3Route)
-	router.POST(fmt.Sprintf("/v2%s/gql", gctx.Config().Http.VersionSuffix), func(ctx *fasthttp.RequestCtx) {
-		gqlv2(ctx)
-	})
 
 	doCORS := middleware.CORS(gctx)
 	doAuth := middleware.Auth(gctx)
