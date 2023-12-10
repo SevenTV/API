@@ -3,6 +3,7 @@ package configure
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 )
 
 func checkErr(err error) {
+	fmt.Println(err)
 	if err != nil {
 		zap.S().Fatalw("config",
 			"error", err,
@@ -60,7 +62,7 @@ func New() *Config {
 
 	// Print final config
 	c := &Config{}
-	checkErr(config.Unmarshal(&c))
+	checkErr(config.Unmarshal(c))
 
 	initLogging(c.Level)
 

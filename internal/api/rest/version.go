@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"runtime/debug"
 
 	"github.com/fasthttp/router"
@@ -58,6 +59,7 @@ func (s *HttpServer) traverseRoutes(r rest.Route, parentGroup Router) {
 
 	// Compose the full request URI (prefixing with parent, if any)
 	routable := parentGroup
+	fmt.Println(c.URI)
 	group := routable.Group(c.URI)
 	l := zap.S().With(
 		"group", group,
@@ -65,7 +67,7 @@ func (s *HttpServer) traverseRoutes(r rest.Route, parentGroup Router) {
 	)
 
 	// Handle requests
-	group.Handle(string(c.Method), "", func(ctx *fasthttp.RequestCtx) {
+	group.Handle(string(c.Method), "/", func(ctx *fasthttp.RequestCtx) {
 		rctx := &rest.Ctx{RequestCtx: ctx}
 
 		handlers := make([]rest.Middleware, len(c.Middleware)+1)

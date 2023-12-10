@@ -37,7 +37,7 @@ func newCreate(gCtx global.Context) rest.Route {
 
 func (r *create) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:    "",
+		URI:    "/",
 		Method: rest.POST,
 		Middleware: []rest.Middleware{
 			middleware.Auth(r.Ctx, true),
