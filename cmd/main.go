@@ -198,6 +198,8 @@ func main() {
 		)
 	}
 
+	zap.S().Info("nats, ok")
+
 	defer func() {
 		err = nc.Drain()
 		zap.S().Errorw("failed to drain nats, is connection failing?",

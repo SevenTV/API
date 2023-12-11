@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (m *Mutate) TransferUserConnection(ctx context.Context, transferer, transferee structures.User, connectionID string) error {
+func (m *Mutate) TransferUserConnection(ctx context.Context, actor structures.User, transferer, transferee structures.User, connectionID string) error {
 	// Check permissions
-	if transferer.GetHighestRole().Position <= transferee.GetHighestRole().Position {
-		return errors.ErrInsufficientPrivilege()
+	if (!actor.ID.IsZero() && actor.ID != transferer.ID) && actor.GetHighestRole().Position <= transferer.GetHighestRole().Position {
+		return errors.ErrInsufficientPrivilege().SetDetail("Lower than victim")
 	}
 
 	// Get connection from the outgoing user

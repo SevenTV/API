@@ -12,13 +12,11 @@ import (
 	"github.com/seventv/api/internal/api/gql/v3/gen/generated"
 	"github.com/seventv/api/internal/api/gql/v3/gen/model"
 	"github.com/seventv/api/internal/api/gql/v3/types"
-	"github.com/seventv/api/internal/events"
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/structures/v3"
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.uber.org/zap"
 )
 
 type ResolverOps struct {
@@ -36,16 +34,6 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	actor := auth.For(ctx)
 	if actor.ID.IsZero() {
 		return nil, errors.ErrUnauthorized()
-	}
-
-	// Get the emote
-	emote, err := r.Ctx.Inst().Query.Emotes(ctx, bson.M{"versions.id": id}).First()
-	if err != nil {
-		if errors.Compare(err, errors.ErrNoItems()) {
-			return nil, errors.ErrUnknownEmote()
-		}
-
-		return nil, err
 	}
 
 	// Get the emote set
@@ -87,33 +75,6 @@ func (r *ResolverOps) Emotes(ctx context.Context, obj *model.EmoteSetOps, id pri
 	for i, e := range b.EmoteSet.Emotes {
 		emoteIDs[i] = e.ID
 	}
-
-	// Publish an emote set update
-	go func() {
-		events.Publish(r.Ctx, "emote_sets", b.EmoteSet.ID)
-
-		setOwner, _ := r.Ctx.Inst().Loaders.UserByID().Load(b.EmoteSet.OwnerID)
-
-		set.Owner = &setOwner
-
-		// Legacy Event API v1
-		if !setOwner.ID.IsZero() && !actor.ID.IsZero() {
-			tw, _, err := setOwner.Connections.Twitch()
-			if err != nil {
-				return
-			}
-
-			if tw.EmoteSetID.IsZero() || tw.EmoteSetID != set.ID {
-				return // skip if target emote set isn't bound to user connection
-			}
-
-			if err := events.PublishLegacyEventAPI(r.Ctx, action, tw.Data.Login, actor, set, emote); err != nil {
-				zap.S().Errorw("redis",
-					"error", err,
-				)
-			}
-		}
-	}()
 
 	setModel := modelgql.EmoteSetModel(r.Ctx.Inst().Modelizer.EmoteSet(b.EmoteSet))
 	emotes, errs := r.Ctx.Inst().Loaders.EmoteByID().LoadAll(emoteIDs)

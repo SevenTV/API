@@ -21,8 +21,8 @@ http:
 limits:
   max_page: 25
   buckets:
-    gql_v3: [ 250, 2 ]
-    image_processing: [ 20, 60 ]
+    gql_v3: [250, 2]
+    image_processing: [20, 60]
   emotes:
     max_tags: 6
     max_width: 1000
