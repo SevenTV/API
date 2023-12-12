@@ -92,6 +92,10 @@ func (q *Query) SearchEmotes(ctx context.Context, opt SearchEmotesOptions) ([]st
 
 	emotes, err := q.Emotes(ctx, bson.M{"_id": bson.M{"$in": emoteIds}}).Items()
 	if err != nil {
+		if errors.Compare(err, errors.ErrNoItems()) {
+			return nil, 0, errors.ErrNoItems().SetDetail("Search returned no results")
+		}
+
 		zap.S().Errorw("mongo, failed to find emotes() gql query",
 			"error", err,
 		)
