@@ -2,7 +2,6 @@ package mutate
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/seventv/common/errors"
 	"github.com/seventv/common/mongo"
@@ -22,7 +21,6 @@ func (m *Mutate) DeleteUser(ctx context.Context, opt DeleteUserOptions) (int, er
 	if opt.Actor.GetHighestRole().Position <= opt.Victim.GetHighestRole().Position {
 		return 0, errors.ErrInsufficientPrivilege()
 	}
-	fmt.Println(opt.Victim, opt.Actor)
 
 	// Delete all EUD
 	for _, query := range userDeleteQueries(opt.Victim.ID) {

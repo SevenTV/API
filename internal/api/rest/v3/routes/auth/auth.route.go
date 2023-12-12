@@ -170,14 +170,23 @@ func setupUser(
 	platform structures.UserConnectionPlatform,
 	grant auth.OAuth2AuthorizedResponse,
 ) errors.APIError {
+	var (
+		userID   primitive.ObjectID
+		userConn structures.UserConnection[bson.Raw]
+	)
+
 	// Create the user
 	if ub.User.ID.IsZero() {
+		userID = primitive.NewObjectIDFromTimestamp(time.Now())
+
+		userConn = formatUserConnection(id, platform, b, grant)
+
 		ub.User = structures.User{
-			ID:           primitive.NewObjectIDFromTimestamp(time.Now()),
+			ID:           userID,
 			TokenVersion: 1.0,
 			RoleIDs:      []primitive.ObjectID{},
 			Editors:      []structures.UserEditor{},
-			Connections:  []structures.UserConnection[bson.Raw]{formatUserConnection(id, platform, b, grant)},
+			Connections:  []structures.UserConnection[bson.Raw]{userConn},
 			State: structures.UserState{
 				LastLoginDate: time.Now(),
 				LastVisitDate: time.Now(),
@@ -213,6 +222,10 @@ func setupUser(
 			con := formatUserConnection(id, platform, b, grant)
 			ub.AddConnection(con)
 
+			userID = ub.User.ID
+
+			userConn = con
+
 			// eventapi: dispatch the connection create event
 			gctx.Inst().Events.Dispatch(events.EventTypeUpdateUser, events.ChangeMap{
 				ID:    ub.User.ID,
@@ -235,6 +248,22 @@ func setupUser(
 			"_id": ub.User.ID,
 		}, ub.Update); err != nil {
 			ctx.Log().Errorw("auth, update user", "error", err)
+		}
+	}
+
+	if !userID.IsZero() && userConn.ID != "" {
+		// Check entitlement claims
+		if _, err := gctx.Inst().Mongo.Collection(mongo.CollectionNameEntitlements).UpdateMany(ctx, bson.M{
+			"claim":          bson.M{"$exists": true},
+			"claim.platform": platform,
+			"claim.id":       userConn.ID,
+		}, bson.M{
+			"$unset": bson.M{"claim": 1},
+			"$set": bson.M{
+				"user_id": userID,
+			},
+		}); err != nil {
+			ctx.Log().Errorw("mongo, failed to update entitlement claims")
 		}
 	}
 
