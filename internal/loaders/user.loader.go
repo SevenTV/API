@@ -140,7 +140,7 @@ func entitlementsLoader(ctx context.Context, x inst) *dataloader.DataLoader[prim
 		Wait:     time.Millisecond * 100,
 		MaxBatch: 500,
 		Fetch: func(keys []primitive.ObjectID) ([]query.EntitlementQueryResult, []error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 			defer cancel()
 
 			items := make([]query.EntitlementQueryResult, len(keys))
