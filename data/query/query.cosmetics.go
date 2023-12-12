@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	mongod "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (q *Query) Cosmetics(ctx context.Context, ids utils.Set[primitive.ObjectID]) ([]structures.Cosmetic[bson.Raw], error) {
@@ -31,7 +32,7 @@ func (q *Query) Cosmetics(ctx context.Context, ids utils.Set[primitive.ObjectID]
 	}
 
 	// Query
-	cur, err = q.mongo.Collection(mongo.CollectionNameCosmetics).Find(ctx, bson.M{})
+	cur, err = q.mongo.Collection(mongo.CollectionNameCosmetics).Find(ctx, bson.M{}, options.Find().SetNoCursorTimeout(true))
 	if err != nil {
 		return nil, err
 	}

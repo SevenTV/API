@@ -78,7 +78,7 @@ resource "kubernetes_deployment" "app" {
     strategy {
       type = "RollingUpdate"
       rolling_update {
-        max_surge       = "3"
+        max_surge       = "1"
         max_unavailable = "3"
       }
     }
