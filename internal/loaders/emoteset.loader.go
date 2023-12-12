@@ -15,9 +15,9 @@ import (
 
 func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, structures.EmoteSet]{
-		Wait: time.Millisecond * 25,
+		Wait: time.Millisecond * 100,
 		Fetch: func(keys []primitive.ObjectID) ([]structures.EmoteSet, []error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 			defer cancel()
 
 			// Fetch emote set data from the database
@@ -54,15 +54,16 @@ func emoteSetByID(ctx context.Context, x inst) EmoteSetLoaderByID {
 			return models, errs
 		},
 		// TODO: find optimal max batch size
-		MaxBatch: 50,
+		MaxBatch: 30,
 	})
 }
 
 func emoteSetByUserID(ctx context.Context, x inst) BatchEmoteSetLoaderByID {
 	return dataloader.New(dataloader.Config[primitive.ObjectID, []structures.EmoteSet]{
-		Wait: time.Millisecond * 25,
+		Wait:     time.Millisecond * 100,
+		MaxBatch: 30,
 		Fetch: func(keys []primitive.ObjectID) ([][]structures.EmoteSet, []error) {
-			ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+			ctx, cancel := context.WithTimeout(ctx, time.Second*30)
 			defer cancel()
 
 			// Fetch emote sets

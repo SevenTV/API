@@ -69,6 +69,8 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 		return r
 	}
 
+	defer cur.Close(ctx)
+
 	cosmeticIDs := make(utils.Set[primitive.ObjectID])
 
 	for cur.Next(ctx) {

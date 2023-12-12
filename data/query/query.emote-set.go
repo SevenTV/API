@@ -22,12 +22,14 @@ func (q *Query) EmoteSets(ctx context.Context, filter bson.M, opts ...QueryEmote
 	cur, err := q.mongo.Collection(mongo.CollectionNameEmoteSets).Find(
 		ctx,
 		filter,
-		options.Find().SetBatchSize(10),
+		options.Find().SetBatchSize(10).SetNoCursorTimeout(true),
 	)
 	if err != nil {
 		zap.S().Errorw("mongo, failed to query emote sets", "error", err)
 		return qr.setError(err)
 	}
+
+	defer cur.Close(ctx)
 
 	if err = cur.All(ctx, &items); err != nil {
 		zap.S().Errorw("mongo, failed to fetch emote sets", "error", err)
