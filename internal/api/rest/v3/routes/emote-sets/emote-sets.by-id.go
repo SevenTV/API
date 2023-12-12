@@ -23,7 +23,7 @@ func newEmoteSetByIDRoute(gctx global.Context) rest.Route {
 
 func (r *emoteSetByIDRoute) Config() rest.RouteConfig {
 	return rest.RouteConfig{
-		URI:      "/{emote-set.id}",
+		URI:      "{emote-set.id}",
 		Method:   rest.GET,
 		Children: []rest.Route{},
 		Middleware: []rest.Middleware{
