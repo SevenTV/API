@@ -11,6 +11,7 @@ import (
 	"github.com/seventv/api/internal/api/rest/v3/routes/docs"
 	emote_sets "github.com/seventv/api/internal/api/rest/v3/routes/emote-sets"
 	"github.com/seventv/api/internal/api/rest/v3/routes/emotes"
+	"github.com/seventv/api/internal/api/rest/v3/routes/entitlements"
 	"github.com/seventv/api/internal/api/rest/v3/routes/users"
 	"github.com/seventv/api/internal/global"
 )
@@ -36,6 +37,7 @@ func (r *Route) Config() rest.RouteConfig {
 			emotes.New(r.Ctx),
 			emote_sets.New(r.Ctx),
 			users.New(r.Ctx),
+			entitlements.New(r.Ctx),
 		},
 		Middleware: []rest.Middleware{
 			middleware.SetCacheControl(r.Ctx, 30, nil),
