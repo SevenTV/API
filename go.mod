@@ -17,7 +17,7 @@ require (
 	github.com/nats-io/nats.go v1.28.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.14.0
-	github.com/seventv/common v0.0.0-20231212092216-2658fa1b97ba
+	github.com/seventv/common v0.0.0-20231212140741-9412bffd7525
 	github.com/seventv/compactdisc v0.0.0-20221006190906-ccfe99954e48
 	github.com/seventv/image-processor/go v0.0.0-20221128171540-d050701ac324
 	github.com/seventv/message-queue/go v0.0.0-20231201171845-1bb9d5db6881
