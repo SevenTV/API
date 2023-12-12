@@ -8,7 +8,6 @@ import (
 	"github.com/seventv/common/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +61,7 @@ func (q *Query) Entitlements(ctx context.Context, filter bson.M, opts ...QueryEn
 				"emote_sets": typeFilterFactory(structures.EntitlementKindEmoteSet, mongo.CollectionNameEmoteSets, false),
 			},
 		}},
-	}, options.Aggregate().SetCustom(bson.M{"noCursorTimeout": true}))
+	})
 	if err != nil {
 		zap.S().Errorw("failed to query entitlements", "error", err)
 		r.setError(err)
