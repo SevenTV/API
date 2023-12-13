@@ -167,12 +167,13 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 		}
 
 		// Fetch Emote Sets
-		sets, errs := p.loaders.EmoteSetByID().LoadAll(setIDs)
-		if multierror.Append(nil, errs...).ErrorOrNil() != nil {
-			return err
-		}
+		sets, _ := p.loaders.EmoteSetByID().LoadAll(setIDs)
 
 		for _, es := range sets {
+			if es.ID.IsZero() {
+				continue
+			}
+
 			es.Owner = nil
 
 			ent, ok := entMap[es.ID]
@@ -186,7 +187,7 @@ func (p *inst) ChannelPresenceFanout(ctx context.Context, opt ChannelPresenceFan
 					return x.ID
 				}),
 			)
-			if multierror.Append(nil, errs...).ErrorOrNil() != nil {
+			if err = multierror.Append(nil, errs...).ErrorOrNil(); err != nil {
 				zap.S().Errorw("failed to load emotes", "emote_set_id", es.ID, "errors", errs)
 
 				continue
