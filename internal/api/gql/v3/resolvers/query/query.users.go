@@ -50,6 +50,11 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 
 	isManager := actor.HasPermission(structures.RolePermissionManageUsers)
 
+	// Temporary measure until search is optimized
+	if !isManager {
+		return nil, errors.ErrInsufficientPrivilege().SetDetail("Search is disabled at this time")
+	}
+
 	// Unprivileged users must provide a query
 	if !isManager && len(queryArg) < 2 {
 		return nil, errors.ErrInvalidRequest().SetDetail("query must be at least 2 characters long")
