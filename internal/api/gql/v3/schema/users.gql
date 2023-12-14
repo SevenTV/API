@@ -44,7 +44,7 @@ type User {
 
   roles: [ObjectID!]!
 
-  emote_sets: [EmoteSet!]! @goField(forceResolver: true)
+  emote_sets(entitled: Boolean): [EmoteSet!]! @goField(forceResolver: true)
   owned_emotes: [Emote!]! @goField(forceResolver: true)
   activity(limit: Int): [AuditLog!]! @goField(forceResolver: true)
   connections(type: [ConnectionPlatform!]): [UserConnection]!
