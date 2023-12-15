@@ -28,10 +28,39 @@ func New(r types.Resolver) generated.UserResolver {
 	return &Resolver{r}
 }
 
-func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User) ([]*model.EmoteSet, error) {
+func (r *Resolver) EmoteSets(ctx context.Context, obj *model.User, entitled *bool) ([]*model.EmoteSet, error) {
 	sets, err := r.Ctx.Inst().Loaders.EmoteSetByUserID().Load(obj.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if entitled != nil && *entitled {
+		ownedSets := make(utils.Set[primitive.ObjectID])
+		for _, set := range sets {
+			if set.OwnerID == obj.ID {
+				continue
+			}
+
+			ownedSets.Add(set.ID)
+		}
+
+		res, err := r.Ctx.Inst().Loaders.EntitlementsLoader().Load(obj.ID)
+		if err == nil {
+			ids := make(utils.Set[primitive.ObjectID])
+			ids.Fill(utils.Map(res.EmoteSets, func(x structures.Entitlement[structures.EntitlementDataEmoteSet]) primitive.ObjectID {
+				return x.Data.RefID
+			})...)
+
+			entitledSets, _ := r.Ctx.Inst().Loaders.EmoteSetByID().LoadAll(ids.Values())
+
+			for _, set := range entitledSets {
+				if set.OwnerID == obj.ID {
+					continue
+				}
+
+				sets = append(sets, set)
+			}
+		}
 	}
 
 	result := make([]*model.EmoteSet, len(sets))

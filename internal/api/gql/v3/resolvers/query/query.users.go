@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -44,11 +45,18 @@ func (r *Resolver) Users(ctx context.Context, queryArg string, pageArg *int, lim
 	}
 
 	actor := auth.For(ctx)
-	if actor.ID.IsZero() {
-		return nil, errors.ErrUnauthorized()
-	}
 
 	isManager := actor.HasPermission(structures.RolePermissionManageUsers)
+
+	// Temporary measure until search is optimized
+	if !isManager {
+		user, err := r.Ctx.Inst().Loaders.UserByUsername().Load(strings.ToLower((queryArg)))
+		if err != nil {
+			return nil, err
+		}
+
+		return []*model.UserPartial{modelgql.UserPartialModel(r.Ctx.Inst().Modelizer.User(user).ToPartial())}, nil
+	}
 
 	// Unprivileged users must provide a query
 	if !isManager && len(queryArg) < 2 {
