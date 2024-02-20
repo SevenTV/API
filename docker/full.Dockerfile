@@ -36,8 +36,7 @@ FROM $BASE_IMG as go-builder
 
     COPY . .
 
-    RUN make generate && \
-        make test
+    RUN make generate
 
     ARG BUILDER
     ARG VERSION

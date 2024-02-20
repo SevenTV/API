@@ -23,50 +23,40 @@ const (
 	identifier_id               = "id"
 )
 
-var userStateLoader *dataloader.DataLoader[string, structures.User]
+type UserIdentifier struct {
+	Platform structures.UserConnectionPlatform `json:"platform"`
+	IdType   string                            `json:"id_type"`
+	Id       string                            `json:"id"`
+}
+
+var userStateLoader *dataloader.DataLoader[UserIdentifier, structures.User]
+
+type identifier struct {
+	Platform structures.UserConnectionPlatform
+	Id       string
+}
 
 func createUserStateLoader(gctx global.Context) {
-	userStateLoader = dataloader.New(dataloader.Config[string, structures.User]{
-		Fetch: func(keys []string) ([]structures.User, []error) {
+	userStateLoader = dataloader.New(dataloader.Config[UserIdentifier, structures.User]{
+		Fetch: func(keys []UserIdentifier) ([]structures.User, []error) {
 			var (
-				errs []error
-				v    []structures.User
+				errs      []error
+				resultMap map[UserIdentifier]structures.User = map[UserIdentifier]structures.User{}
 			)
 
-			identifierMap := map[string]utils.Set[string]{
+			identifierMap := map[string]utils.Set[identifier]{
 				identifier_foreign_username: {},
 				identifier_foreign_id:       {},
-				identifier_id:               {},
-				identifier_username:         {},
 			}
 
 			for _, key := range keys {
-				// Identify the target
-				keysp := strings.SplitN(key, "|", 2)
-				if len(keysp) != 2 {
-					continue
-				}
-
-				platform := keysp[0]
-
-				idsp := strings.SplitN(keysp[1], ":", 2)
-				idType := idsp[0]
-				identifier := idsp[1]
-
 				// Platform specified: find by connection
-				if platform != "" {
-					switch idType {
-					case "id":
-						identifierMap["foreign_id"].Add(platform + ":" + identifier)
-					case "username":
-						identifierMap["foreign_username"].Add(platform + ":" + identifier)
-					}
-				} else { // no platform means app user
-					switch idType {
-					case "id":
-						identifierMap["id"].Add(identifier)
-					case "username":
-						identifierMap["username"].Add(identifier)
+				if key.Platform != "" {
+					switch key.IdType {
+					case identifier_id:
+						identifierMap[identifier_foreign_id].Add(identifier{Platform: key.Platform, Id: key.Id})
+					case identifier_username:
+						identifierMap[identifier_foreign_username].Add(identifier{Platform: key.Platform, Id: key.Id})
 					}
 				}
 			}
@@ -81,7 +71,7 @@ func createUserStateLoader(gctx global.Context) {
 
 				wg.Add(1)
 
-				go func(idType string, identifiers utils.Set[string]) {
+				go func(idType string, identifiers utils.Set[identifier]) {
 					defer wg.Done()
 
 					var users = []structures.User{}
@@ -90,91 +80,75 @@ func createUserStateLoader(gctx global.Context) {
 					case identifier_foreign_id, identifier_foreign_username:
 						l := utils.Ternary(idType == identifier_foreign_id, gctx.Inst().Loaders.UserByConnectionID, gctx.Inst().Loaders.UserByConnectionUsername)
 
-						m := make(map[structures.UserConnectionPlatform][]string)
+						m := map[structures.UserConnectionPlatform][]string{}
 
 						for _, id := range identifiers.Values() {
-							idsp := strings.SplitN(id, ":", 2)
-							if len(idsp) != 2 {
-								continue
-							}
-
-							platform := structures.UserConnectionPlatform((idsp[0]))
-							id := idsp[1]
-
-							m[platform] = append(m[platform], id)
+							m[id.Platform] = append(m[id.Platform], id.Id)
 						}
 
 						for p, ids := range m {
 							users, errs = l(p).LoadAll(ids)
+							mx.Lock()
+
+							for i := range users {
+								if errs[i] != nil {
+									if errors.Compare(errs[i], errors.ErrUnknownUser()) {
+										continue
+									}
+
+									zap.S().Errorw("failed to load user for bridged cosmetics request command", "error", errs[i])
+									break
+								}
+
+								id := ids[i]
+								key := UserIdentifier{
+									Platform: p,
+									IdType:   utils.Ternary(idType == identifier_foreign_id, identifier_id, identifier_username),
+									Id:       id,
+								}
+
+								resultMap[key] = users[i]
+							}
+
+							mx.Unlock()
 						}
-					case identifier_id:
-						//iden := identifiers.Values()
-						//idList := utils.Map(iden, func(x string) primitive.ObjectID {
-						//	oid, err := primitive.ObjectIDFromHex(x)
-						//	if err != nil {
-						//		return primitive.NilObjectID
-						//	}
-
-						//	return oid
-						//})
-
-						// v, errs = gctx.Inst().Loaders.UserByID().LoadAll(idList)
-					case identifier_username:
-						// v, errs = gctx.Inst().Loaders.UserByUsername().LoadAll(identifiers.Values())
-					}
-
-					mx.Lock()
-
-					v = append(v, users...)
-
-					mx.Unlock()
-
-					for _, err := range errs {
-						if err == nil || errors.Compare(err, errors.ErrUnknownUser()) {
-							continue
-						}
-
-						zap.S().Errorw("failed to load users for bridged cosmetics request command", "error", err)
-
-						break
 					}
 				}(idType, identifiers)
 			}
 
 			wg.Wait()
 
-			return v, errs
+			result := make([]structures.User, len(keys))
+			for i, key := range keys {
+				result[i] = resultMap[key]
+			}
+
+			return result, errs
 		},
 		Wait:     250 * time.Millisecond,
 		MaxBatch: 500,
 	})
 }
 
-func handleUserState(gctx global.Context, ctx context.Context, body events.UserStateCommandBody) ([]events.Message[json.RawMessage], error) {
-	keys := make([]string, len(body.Identifiers))
+func handleUserState(gctx global.Context, ctx context.Context, body events.BridgedCommandBody) ([]events.Message[json.RawMessage], error) {
+	keys := make([]UserIdentifier, len(body.Identifiers))
 
 	for i, id := range body.Identifiers {
-		params := strings.Builder{}
-		params.WriteString(string(body.Platform))
-		params.WriteString("|")
-		params.WriteString(id)
+		splits := strings.SplitN(id, ":", 2)
 
-		keys[i] = params.String()
+		if len(splits) != 2 {
+			zap.S().Errorw("invalid user identifier", "identifier", id)
+			return nil, nil
+		}
+
+		keys[i] = UserIdentifier{
+			Platform: body.Platform,
+			IdType:   splits[0],
+			Id:       splits[1],
+		}
 	}
 
 	users, _ := userStateLoader.LoadAll(keys)
-
-	var sid string
-	switch t := ctx.Value(SESSION_ID_KEY).(type) {
-	case string:
-		sid = t
-	}
-
-	if sid == "" {
-		zap.S().Errorw("failed to get session id from context")
-		return nil, nil
-	}
-
 	result := []events.Message[json.RawMessage]{}
 
 	// Dispatch user avatar
@@ -191,7 +165,6 @@ func handleUserState(gctx global.Context, ctx context.Context, body events.UserS
 					Contextual: true,
 					Object:     av,
 				},
-				Whisper: sid,
 			}).ToRaw())
 		}
 	}

@@ -24,7 +24,7 @@ lint:
 
 format:
 	gofmt -s -w .
-	yarn prettier --write .
+	# yarn prettier --write .
 
 deps:
 	go install github.com/swaggo/swag/cmd/swag@v1.8.10

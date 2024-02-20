@@ -15,7 +15,7 @@ import (
 type AnyPayload interface {
 	json.RawMessage | HelloPayload | AckPayload | HeartbeatPayload | ReconnectPayload | ResumePayload |
 		SubscribePayload | UnsubscribePayload | DispatchPayload | SignalPayload |
-		ErrorPayload | EndOfStreamPayload | BridgedCommandPayload[json.RawMessage]
+		ErrorPayload | EndOfStreamPayload | BridgedCommandBody
 }
 
 type HelloPayload struct {
@@ -155,11 +155,4 @@ type ErrorPayload struct {
 type EndOfStreamPayload struct {
 	Code    CloseCode `json:"code"`
 	Message string    `json:"message"`
-}
-
-type BridgedCommandPayload[T BridgedCommandBody] struct {
-	Command   string `json:"command"`
-	SessionID string `json:"sid"`
-	ClientIP  string `json:"ip"`
-	Body      T      `json:"body"`
 }
