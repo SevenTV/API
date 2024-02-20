@@ -75,12 +75,12 @@ type DispatchPayload struct {
 	Whisper string `json:"whisper,omitempty"`
 }
 
-func CreateDispatchKey(t EventType, condition EventCondition, wildcard bool) string {
+func CreateDispatchKey(t EventType, condition EventCondition) string {
 	s := strings.Builder{}
 
 	s.WriteString(OpcodeDispatch.PublishKey())
 	s.WriteString(".type.")
-	s.WriteString(utils.Ternary(wildcard, t.ObjectName()+".*", string(t)))
+	s.WriteString(string(t))
 
 	if len(condition) > 0 {
 		s.WriteString(".")

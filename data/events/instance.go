@@ -75,11 +75,9 @@ func (inst *EventsInst) Dispatch(t EventType, cm ChangeMap, cond ...EventConditi
 
 	for _, c := range cond {
 		// TODO: check if it's necesary to publish for both bools
-		for _, b := range []bool{false, true} {
-			err = inst.nc.Publish(inst.subject+"."+CreateDispatchKey(t, c, b), data)
-			if err != nil {
-				zap.S().Errorw("nats publish", "error", err)
-			}
+		err = inst.nc.Publish(inst.subject+"."+CreateDispatchKey(t, c), data)
+		if err != nil {
+			zap.S().Errorw("nats publish", "error", err)
 		}
 	}
 }
@@ -124,12 +122,10 @@ func (inst *EventsInst) DispatchWithEffect(t EventType, cm ChangeMap, opt Dispat
 
 	if opt.Whisper == "" {
 		for _, c := range cond {
-			for _, b := range []bool{false, true} {
-				payloads[CreateDispatchKey(t, c, b)] = data
-			}
+			payloads[CreateDispatchKey(t, c)] = data
 		}
 	} else {
-		payloads[CreateDispatchKey(EventTypeWhisper, EventCondition{"session_id": opt.Whisper}, false)] = data
+		payloads[CreateDispatchKey(EventTypeWhisper, EventCondition{"session_id": opt.Whisper})] = data
 	}
 
 	go func() {
