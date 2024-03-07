@@ -32,7 +32,7 @@ func (r *Resolver) CreateEmoteSet(ctx context.Context, userID primitive.ObjectID
 		SetName(input.Name).
 		SetPrivileged(isPrivileged).
 		SetOwnerID(userID).
-		SetCapacity(300)
+		SetCapacity(1000)
 
 	// Execute mutation
 	if err := r.Ctx.Inst().Mutate.CreateEmoteSet(ctx, b, mutate.EmoteSetMutationOptions{
