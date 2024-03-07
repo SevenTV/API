@@ -287,7 +287,7 @@ func formatUserConnection(id string, platform structures.UserConnectionPlatform,
 		ID:         id,
 		Platform:   platform,
 		LinkedAt:   time.Now(),
-		EmoteSlots: 600,
+		EmoteSlots: 1000,
 		Data:       b,
 		Grant: &structures.UserConnectionGrant{
 			AccessToken:  grant.AccessToken,
